@@ -46,7 +46,6 @@ CATEGORIES = {
 
 def check_and_update_subscriptions():
     """Logic to check expiry:
-
     - If unpaid for > 30 days: Status becomes 'locked'.
     - If unpaid for > 150 days (~5 months): Status becomes 'deleted'.
     """
@@ -61,9 +60,9 @@ def check_and_update_subscriptions():
             continue
 
         days_since_payment = (now - biz['last_paid_date']).days
-        if days_since_payment > 150:
+        if days_since_payment > 150:  # ~5 months
             biz['status'] = 'deleted'
-        elif days_since_payment > 30:
+        elif days_since_payment > 30:  # 1 month crossed
             biz['status'] = 'locked'
 
 
@@ -112,7 +111,6 @@ def admin_panel():
         address = request.form.get('address')
         phone = request.form.get('phone')
         
-        # Simple doctors parser format (Name: Specialty) separated by commas or newlines
         doc_input = request.form.get('doctors', '')
         doctors = []
         if doc_input and category == 'hospitals':
@@ -134,7 +132,7 @@ def admin_panel():
             'doctors': doctors,
             'joined_date': datetime.now(),
             'last_paid_date': datetime.now(),
-            'status': 'trial'  # New entry starts with free trial
+            'status': 'trial'
         }
         return redirect(url_for('admin_panel'))
 
