@@ -8,8 +8,7 @@ SITE_NAME = 'SwatBiz Hub'
 app = Flask(__name__, template_folder='templates', static_folder='static')
 app.secret_key = 'swat_biz_hub_secret_key'
 
-# Mock Database (In production, replace this with SQLite, PostgreSQL or MongoDB)
-# Status options: 'active', 'trial', 'locked', 'deleted'
+# Mock Database (In production, replace with SQLite, PostgreSQL or MongoDB)
 BUSINESSES = {
     '1': {
         'id': '1',
@@ -19,13 +18,9 @@ BUSINESSES = {
         'phone': '+92 946 9240123',
         'doctors': [
             {'name': 'Dr. Ahmad Khan', 'specialty': 'Cardiologist', 'timing': '9 AM - 2 PM'},
-            {
-                'name': 'Dr. Fatima Ali',
-                'specialty': 'Pediatrician',
-                'timing': '10 AM - 4 PM',
-            },
+            {'name': 'Dr. Fatima Ali', 'specialty': 'Pediatrician', 'timing': '10 AM - 4 PM'},
         ],
-        'joined_date': datetime.now() - timedelta(days=10),  # Trial period
+        'joined_date': datetime.now() - timedelta(days=10),
         'last_paid_date': datetime.now(),
         'status': 'trial',
     },
@@ -35,9 +30,9 @@ BUSINESSES = {
         'name': 'Rock City Restaurant & Hotel',
         'address': 'By-pass Road, Mingora, Swat',
         'phone': '+92 946 7112233',
-        'doctors': [],  # Not applicable for restaurants
+        'doctors': [],
         'joined_date': datetime.now() - timedelta(days=45),
-        'last_paid_date': datetime.now() - timedelta(days=40),  # Active paid
+        'last_paid_date': datetime.now() - timedelta(days=40),
         'status': 'active',
     },
 }
@@ -52,25 +47,23 @@ CATEGORIES = {
 def check_and_update_subscriptions():
     """Logic to check expiry:
 
-    - If unpaid for > 30 days: Status becomes 'locked' (Details won't open).
-    - If unpaid for > 150 days (5 months): Status becomes 'deleted' (Auto-delete).
+    - If unpaid for > 30 days: Status becomes 'locked'.
+    - If unpaid for > 150 days (~5 months): Status becomes 'deleted'.
     """
     now = datetime.now()
     for b_id, biz in list(BUSINESSES.items()):
         if biz['status'] == 'deleted':
             continue
 
-        # Check trial expiry (e.g. 30 days trial)
         if biz['status'] == 'trial':
             if (now - biz['joined_date']).days > 30:
                 biz['status'] = 'locked'
             continue
 
-        # Check paid subscription expiry
         days_since_payment = (now - biz['last_paid_date']).days
-        if days_since_payment > 150:  (~5 months)
+        if days_since_payment > 150:
             biz['status'] = 'deleted'
-        elif days_since_payment > 30:  (1 month crossed)
+        elif days_since_payment > 30:
             biz['status'] = 'locked'
 
 
@@ -81,20 +74,15 @@ def before_request_func():
 
 @app.route('/')
 def home():
-    return render_template(
-        'index.html', categories=CATEGORIES, site_name=SITE_NAME
-    )
+    return render_template('index.html', categories=CATEGORIES, site_name=SITE_NAME)
 
 
 @app.route('/category/<cat_slug>')
 def category_page(cat_slug):
     if cat_slug not in CATEGORIES:
         abort(404)
-
-    # Sirf wo business dikhayein jo deleted na hon
     cat_businesses = [
-        b
-        for b in BUSINESSES.values()
+        b for b in BUSINESSES.values() 
         if b['category'] == cat_slug and b['status'] != 'deleted'
     ]
     return render_template(
@@ -110,19 +98,48 @@ def business_detail(b_id):
     biz = BUSINESSES.get(b_id)
     if not biz or biz['status'] == 'deleted':
         abort(404)
-
-    # Agar 1 mahina payment na ki ho aur status 'locked' ho toh detail open nahi hogi
     if biz['status'] == 'locked':
         return render_template('locked.html', business=biz, site_name=SITE_NAME)
-
     return render_template('detail.html', business=biz, site_name=SITE_NAME)
 
 
-@app.route('/admin')
+@app.route('/admin', methods=['GET', 'POST'])
 def admin_panel():
-    """Admin panel to view subscription statuses and manually manage payments."""
+    if request.method == 'POST':
+        b_id = str(len(BUSINESSES) + 1)
+        name = request.form.get('name')
+        category = request.form.get('category')
+        address = request.form.get('address')
+        phone = request.form.get('phone')
+        
+        # Simple doctors parser format (Name: Specialty) separated by commas or newlines
+        doc_input = request.form.get('doctors', '')
+        doctors = []
+        if doc_input and category == 'hospitals':
+            for line in doc_input.split('\n'):
+                parts = line.split(':')
+                if len(parts) >= 2:
+                    doctors.append({
+                        'name': parts[0].strip(),
+                        'specialty': parts[1].strip(),
+                        'timing': '9 AM - 5 PM'
+                    })
+
+        BUSINESSES[b_id] = {
+            'id': b_id,
+            'category': category,
+            'name': name,
+            'address': address,
+            'phone': phone,
+            'doctors': doctors,
+            'joined_date': datetime.now(),
+            'last_paid_date': datetime.now(),
+            'status': 'trial'  # New entry starts with free trial
+        }
+        return redirect(url_for('admin_panel'))
+
     return render_template(
-        'admin.html', businesses=BUSINESSES, site_name=SITE_NAME
+        'admin.html', businesses=BUSINESSES, categories=CATEGORIES, site_name=SITE_NAME
     )
 
 
