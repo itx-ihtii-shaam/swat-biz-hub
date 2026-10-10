@@ -5,10 +5,16 @@ from flask import Flask, abort, redirect, render_template, request, url_for
 
 SITE_NAME = 'SwatBiz Hub'
 
-app = Flask(__name__, template_folder='templates', static_folder='static')
+# Absolute path fix for Vercel serverless environment
+basedir = os.path.abspath(os.path.dirname(__file__))
+app = Flask(
+    __name__,
+    template_folder=os.path.join(basedir, 'templates'),
+    static_folder=os.path.join(basedir, 'static'),
+)
 app.secret_key = 'swat_biz_hub_secret_key'
 
-# Mock Database (In production, replace with SQLite, PostgreSQL or MongoDB)
+# Mock Database
 BUSINESSES = {
     '1': {
         'id': '1',
@@ -45,10 +51,6 @@ CATEGORIES = {
 
 
 def check_and_update_subscriptions():
-    """Logic to check expiry:
-    - If unpaid for > 30 days: Status becomes 'locked'.
-    - If unpaid for > 150 days (~5 months): Status becomes 'deleted'.
-    """
     now = datetime.now()
     for b_id, biz in list(BUSINESSES.items()):
         if biz['status'] == 'deleted':
@@ -60,9 +62,9 @@ def check_and_update_subscriptions():
             continue
 
         days_since_payment = (now - biz['last_paid_date']).days
-        if days_since_payment > 150:  # ~5 months
+        if days_since_payment > 150:
             biz['status'] = 'deleted'
-        elif days_since_payment > 30:  # 1 month crossed
+        elif days_since_payment > 30:
             biz['status'] = 'locked'
 
 
