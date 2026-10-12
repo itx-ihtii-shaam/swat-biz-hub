@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en" id="html-root" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register Business - {{ site_name }}</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏙️</text></svg>">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>tailwind.config = { darkMode: 'class' }</script>
+</head>
+<body class="bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 min-h-screen">
+    <header class="bg-gradient-to-r from-slate-900 via-blue-950 to-indigo-950 text-white shadow-xl">
+        <div class="max-w-7xl mx-auto px-4 py-6 flex justify-between items-center">
+            <h1 class="text-2xl font-extrabold"><a href="{{ url_for('home') }}">🏙️ {{ site_name }}</a></h1>
+            <a href="{{ url_for('home') }}" class="bg-white/10 hover:bg-white/20 px-4 py-2 rounded-xl text-sm font-semibold transition">← Back to Home</a>
+        </div>
+    </header>
+
+    <main class="max-w-3xl mx-auto px-4 py-12">
+        <div class="bg-white dark:bg-gray-900 p-8 md:p-10 rounded-3xl shadow-2xl border border-gray-100 dark:border-gray-800">
+            <div class="text-center mb-8">
+                <h2 class="text-3xl font-extrabold">Register Your Business</h2>
+                <p class="text-gray-500 dark:text-gray-400 mt-2">Get listed on SwatBiz Hub instantly with a 30-day free trial!</p>
+            </div>
+
+            <form method="POST" class="space-y-6">
+                <div>
+                    <label class="block text-sm font-medium mb-2">Business Name</label>
+                    <input type="text" name="name" required placeholder="e.g. Al-Shifa Hospital or Rock City Hotel" class="w-full px-4 py-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Category</label>
+                        <select name="category" id="categorySelect" onchange="toggleDoctorSection()" class="w-full px-4 py-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-blue-500 outline-none">
+                            {% for slug, cat in categories.items() %}
+                            <option value="{{ slug }}">{{ cat.title }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Phone Number</label>
+                        <input type="text" name="phone" required placeholder="+92 946 XXXXXXX" class="w-full px-4 py-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-blue-500 outline-none">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium mb-2">Address / Location</label>
+                    <input type="text" name="address" required placeholder="e.g. Hospital Road, Mingora, Swat" class="w-full px-4 py-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium mb-2">Business Image URL (Photo link)</label>
+                    <input type="url" name="image" required placeholder="https://images.unsplash.com/..." class="w-full px-4 py-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+
+                <!-- Doctors Section (Only visible for Hospitals) -->
+                <div id="doctorSection" class="p-6 bg-blue-50/50 dark:bg-gray-800/50 rounded-2xl border border-blue-100 dark:border-gray-700 space-y-4">
+                    <h3 class="text-lg font-bold text-blue-600 dark:text-blue-400">🩺 Doctors & Specialist Timings</h3>
+                    <div id="doctorList" class="space-y-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-white dark:bg-gray-900 p-4 rounded-xl border border-gray-200 dark:border-gray-700">
+                            <input type="text" name="doc_name[]" placeholder="Doctor Name (Dr. Ahmad)" class="px-3 py-2.5 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm">
+                            <input type="text" name="doc_spec[]" placeholder="Specialty (Cardiologist)" class="px-3 py-2.5 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm">
+                            <input type="text" name="doc_time[]" placeholder="Appointment Timing (9 AM - 2 PM)" class="px-3 py-2.5 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm">
+                            <input type="text" name="doc_clinic[]" placeholder="Clinic / Room (Room 12, OPD)" class="px-3 py-2.5 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm">
+                        </div>
+                    </div>
+                    <button type="button" onclick="addDoctorField()" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-xl text-sm font-semibold transition">+ Add Another Doctor</button>
+                </div>
+
+                <button type="submit" class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold py-4 rounded-2xl shadow-xl hover:opacity-95 transition text-lg">Submit & Activate Free Listing</button>
+            </form>
+        </div>
+    </main>
+
+    <script>
+        function toggleDoctorSection() {
+            const cat = document.getElementById('categorySelect').value;
+            const docSec = document.getElementById('doctorSection');
+            docSec.style.display = (cat === 'hospitals') ? 'block' : 'none';
+        }
+        function addDoctorField() {
+            const list = document.getElementById('doctorList');
+            const div = document.createElement('div');
+            div.className = "grid grid-cols-1 md:grid-cols-2 gap-4 bg-white dark:bg-gray-900 p-4 rounded-xl border border-gray-200 dark:border-gray-700";
+            div.innerHTML = `
+                <input type="text" name="doc_name[]" placeholder="Doctor Name" class="px-3 py-2.5 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm">
+                <input type="text" name="doc_spec[]" placeholder="Specialty" class="px-3 py-2.5 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm">
+                <input type="text" name="doc_time[]" placeholder="Appointment Timing" class="px-3 py-2.5 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm">
+                <input type="text" name="doc_clinic[]" placeholder="Clinic / Room" class="px-3 py-2.5 rounded-lg bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm">
+            `;
+            list.appendChild(div);
+        }
+        toggleDoctorSection();
+    </script>
+</body>
+</html>
