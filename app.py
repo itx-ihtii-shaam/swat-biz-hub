@@ -1,4 +1,4 @@
-"""SwatBiz Hub - Final Stable Application with Animated Back Links & Admin Favicon."""
+"""SwatBiz Hub - Complete Application with Business Details, Doctor Info & Tests Feature."""
 from datetime import datetime, timedelta
 import os
 from flask import Flask, abort, redirect, render_template_string, request, url_for, session
@@ -21,7 +21,9 @@ BUSINESSES = {
         'payment_method': 'Bank Transfer',
         'payment_ref': 'TXN-984210',
         'payment_status': 'paid',
-        'expiry_date': datetime.now() - timedelta(days=2)
+        'expiry_date': datetime.now() - timedelta(days=2),
+        'doctor_info': 'Dr. Muhammad Ali (Cardiologist), Dr. Ayesha Khan (Pediatrician), Dr. Tariq Rahim (Surgeon)',
+        'tests_services': 'MRI, CT Scan, X-Ray, Ultrasound, Emergency Care, Complete Blood Count (CBC)'
     },
     '2': {
         'id': '2',
@@ -34,7 +36,9 @@ BUSINESSES = {
         'payment_method': 'EasyPaisa',
         'payment_ref': 'TID-9920182',
         'payment_status': 'unpaid',
-        'expiry_date': datetime.now() + timedelta(days=30)
+        'expiry_date': datetime.now() + timedelta(days=30),
+        'doctor_info': 'N/A',
+        'tests_services': 'Dumba Karahi, Shinwari Tikka, Green Tea'
     },
     '3': {
         'id': '3',
@@ -47,7 +51,9 @@ BUSINESSES = {
         'payment_method': 'EasyPaisa',
         'payment_ref': 'TID-7782194',
         'payment_status': 'paid',
-        'expiry_date': datetime.now() + timedelta(days=3)
+        'expiry_date': datetime.now() + timedelta(days=3),
+        'doctor_info': 'Available Pharmacist: Dr. Bilal Ahmed',
+        'tests_services': 'Blood Pressure Check, Blood Glucose Testing, First Aid Supplies'
     }
 }
 
@@ -204,21 +210,22 @@ def category_page(cat_slug):
     cards = ""
     for b in filtered:
         cards += '''
-        <div class="bg-gray-900 rounded-2xl shadow-sm hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1.5 border border-gray-800 overflow-hidden flex flex-col justify-between">
-            <img src="''' + b.get('image', '') + '''" class="w-full h-48 object-cover hover:scale-105 transition-transform duration-500">
+        <a href="/business/''' + b['id'] + '''" class="bg-gray-900 rounded-2xl shadow-sm hover:shadow-2xl hover:border-blue-500 transition-all duration-300 transform hover:-translate-y-1.5 border border-gray-800 overflow-hidden flex flex-col justify-between group">
+            <img src="''' + b.get('image', '') + '''" class="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-500">
             <div class="p-6">
-                <h3 class="text-xl font-bold">''' + b['name'] + '''</h3>
+                <h3 class="text-xl font-bold group-hover:text-blue-400 transition-colors">''' + b['name'] + '''</h3>
                 <p class="text-sm text-gray-400 mt-1">📍 ''' + b['address'] + '''</p>
                 <p class="text-xs text-blue-400 mt-2">📞 ''' + b.get('phones', ['N/A'])[0] + '''</p>
+                <span class="inline-block mt-4 text-xs font-bold text-blue-500 bg-blue-500/10 px-3 py-1.5 rounded-lg">View Details →</span>
             </div>
-        </div>
+        </a>
         '''
     if not cards:
         cards = '<div class="col-span-3 text-center py-20 text-gray-500"><p class="text-xl">No listings found.</p></div>'
 
     json_list = ""
     for b in all_biz:
-        json_list += '{"name": "' + b['name'].replace('"', '\\"') + '", "address": "' + b['address'].replace('"', '\\"') + '"},'
+        json_list += '{"id": "' + b['id'] + '", "name": "' + b['name'].replace('"', '\\"') + '", "address": "' + b['address'].replace('"', '\\"') + '"},'
 
     html = BASE_HEAD + '''
     <main class="max-w-7xl mx-auto px-4 py-12">
@@ -256,7 +263,7 @@ def category_page(cat_slug):
                 if (matches.length > 0) {
                     let html = '';
                     matches.forEach(match => {
-                        html += `<div class="px-5 py-3 hover:bg-gray-800 cursor-pointer border-b border-gray-800 last:border-none transition" onclick="selectSuggestion('${match.name}')">
+                        html += `<div class="px-5 py-3 hover:bg-gray-800 cursor-pointer border-b border-gray-800 last:border-none transition" onclick="window.location.href='/business/${match.id}'">
                             <div class="text-sm font-bold text-white">🏥 ${match.name}</div>
                             <div class="text-xs text-gray-400">📍 ${match.address}</div>
                         </div>`;
@@ -269,18 +276,56 @@ def category_page(cat_slug):
             });
         }
 
-        function selectSuggestion(val) {
-            searchInput.value = val;
-            suggestionsBox.classList.add('hidden');
-            searchInput.form.submit();
-        }
-
         document.addEventListener('click', function(e) {
             if (searchInput && suggestionsBox && !searchInput.contains(e.target) && !suggestionsBox.contains(e.target)) {
                 suggestionsBox.classList.add('hidden');
             }
         });
     </script>
+    ''' + FOOTER
+    return render_template_string(html)
+
+@app.route('/business/<b_id>')
+def business_detail(b_id):
+    if b_id not in BUSINESSES or BUSINESSES[b_id].get('status') != 'approved':
+        abort(404)
+    b = BUSINESSES[b_id]
+    
+    doc_info = b.get('doctor_info', 'Not specified')
+    tests_serv = b.get('tests_services', 'Not specified')
+
+    html = BASE_HEAD + '''
+    <main class="max-w-4xl mx-auto px-4 py-12">
+        <div class="bg-gray-900 border border-gray-800 rounded-3xl overflow-hidden shadow-2xl">
+            <img src="''' + b.get('image', '') + '''" class="w-full h-72 object-cover">
+            <div class="p-8 space-y-6">
+                <div>
+                    <span class="bg-blue-600/20 text-blue-400 text-xs px-3 py-1 rounded-full font-bold uppercase tracking-wider">Verified Listing</span>
+                    <h1 class="text-3xl md:text-4xl font-black mt-3">''' + b['name'] + '''</h1>
+                    <p class="text-gray-400 mt-1 text-base">📍 ''' + b['address'] + '''</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-gray-800">
+                    <div class="bg-gray-800/50 p-6 rounded-2xl border border-gray-700/50">
+                        <h3 class="text-lg font-bold text-blue-400 mb-2">👨‍⚕️ Doctor & Specialist Info</h3>
+                        <p class="text-gray-300 text-sm leading-relaxed">''' + doc_info + '''</p>
+                    </div>
+                    <div class="bg-gray-800/50 p-6 rounded-2xl border border-gray-700/50">
+                        <h3 class="text-lg font-bold text-emerald-400 mb-2">🔬 Available Tests & Services</h3>
+                        <p class="text-gray-300 text-sm leading-relaxed">''' + tests_serv + '''</p>
+                    </div>
+                </div>
+
+                <div class="pt-4 border-t border-gray-800 flex items-center justify-between">
+                    <div>
+                        <span class="text-xs text-gray-500 block">Contact Phone</span>
+                        <a href="tel:''' + b.get('phones', [''])[0] + '''" class="text-lg font-bold text-white hover:text-blue-400 transition">📞 ''' + b.get('phones', ['N/A'])[0] + '''</a>
+                    </div>
+                    <a href="/category/''' + b['category'] + '''" class="bg-gray-800 hover:bg-gray-700 px-5 py-2.5 rounded-xl text-sm font-semibold transition">← Back to Category</a>
+                </div>
+            </div>
+        </div>
+    </main>
     ''' + FOOTER
     return render_template_string(html)
 
@@ -294,6 +339,8 @@ def register_business():
             'name': request.form.get('name'),
             'address': request.form.get('address'),
             'phones': [request.form.get('phone', '')],
+            'doctor_info': request.form.get('doctor_info', 'N/A'),
+            'tests_services': request.form.get('tests_services', 'N/A'),
             'status': 'pending',
             'payment_method': request.form.get('payment_method', 'Cash'),
             'payment_ref': request.form.get('payment_ref', 'N/A'),
@@ -310,11 +357,18 @@ def register_business():
     <main class="max-w-2xl mx-auto px-4 py-12">
         <h2 class="text-3xl font-extrabold text-center mb-6">Register Business</h2>
         <form method="POST" class="space-y-4">
-            <input type="text" name="name" required placeholder="Business Name" class="w-full p-3 rounded-xl bg-gray-900 border border-gray-800 focus:ring-2 focus:ring-blue-500 outline-none">
+            <input type="text" name="name" required placeholder="Business / Hospital Name" class="w-full p-3 rounded-xl bg-gray-900 border border-gray-800 focus:ring-2 focus:ring-blue-500 outline-none">
             <select name="category" class="w-full p-3 rounded-xl bg-gray-900 border border-gray-800">''' + opts + '''</select>
-            <input type="text" name="address" required placeholder="Address" class="w-full p-3 rounded-xl bg-gray-900 border border-gray-800 focus:ring-2 focus:ring-blue-500 outline-none">
+            <input type="text" name="address" required placeholder="Address (e.g. Mingora, Swat)" class="w-full p-3 rounded-xl bg-gray-900 border border-gray-800 focus:ring-2 focus:ring-blue-500 outline-none">
             <input type="text" name="phone" required placeholder="Phone Number" class="w-full p-3 rounded-xl bg-gray-900 border border-gray-800 focus:ring-2 focus:ring-blue-500 outline-none">
-            <select name="payment_method" class="w-full p-3 rounded-xl bg-gray-900 border border-gray-800">
+            
+            <div class="border-t border-gray-800 pt-4 mt-4">
+                <label class="block text-xs font-bold text-gray-400 mb-1">Optional Healthcare Details</label>
+                <textarea name="doctor_info" placeholder="Doctor Information / Specialists (Optional)" class="w-full p-3 rounded-xl bg-gray-900 border border-gray-800 focus:ring-2 focus:ring-blue-500 outline-none text-sm" rows="2"></textarea>
+                <textarea name="tests_services" placeholder="Available Tests & Services (Optional, e.g., X-Ray, Lab Tests)" class="w-full p-3 rounded-xl bg-gray-900 border border-gray-800 focus:ring-2 focus:ring-blue-500 outline-none text-sm mt-3" rows="2"></textarea>
+            </div>
+
+            <select name="payment_method" class="w-full p-3 rounded-xl bg-gray-900 border border-gray-800 mt-4">
                 <option value="EasyPaisa">EasyPaisa</option>
                 <option value="JazzCash">JazzCash</option>
                 <option value="Bank Transfer">Bank Transfer</option>
