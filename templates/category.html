@@ -21,22 +21,50 @@
             <span class="text-6xl">{{ category.icon }}</span>
             <h2 class="text-4xl font-extrabold mt-4">{{ category.title }}</h2>
             <p class="text-gray-500 dark:text-gray-400 mt-2">Explore verified listings in Swat & Mingora</p>
+            
+            <!-- Category Specific Search Bar -->
+            <form method="GET" action="{{ url_for('category_page', cat_slug=cat_slug) }}" class="mt-8 max-w-xl mx-auto flex gap-3">
+                <input type="text" name="q" value="{{ search_query }}" placeholder="Search specific medicine, property, or item here..." class="w-full px-5 py-3.5 rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-white px-6 py-3.5 rounded-2xl font-semibold shadow-md transition">Search</button>
+                {% if search_query %}
+                <a href="{{ url_for('category_page', cat_slug=cat_slug) }}" class="bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300 px-4 py-3.5 rounded-2xl font-semibold flex items-center justify-center">Reset</a>
+                {% endif %}
+            </form>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             {% for biz in businesses %}
-            <a href="{{ url_for('business_detail', b_id=biz.id) }}" class="bg-white dark:bg-gray-900 rounded-2xl shadow-sm hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-100 dark:border-gray-800 overflow-hidden group">
-                <img src="{{ biz.image }}" alt="{{ biz.name }}" class="w-full h-48 object-cover group-hover:scale-105 transition duration-300">
-                <div class="p-6">
-                    <h3 class="text-xl font-bold group-hover:text-blue-500 transition-colors">{{ biz.name }}</h3>
-                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">📍 {{ biz.address }}</p>
-                    <p class="text-sm font-semibold text-blue-600 dark:text-blue-400 mt-3">📞 {{ biz.phone }}</p>
+            <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-sm hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-100 dark:border-gray-800 overflow-hidden flex flex-col justify-between">
+                <div>
+                    <img src="{{ biz.image }}" alt="{{ biz.name }}" class="w-full h-48 object-cover">
+                    <div class="p-6">
+                        <h3 class="text-xl font-bold hover:text-blue-500 transition-colors">
+                            <a href="{{ url_for('business_detail', b_id=biz.id) }}">{{ biz.name }}</a>
+                        </h3>
+                        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">📍 {{ biz.address }}</p>
+                        
+                        <!-- Show Matched Items / Medicines / Properties if Searched -->
+                        {% if biz.items %}
+                        <div class="mt-4 pt-4 border-t border-gray-100 dark:border-gray-800 space-y-2">
+                            <span class="text-xs font-bold text-blue-500 uppercase">Available Items / Stock:</span>
+                            {% for item in biz.items %}
+                            <div class="flex justify-between items-center text-sm bg-gray-50 dark:bg-gray-800/60 p-2 rounded-xl">
+                                <span class="font-medium truncate max-w-[150px]">{{ item.name }}</span>
+                                <span class="text-emerald-600 dark:text-emerald-400 font-bold">Rs. {{ item.price }}</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
                 </div>
-            </a>
+                <div class="p-6 pt-0">
+                    <a href="{{ url_for('business_detail', b_id=biz.id) }}" class="block w-full text-center bg-blue-600 hover:bg-blue-500 text-white py-2.5 rounded-xl text-sm font-semibold transition">View Details & Contact</a>
+                </div>
+            </div>
             {% else %}
             <div class="col-span-3 text-center py-20 text-gray-500">
-                <p class="text-xl">No businesses registered in this category yet.</p>
-                <a href="{{ url_for('register_business') }}" class="inline-block mt-4 bg-blue-600 text-white px-6 py-3 rounded-xl font-semibold shadow">Be the first to list!</a>
+                <p class="text-xl">No businesses or items found matching your search.</p>
+                <a href="{{ url_for('category_page', cat_slug=cat_slug) }}" class="inline-block mt-4 text-blue-500 underline font-semibold">View all in this category</a>
             </div>
             {% endfor %}
         </div>
