@@ -146,13 +146,17 @@ CATEGORY_TEMPLATE = BASE_HEAD + '''
             <h2 class="text-4xl font-extrabold mt-4">{{ category.title }}</h2>
             <p class="text-gray-500 dark:text-gray-400 mt-2">Explore verified listings in Swat & Mingora</p>
             
-            <form method="GET" action="/category/{{ cat_slug }}" class="mt-8 max-w-xl mx-auto flex gap-3">
-                <input type="text" name="q" value="{{ search_query }}" placeholder="{{ category.search_hint }}" class="w-full px-5 py-3.5 rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
-                <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-white px-6 py-3.5 rounded-2xl font-semibold shadow-md transition">Search</button>
-                {% if search_query %}
-                <a href="/category/{{ cat_slug }}" class="bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300 px-4 py-3.5 rounded-2xl font-semibold flex items-center justify-center">Reset</a>
-                {% endif %}
-            </form>
+            <div class="mt-8 max-w-xl mx-auto relative">
+                <form method="GET" action="/category/{{ cat_slug }}" class="flex gap-3">
+                    <input type="text" id="searchInput" name="q" value="{{ search_query }}" placeholder="{{ category.search_hint }}" autocomplete="off" class="w-full px-5 py-3.5 rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-white px-6 py-3.5 rounded-2xl font-semibold shadow-md transition">Search</button>
+                    {% if search_query %}
+                    <a href="/category/{{ cat_slug }}" class="bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300 px-4 py-3.5 rounded-2xl font-semibold flex items-center justify-center">Reset</a>
+                    {% endif %}
+                </form>
+                <!-- Live Suggestions Dropdown -->
+                <div id="suggestionsBox" class="absolute left-0 right-0 mt-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-xl hidden z-50 overflow-hidden text-left"></div>
+            </div>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -181,6 +185,51 @@ CATEGORY_TEMPLATE = BASE_HEAD + '''
             {% endif %}
         </div>
     </main>
+
+    <script>
+        const allNames = [
+            {% for b in all_category_businesses %}
+                "{{ b.name }}",
+            {% endfor %}
+        ];
+
+        const searchInput = document.getElementById('searchInput');
+        const suggestionsBox = document.getElementById('suggestionsBox');
+
+        searchInput.addEventListener('input', function() {
+            const query = this.value.toLowerCase().trim();
+            if (!query) {
+                suggestionsBox.classList.add('hidden');
+                suggestionsBox.innerHTML = '';
+                return;
+            }
+
+            const matches = allNames.filter(name => name.toLowerCase().includes(query));
+            if (matches.length > 0) {
+                let html = '';
+                matches.forEach(match => {
+                    html += `<div class="px-5 py-3 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer text-sm font-medium border-b border-gray-100 dark:border-gray-800 last:border-none" onclick="selectSuggestion('${match}')">${match}</div>`;
+                });
+                suggestionsBox.innerHTML = html;
+                suggestionsBox.classList.remove('hidden');
+            } else {
+                suggestionsBox.classList.add('hidden');
+                suggestionsBox.innerHTML = '';
+            }
+        });
+
+        function selectSuggestion(val) {
+            searchInput.value = val;
+            suggestionsBox.classList.add('hidden');
+            searchInput.form.submit();
+        }
+
+        document.addEventListener('click', function(e) {
+            if (!searchInput.contains(e.target) && !suggestionsBox.contains(e.target)) {
+                suggestionsBox.classList.add('hidden');
+            }
+        });
+    </script>
 ''' + FOOTER
 
 
@@ -196,9 +245,11 @@ def category_page(cat_slug):
     
     search_query = request.args.get('q', '').lower().strip()
     cat_businesses = []
-    
+    all_cat_biz = []
+
     for b in BUSINESSES.values():
         if b.get('category') == cat_slug and b.get('status', 'trial') != 'deleted':
+            all_cat_biz.append(b)
             if search_query:
                 if search_query in b.get('name', '').lower():
                     cat_businesses.append(b)
@@ -209,9 +260,11 @@ def category_page(cat_slug):
         CATEGORY_TEMPLATE,
         category=CATEGORIES[cat_slug],
         businesses=cat_businesses,
-        title=CATEGORIES[cat_slug]['title'],
+        all_category_businesses=all_cat_biz,
+        site_name=SITE_NAME,
         search_query=search_query,
-        cat_slug=cat_slug
+        cat_slug=cat_slug,
+        title=CATEGORIES[cat_slug]['title']
     )
 
 
