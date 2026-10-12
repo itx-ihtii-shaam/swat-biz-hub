@@ -34,6 +34,7 @@
                     <p class="flex items-center"><strong class="w-24">Phone:</strong> 📞 <a href="tel:{{ business.phone }}" class="text-blue-600 dark:text-blue-400 hover:underline font-semibold">{{ business.phone }}</a></p>
                 </div>
 
+                <!-- Doctors Section (If category is Hospitals) -->
                 {% if business.doctors %}
                 <div class="mt-8">
                     <h3 class="text-2xl font-bold mb-6 flex items-center space-x-2"><span>🩺</span> <span>Doctors, Clinic & Appointment Timings</span></h3>
@@ -47,6 +48,33 @@
                                 <p class="flex justify-between"><span class="text-gray-500">Clinic Timing:</span> <span class="font-bold text-gray-800 dark:text-gray-200">{{ doc.clinic_timing }}</span></p>
                                 <p class="flex justify-between"><span class="text-gray-500">Appointment:</span> <span class="font-bold text-gray-800 dark:text-gray-200">{{ doc.appointment_timing }}</span></p>
                                 <p class="flex justify-between"><span class="text-gray-500">Clinic / Room:</span> <span class="font-bold text-gray-800 dark:text-gray-200">{{ doc.clinic }}</span></p>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Menu Items / Products Section (If category is Restaurants or Property) -->
+                {% if business.items %}
+                <div class="mt-8">
+                    <h3 class="text-2xl font-bold mb-6 flex items-center space-x-2"><span>🍽️</span> <span>Menu Items & Special Offers</span></h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        {% for item in business.items %}
+                        <div class="bg-gray-50 dark:bg-gray-800/60 rounded-2xl border border-gray-200 dark:border-gray-700 overflow-hidden shadow-sm hover:shadow-md transition flex flex-col justify-between">
+                            <div class="relative">
+                                <img src="{{ item.image }}" alt="{{ item.name }}" class="w-full h-40 object-cover">
+                                {% if item.offer %}
+                                <span class="absolute top-3 right-3 bg-red-600 text-white text-xs font-extrabold px-3 py-1 rounded-full shadow-lg animate-pulse">{{ item.offer }}</span>
+                                {% endif %}
+                            </div>
+                            <div class="p-5 flex justify-between items-center">
+                                <div>
+                                    <h4 class="font-extrabold text-lg">{{ item.name }}</h4>
+                                </div>
+                                <div class="text-right">
+                                    <span class="text-lg font-black text-emerald-600 dark:text-emerald-400">Rs. {{ item.price }}</span>
+                                </div>
                             </div>
                         </div>
                         {% endfor %}
