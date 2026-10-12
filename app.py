@@ -54,16 +54,36 @@ BUSINESSES = {
     '4': {
         'id': '4',
         'category': 'education',
-        'name': 'Swat Public School & College',
-        'address': 'Circular Road, Wadpachha, Mingora, Swat',
+        'sub_category': 'schools',
+        'name': 'Swat Public School',
+        'address': 'Circular Road, Mingora, Swat',
         'phones': ['+92 946 7112233'],
         'image': 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&w=800&q=80',
-        'doctors': [],
-        'items': [
-            {'name': 'Primary & Middle School Section', 'price': 'Monthly Fee', 'offer': 'Admissions Open'},
-            {'name': 'Higher Secondary College (FSc/FA)', 'price': 'Semester Fee', 'offer': 'Scholarships Available'}
-        ],
         'joined_date': datetime.now() - timedelta(days=2),
+        'last_paid_date': datetime.now(),
+        'status': 'trial',
+    },
+    '5': {
+        'id': '5',
+        'category': 'education',
+        'sub_category': 'colleges',
+        'name': 'Government College Mingora',
+        'address': 'Saidu Sharif Road, Swat',
+        'phones': ['+92 946 9240011'],
+        'image': 'https://images.unsplash.com/photo-1562774053-701939374585?auto=format&fit=crop&w=800&q=80',
+        'joined_date': datetime.now() - timedelta(days=3),
+        'last_paid_date': datetime.now(),
+        'status': 'trial',
+    },
+    '6': {
+        'id': '6',
+        'category': 'education',
+        'sub_category': 'universities',
+        'name': 'University of Swat',
+        'address': 'Charbagh, Swat',
+        'phones': ['+92 946 730504'],
+        'image': 'https://images.unsplash.com/photo-1541829070764-84a7d30dd3f3?auto=format&fit=crop&w=800&q=80',
+        'joined_date': datetime.now() - timedelta(days=1),
         'last_paid_date': datetime.now(),
         'status': 'trial',
     }
@@ -76,7 +96,17 @@ CATEGORIES = {
     'supermarts': {'title': 'Supermarts & Grocery', 'icon': '🛒', 'search_hint': 'Search grocery item or store...'},
     'property': {'title': 'Property Dealers', 'icon': '🏠', 'search_hint': 'Search plot, house or dealer...'},
     'hotels': {'title': 'Hotels & Guest Houses', 'icon': '🏨', 'search_hint': 'Search hotel or room type...'},
-    'education': {'title': 'Schools, Colleges & Universities', 'icon': '🎓', 'search_hint': 'Search school, college, university or academy...'}
+    'education': {'title': 'Educational Institutes', 'icon': '🎓', 'search_hint': 'Search school, college, university or academy...'}
+}
+
+SUB_CATEGORIES = {
+    'education': [
+        {'slug': 'all', 'title': 'All Institutes', 'icon': '🎓'},
+        {'slug': 'schools', 'title': 'Schools', 'icon': '🏫'},
+        {'slug': 'colleges', 'title': 'Colleges', 'icon': '🏛️'},
+        {'slug': 'universities', 'title': 'Universities', 'icon': '🎓'},
+        {'slug': 'academies', 'title': 'Academies', 'icon': '📚'}
+    ]
 }
 
 INDEX_BASE_HEAD = '''
@@ -157,17 +187,31 @@ INDEX_TEMPLATE = INDEX_BASE_HEAD + '''
 
 CATEGORY_TEMPLATE = BASE_HEAD + '''
     <main class="max-w-7xl mx-auto px-4 py-12">
-        <div class="mb-10 text-center">
+        <div class="mb-8 text-center">
             <span class="text-6xl">{{ category.icon }}</span>
             <h2 class="text-4xl font-extrabold mt-4">{{ category.title }}</h2>
             <p class="text-gray-500 dark:text-gray-400 mt-2">Explore verified listings in Swat & Mingora</p>
             
-            <div class="mt-8 max-w-xl mx-auto relative">
+            {% if sub_categories %}
+            <!-- Sub Categories Tabs -->
+            <div class="flex flex-wrap justify-center gap-2 mt-6">
+                {% for sub in sub_categories %}
+                <a href="/category/{{ cat_slug }}?sub={{ sub.slug }}" class="px-5 py-2.5 rounded-xl font-semibold text-sm transition-all {% if active_sub == sub.slug %} bg-blue-600 text-white shadow-lg {% else %} bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 {% endif %}">
+                    {{ sub.icon }} {{ sub.title }}
+                </a>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <div class="mt-6 max-w-xl mx-auto relative">
                 <form method="GET" action="/category/{{ cat_slug }}" class="flex gap-3">
+                    {% if active_sub %}
+                    <input type="hidden" name="sub" value="{{ active_sub }}">
+                    {% endif %}
                     <input type="text" id="searchInput" name="q" value="{{ search_query }}" placeholder="{{ category.search_hint }}" autocomplete="off" class="w-full px-5 py-3.5 rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
                     <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-white px-6 py-3.5 rounded-2xl font-semibold shadow-md transition">Search</button>
                     {% if search_query %}
-                    <a href="/category/{{ cat_slug }}" class="bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300 px-4 py-3.5 rounded-2xl font-semibold flex items-center justify-center">Reset</a>
+                    <a href="/category/{{ cat_slug }}{% if active_sub %}?sub={{ active_sub }}{% endif %}" class="bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300 px-4 py-3.5 rounded-2xl font-semibold flex items-center justify-center">Reset</a>
                     {% endif %}
                 </form>
                 <!-- Live Suggestions Dropdown -->
@@ -195,8 +239,8 @@ CATEGORY_TEMPLATE = BASE_HEAD + '''
                 {% endfor %}
             {% else %}
                 <div class="col-span-3 text-center py-20 text-gray-500">
-                    <p class="text-xl">No institutions found matching your criteria.</p>
-                    <a href="/category/{{ cat_slug }}" class="inline-block mt-4 text-blue-500 underline font-semibold">Reset Search</a>
+                    <p class="text-xl">No listings found matching your criteria.</p>
+                    <a href="/category/{{ cat_slug }}" class="inline-block mt-4 text-blue-500 underline font-semibold">Reset Filter</a>
                 </div>
             {% endif %}
         </div>
@@ -260,12 +304,21 @@ def category_page(cat_slug):
         abort(404)
     
     search_query = request.args.get('q', '').lower().strip()
+    sub_query = request.args.get('sub', 'all')
+    
     cat_businesses = []
     all_cat_biz = []
+    sub_cats = SUB_CATEGORIES.get(cat_slug, [])
 
     for b in BUSINESSES.values():
         if b.get('category') == cat_slug and b.get('status', 'trial') != 'deleted':
             all_cat_biz.append(b)
+            
+            # Sub-category filter
+            if sub_query != 'all' and b.get('sub_category') != sub_query:
+                continue
+                
+            # Search query filter
             if search_query:
                 if search_query in b.get('name', '').lower():
                     cat_businesses.append(b)
@@ -277,6 +330,8 @@ def category_page(cat_slug):
         category=CATEGORIES[cat_slug],
         businesses=cat_businesses,
         all_category_businesses=all_cat_biz,
+        sub_categories=sub_cats,
+        active_sub=sub_query,
         site_name=SITE_NAME,
         search_query=search_query,
         cat_slug=cat_slug,
@@ -310,12 +365,14 @@ def register_business():
         b_id = str(len(BUSINESSES) + 1)
         name = request.form.get('name')
         category = request.form.get('category')
+        sub_category = request.form.get('sub_category', '')
         address = request.form.get('address')
         phone = request.form.get('phone[]', '+92 946 0000000')
 
         BUSINESSES[b_id] = {
             'id': b_id,
             'category': category,
+            'sub_category': sub_category,
             'name': name,
             'address': address,
             'phones': [phone],
@@ -329,10 +386,10 @@ def register_business():
     reg_html = BASE_HEAD + '''
     <main class="max-w-3xl mx-auto px-4 py-12">
         <div class="bg-white dark:bg-gray-900 p-8 rounded-3xl shadow-2xl border border-gray-100 dark:border-gray-800">
-            <h2 class="text-3xl font-extrabold text-center mb-6">Register Your Business or Institution</h2>
+            <h2 class="text-3xl font-extrabold text-center mb-6">Register Your Listing</h2>
             <form method="POST" class="space-y-4">
                 <div>
-                    <label class="block text-sm font-medium mb-1">Name (Business / School / College)</label>
+                    <label class="block text-sm font-medium mb-1">Name</label>
                     <input type="text" name="name" required placeholder="e.g. City Model School" class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-700 outline-none">
                 </div>
                 <div>
@@ -341,6 +398,16 @@ def register_business():
                         {% for slug, cat in categories.items() %}
                         <option value="{{ slug }}">{{ cat.icon }} {{ cat.title }}</option>
                         {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1">Sub-Category (Optional for Education)</label>
+                    <select name="sub_category" class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-700 outline-none cursor-pointer">
+                        <option value="">None / Not Applicable</option>
+                        <option value="schools">🏫 School</option>
+                        <option value="colleges">🏛️ College</option>
+                        <option value="universities">🎓 University</option>
+                        <option value="academies">📚 Academy</option>
                     </select>
                 </div>
                 <div>
