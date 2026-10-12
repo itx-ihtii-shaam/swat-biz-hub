@@ -1,4 +1,4 @@
-"""SwatBiz Hub - Final Application with Reordered Contact Position."""
+"""SwatBiz Hub - Complete Application with Joining Date in Admin Panel."""
 from datetime import datetime, timedelta
 import os
 from flask import Flask, abort, redirect, render_template_string, request, url_for, session
@@ -21,6 +21,7 @@ BUSINESSES = {
         'payment_method': 'Bank Transfer',
         'payment_ref': 'TXN-984210',
         'payment_status': 'paid',
+        'joining_date': datetime.now() - timedelta(days=60),
         'expiry_date': datetime.now() - timedelta(days=2),
         'doctor_info': 'Dr. Muhammad Ali (Cardiologist), Dr. Ayesha Khan (Pediatrician), Dr. Tariq Rahim (Surgeon)',
         'tests_services': 'MRI, CT Scan, X-Ray, Ultrasound, Emergency Care, Complete Blood Count (CBC)'
@@ -36,6 +37,7 @@ BUSINESSES = {
         'payment_method': 'EasyPaisa',
         'payment_ref': 'TID-9920182',
         'payment_status': 'unpaid',
+        'joining_date': datetime.now() - timedelta(days=2),
         'expiry_date': datetime.now() + timedelta(days=30),
         'doctor_info': 'N/A',
         'tests_services': 'Dumba Karahi, Shinwari Tikka, Green Tea'
@@ -51,6 +53,7 @@ BUSINESSES = {
         'payment_method': 'EasyPaisa',
         'payment_ref': 'TID-7782194',
         'payment_status': 'paid',
+        'joining_date': datetime.now() - timedelta(days=45),
         'expiry_date': datetime.now() + timedelta(days=3),
         'doctor_info': 'Available Pharmacist: Dr. Bilal Ahmed',
         'tests_services': 'Blood Pressure Check, Blood Glucose Testing, First Aid Supplies'
@@ -345,6 +348,7 @@ def register_business():
             'payment_method': request.form.get('payment_method', 'Cash'),
             'payment_ref': request.form.get('payment_ref', 'N/A'),
             'payment_status': 'unpaid',
+            'joining_date': datetime.now(),
             'expiry_date': datetime.now() + timedelta(days=30)
         }
         return redirect('/')
@@ -421,10 +425,10 @@ def admin_panel():
         return redirect('/admin?module=' + str(module) + '&tab=' + str(tab))
 
     now = datetime.now()
-    pending_biz = {k: v for k, v in BUSINESSES.items() if v.get('status'] == 'pending'}
-    approved_biz = {k: v for k, v in BUSINESSES.items() if v.get('status'] == 'approved'}
-    pending_pay = {k: v for k, v in BUSINESSES.items() if v.get('payment_status'] == 'unpaid'}
-    paid_pay = {k: v for k, v in BUSINESSES.items() if v.get('payment_status'] == 'paid' and v.get('expiry_date', now) >= now}
+    pending_biz = {k: v for k, v in BUSINESSES.items() if v.get('status') == 'pending'}
+    approved_biz = {k: v for k, v in BUSINESSES.items() if v.get('status') == 'approved'}
+    pending_pay = {k: v for k, v in BUSINESSES.items() if v.get('payment_status') == 'unpaid'}
+    paid_pay = {k: v for k, v in BUSINESSES.items() if v.get('payment_status') == 'paid' and v.get('expiry_date', now) >= now}
     
     expiring_alerts = {}
     for k, v in BUSINESSES.items():
@@ -485,11 +489,12 @@ def admin_panel():
         content = ""
         if tab == 'pending':
             for b_id, b in pending_biz.items():
+                j_date = b.get('joining_date', datetime.now()).strftime('%Y-%m-%d')
                 content += '''
                 <div class="bg-gray-800/60 p-4 rounded-2xl flex justify-between items-center hover:bg-gray-800 transition">
                     <div>
                         <h4 class="font-bold">''' + b["name"] + '''</h4>
-                        <p class="text-xs text-gray-400">📍 ''' + b["address"] + '''</p>
+                        <p class="text-xs text-gray-400">📍 ''' + b["address"] + ''' | 📅 Joined: <span class="text-blue-400 font-semibold">''' + j_date + '''</span></p>
                     </div>
                     <div class="flex gap-2">
                         <a href="/admin?module=business&tab=pending&action=approve&id=''' + b_id + '''" class="bg-green-600 hover:bg-green-500 px-4 py-2 rounded-xl text-xs font-bold transition">Approve</a>
@@ -501,11 +506,12 @@ def admin_panel():
                 content = '<p class="text-gray-500 text-center py-8">No pending business approvals.</p>'
         else:
             for b_id, b in approved_biz.items():
+                j_date = b.get('joining_date', datetime.now()).strftime('%Y-%m-%d')
                 content += '''
                 <div class="bg-gray-800/40 p-4 rounded-2xl flex justify-between items-center hover:bg-gray-800/70 transition">
                     <div>
                         <h4 class="font-bold">''' + b["name"] + '''</h4>
-                        <p class="text-xs text-gray-400">📍 ''' + b["address"] + '''</p>
+                        <p class="text-xs text-gray-400">📍 ''' + b["address"] + ''' | 📅 Joined: <span class="text-blue-400 font-semibold">''' + j_date + '''</span></p>
                     </div>
                     <a href="/admin?module=business&tab=approved&action=delete&id=''' + b_id + '''" class="bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white px-3 py-1.5 rounded-xl text-xs font-bold transition">Delete</a>
                 </div>
@@ -531,11 +537,12 @@ def admin_panel():
         content = ""
         if tab == 'pending':
             for b_id, b in pending_pay.items():
+                j_date = b.get('joining_date', datetime.now()).strftime('%Y-%m-%d')
                 content += '''
                 <div class="bg-gray-800/60 p-4 rounded-2xl flex justify-between items-center hover:bg-gray-800 transition">
                     <div>
                         <h4 class="font-bold">''' + b["name"] + '''</h4>
-                        <p class="text-xs text-blue-400">Method: ''' + b.get("payment_method") + ''' | Ref: <code>''' + b.get("payment_ref") + '''</code></p>
+                        <p class="text-xs text-blue-400">Method: ''' + b.get("payment_method") + ''' | Ref: <code>''' + b.get("payment_ref") + '''</code> | 📅 Joined: ''' + j_date + '''</p>
                     </div>
                     <a href="/admin?module=payment&tab=pending&action=approve_pay&id=''' + b_id + '''" class="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-xl text-xs font-bold transition">Confirm Payment</a>
                 </div>
@@ -544,10 +551,12 @@ def admin_panel():
                 content = '<p class="text-gray-500 text-center py-8">No pending payments.</p>'
         elif tab == 'alerts':
             for b_id, b in expiring_alerts.items():
+                j_date = b.get('joining_date', datetime.now()).strftime('%Y-%m-%d')
                 content += '''
                 <div class="bg-red-950/40 border border-red-500/50 p-4 rounded-2xl flex justify-between items-center">
                     <div>
                         <h4 class="font-bold text-white">''' + b["name"] + '''</h4>
+                        <p class="text-xs text-gray-400 mt-1">📅 Joined: ''' + j_date + '''</p>
                         <p class="text-xs text-red-400 font-bold mt-1">⏳ Expiry Alert: Less than 5 Days Remaining!</p>
                     </div>
                     <a href="/admin?module=payment&tab=alerts&action=approve_pay&id=''' + b_id + '''" class="bg-red-600 hover:bg-red-500 px-4 py-2 rounded-xl text-xs font-bold text-white transition">Renew (+30 Days)</a>
@@ -558,11 +567,12 @@ def admin_panel():
         elif tab == 'expired':
             for b_id, b in expired_subs.items():
                 days_ago = abs((b.get('expiry_date') - now).days)
+                j_date = b.get('joining_date', datetime.now()).strftime('%Y-%m-%d')
                 content += '''
                 <div class="bg-red-900/30 border-2 border-red-600 p-4 rounded-2xl flex justify-between items-center hover:bg-red-900/50 transition">
                     <div>
                         <h4 class="font-bold text-white">''' + b["name"] + '''</h4>
-                        <p class="text-xs text-gray-400">📞 ''' + b.get("phones", ["N/A"])[0] + ''' | 📍 ''' + b["address"] + '''</p>
+                        <p class="text-xs text-gray-400">📞 ''' + b.get("phones", ["N/A"])[0] + ''' | 📍 ''' + b["address"] + ''' | 📅 Joined: ''' + j_date + '''</p>
                         <p class="text-xs text-red-400 font-bold mt-1">❌ Subscription Ended ''' + str(days_ago) + ''' day(s) ago!</p>
                     </div>
                     <a href="/admin?module=payment&tab=expired&action=approve_pay&id=''' + b_id + '''" class="bg-red-600 hover:bg-red-500 px-4 py-2 rounded-xl text-xs font-bold text-white shadow transition">Renew (+30 Days)</a>
@@ -572,10 +582,11 @@ def admin_panel():
                 content = '<p class="text-gray-500 text-center py-8">No expired subscriptions found. Great!</p>'
         else:
             for b_id, b in paid_pay.items():
+                j_date = b.get('joining_date', datetime.now()).strftime('%Y-%m-%d')
                 content += '''
                 <div class="bg-gray-800/40 p-4 rounded-2xl hover:bg-gray-800/70 transition">
                     <h4 class="font-bold">''' + b["name"] + '''</h4>
-                    <p class="text-xs text-gray-400 mt-1">Method: ''' + b.get("payment_method") + ''' | Ref: <code>''' + b.get("payment_ref") + '''</code></p>
+                    <p class="text-xs text-gray-400 mt-1">Method: ''' + b.get("payment_method") + ''' | Ref: <code>''' + b.get("payment_ref") + '''</code> | 📅 Joined: ''' + j_date + '''</p>
                     <span class="text-xs font-bold text-green-400 mt-1 block">✓ Active Subscription</span>
                 </div>
                 '''
