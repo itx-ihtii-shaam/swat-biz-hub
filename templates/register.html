@@ -6,9 +6,12 @@
     <title>Register Business - {{ site_name }}</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏙️</text></svg>">
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>tailwind.config = { darkMode: 'class' }</script>
+    <script>
+        tailwind.config = { darkMode: 'class' }
+    </script>
 </head>
 <body class="bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 min-h-screen">
+    <!-- Header -->
     <header class="bg-gradient-to-r from-slate-900 via-blue-950 to-indigo-950 text-white shadow-xl">
         <div class="max-w-7xl mx-auto px-4 py-6 flex justify-between items-center">
             <h1 class="text-2xl font-extrabold"><a href="{{ url_for('home') }}" class="hover:opacity-80 transition-opacity">🏙️ {{ site_name }}</a></h1>
@@ -16,6 +19,7 @@
         </div>
     </header>
 
+    <!-- Main Registration Form -->
     <main class="max-w-3xl mx-auto px-4 py-12">
         <div class="bg-white dark:bg-gray-900 p-8 md:p-10 rounded-3xl shadow-2xl border border-gray-100 dark:border-gray-800 transition-all duration-300">
             <div class="text-center mb-8">
@@ -27,7 +31,7 @@
                 <!-- Business Name -->
                 <div class="group">
                     <label class="block text-sm font-medium mb-2 group-hover:text-blue-500 transition-colors duration-200">Business Name</label>
-                    <input type="text" name="name" required placeholder="e.g. Al-Shifa Hospital or Public School" class="w-full px-4 py-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-blue-500 outline-none transition-all duration-300 hover:border-blue-400 hover:scale-[1.01] focus:scale-[1.01]">
+                    <input type="text" name="name" required placeholder="e.g. Al-Shifa Hospital or Swat Public School" class="w-full px-4 py-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-blue-500 outline-none transition-all duration-300 hover:border-blue-400 hover:scale-[1.01] focus:scale-[1.01]">
                 </div>
 
                 <!-- Category -->
@@ -40,7 +44,7 @@
                     </select>
                 </div>
 
-                <!-- Multiple Phone Numbers Section -->
+                <!-- Multiple Phone Numbers -->
                 <div class="p-5 bg-blue-50/40 dark:bg-gray-800/40 rounded-2xl border border-blue-100 dark:border-gray-700 space-y-3">
                     <label class="block text-sm font-bold text-blue-500 flex items-center space-x-2"><span>📞</span> <span>Phone Numbers (Add multiple if needed)</span></label>
                     
@@ -75,7 +79,7 @@
                     </div>
                 </div>
 
-                <!-- Doctors Section (Hospitals Only) -->
+                <!-- Doctor Section (Only for Hospitals) -->
                 <div id="doctorSection" class="p-6 bg-blue-50/50 dark:bg-gray-800/50 rounded-2xl border border-blue-100 dark:border-gray-700 space-y-4 transition-all duration-300">
                     <h3 class="text-lg font-bold text-blue-600 dark:text-blue-400 flex items-center space-x-2"><span>🩺</span> <span>Doctors, Clinic & Timings</span></h3>
                     
@@ -109,15 +113,15 @@
                     <div id="itemList" class="space-y-4">
                         <div class="item-card relative bg-white dark:bg-gray-900 p-5 rounded-2xl border border-gray-200 dark:border-gray-700 space-y-3 transition-all duration-300 hover:shadow-lg">
                             <div class="flex justify-between items-center border-b border-gray-100 dark:border-gray-800 pb-2">
-                                <span id="itemCardLabel" class="text-xs font-bold text-emerald-500 uppercase tracking-wider">Item / Product Details</span>
+                                <span id="itemCardLabel" class="text-xs font-bold text-emerald-500 uppercase tracking-wider">Entry Details</span>
                                 <button type="button" onclick="confirmDelete(this)" class="text-red-500 hover:text-red-700 text-xs font-bold flex items-center space-x-1 bg-red-50 dark:bg-red-900/30 px-2.5 py-1 rounded-lg transition transform hover:scale-105">
                                     <span>❌</span> <span>Remove</span>
                                 </button>
                             </div>
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                                <input type="text" name="item_name[]" id="inputItemName" placeholder="Name (e.g. Chicken Biryani / Class 5th)" class="px-3.5 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition-all hover:border-emerald-400 hover:scale-[1.01]">
-                                <input type="text" name="item_price[]" id="inputItemPrice" placeholder="Price / Fee in Rs. (e.g. 2500)" class="px-3.5 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition-all hover:border-emerald-400 hover:scale-[1.01]">
-                                <input type="text" name="item_offer[]" id="inputItemOffer" placeholder="Offer / Description (Optional)" class="px-3.5 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition-all hover:border-emerald-400 hover:scale-[1.01]">
+                                <input type="text" name="item_name[]" id="inputItemName" placeholder="Name (e.g. Dish / Item / Class)" class="px-3.5 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition-all hover:border-emerald-400 hover:scale-[1.01]">
+                                <input type="text" name="item_price[]" id="inputItemPrice" placeholder="Price / Fee in Rs." class="px-3.5 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition-all hover:border-emerald-400 hover:scale-[1.01]">
+                                <input type="text" name="item_offer[]" id="inputItemOffer" placeholder="Offer / Details (Optional)" class="px-3.5 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition-all hover:border-emerald-400 hover:scale-[1.01]">
                             </div>
                             <div>
                                 <span class="block text-xs text-gray-400 mb-1">Photo (Optional):</span>
@@ -149,6 +153,7 @@
         </div>
     </div>
 
+    <!-- JavaScript Interactions -->
     <script>
         let targetCard = null;
 
@@ -168,7 +173,6 @@
                 docSec.style.display = 'none';
                 itemSec.style.display = 'block';
 
-                // Customize labels based on category
                 if (cat === 'restaurants') {
                     titleElem.innerHTML = "<span>🍽️</span> <span>Menu Items, Dishes & Prices</span>";
                     cardLabelElem.innerText = "Dish / Item Details";
@@ -244,7 +248,7 @@
             const list = document.getElementById('itemList');
             const cat = document.getElementById('categorySelect').value;
             let namePlaceholder = "Name";
-            let pricePlaceholder = "Price in Rs.";
+            let pricePlaceholder = "Price / Fee in Rs.";
             let offerPlaceholder = "Offer / Details (Optional)";
 
             if (cat === 'education') {
@@ -298,6 +302,7 @@
             closeModal();
         });
 
+        // Initialize script on page load
         toggleCategorySections();
     </script>
 </body>
