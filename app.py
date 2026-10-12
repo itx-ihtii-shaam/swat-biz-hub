@@ -54,16 +54,15 @@ BUSINESSES = {
 }
 
 CATEGORIES = {
-    'hospitals': {'title': 'Hospitals & Healthcare', 'icon': '🏥'},
-    'pharmacies': {'title': 'Pharmacies & Medical Stores', 'icon': '💊'},
-    'restaurants': {'title': 'Restaurants & Cafes', 'icon': '🍽️'},
-    'supermarts': {'title': 'Supermarts & Grocery', 'icon': '🛒'},
-    'property': {'title': 'Property Dealers', 'icon': '🏠'},
-    'hotels': {'title': 'Hotels & Guest Houses', 'icon': '🏨'},
-    'education': {'title': 'Educational Institutes', 'icon': '🎓'}
+    'hospitals': {'title': 'Hospitals & Healthcare', 'icon': '🏥', 'search_hint': 'Search doctor name or specialty...'},
+    'pharmacies': {'title': 'Pharmacies & Medical Stores', 'icon': '💊', 'search_hint': 'Search medicine or store name...'},
+    'restaurants': {'title': 'Restaurants & Cafes', 'icon': '🍽️', 'search_hint': 'Search restaurant or dish...'},
+    'supermarts': {'title': 'Supermarts & Grocery', 'icon': '🛒', 'search_hint': 'Search grocery item or store...'},
+    'property': {'title': 'Property Dealers', 'icon': '🏠', 'search_hint': 'Search plot, house or dealer...'},
+    'hotels': {'title': 'Hotels & Guest Houses', 'icon': '🏨', 'search_hint': 'Search hotel or room type...'},
+    'education': {'title': 'Educational Institutes', 'icon': '🎓', 'search_hint': 'Search school, college or academy...'}
 }
 
-# Header specifically for Home Page (Shows Logo instead of Back button)
 INDEX_BASE_HEAD = '''
 <!DOCTYPE html>
 <html lang="en" id="html-root" class="dark">
@@ -87,7 +86,6 @@ INDEX_BASE_HEAD = '''
     </header>
 '''
 
-# Header for Inner Pages (Shows Back to Home button)
 BASE_HEAD = '''
 <!DOCTYPE html>
 <html lang="en" id="html-root" class="dark">
@@ -149,7 +147,7 @@ CATEGORY_TEMPLATE = BASE_HEAD + '''
             <p class="text-gray-500 dark:text-gray-400 mt-2">Explore verified listings in Swat & Mingora</p>
             
             <form method="GET" action="/category/{{ cat_slug }}" class="mt-8 max-w-xl mx-auto flex gap-3">
-                <input type="text" name="q" value="{{ search_query }}" placeholder="Search specific item, medicine, or property..." class="w-full px-5 py-3.5 rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                <input type="text" name="q" value="{{ search_query }}" placeholder="{{ category.search_hint }}" class="w-full px-5 py-3.5 rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
                 <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-white px-6 py-3.5 rounded-2xl font-semibold shadow-md transition">Search</button>
                 {% if search_query %}
                 <a href="/category/{{ cat_slug }}" class="bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300 px-4 py-3.5 rounded-2xl font-semibold flex items-center justify-center">Reset</a>
