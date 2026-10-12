@@ -1,6 +1,7 @@
 """SwatBiz Hub - Local Business Directory with Subscription & Expiry System."""
 from datetime import datetime, timedelta
 import os
+import base64
 from flask import Flask, abort, redirect, render_template, request, url_for
 
 SITE_NAME = 'SwatBiz Hub'
@@ -14,7 +15,7 @@ app = Flask(
 )
 app.secret_key = 'swat_biz_hub_secret_key'
 
-# Mock Database with Image & Doctor Support
+# Mock Database with Base64/URL Image & Complete Doctor Details
 BUSINESSES = {
     '1': {
         'id': '1',
@@ -27,13 +28,15 @@ BUSINESSES = {
             {
                 'name': 'Dr. Ahmad Khan', 
                 'specialty': 'Cardiologist', 
-                'timing': '9 AM - 2 PM', 
+                'appointment_timing': '9 AM - 2 PM', 
+                'clinic_timing': 'Mon - Sat (8 AM - 4 PM)',
                 'clinic': 'Room 12, OPD Block'
             },
             {
                 'name': 'Dr. Fatima Ali', 
                 'specialty': 'Pediatrician', 
-                'timing': '10 AM - 4 PM', 
+                'appointment_timing': '10 AM - 4 PM', 
+                'clinic_timing': 'Mon - Fri (9 AM - 5 PM)',
                 'clinic': 'Room 04, Children Ward'
             },
         ],
@@ -80,6 +83,21 @@ def check_and_update_subscriptions():
             biz['status'] = 'locked'
 
 
+def process_image_input(request_obj):
+    file = request_obj.files.get('image_file')
+    if file and file.filename != '':
+        file_bytes = file.read()
+        encoded = base64.b64encode(file_bytes).decode('utf-8')
+        mime_type = file.mimetype or 'image/jpeg'
+        return f"data:{mime_type};base64,{encoded}"
+    
+    image_url = request_obj.form.get('image_url')
+    if image_url and image_url.strip():
+        return image_url.strip()
+        
+    return 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=800&q=80'
+
+
 @app.before_request
 def before_request_func():
     check_and_update_subscriptions()
@@ -124,13 +142,14 @@ def register_business():
         category = request.form.get('category')
         address = request.form.get('address')
         phone = request.form.get('phone')
-        image = request.form.get('image', 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=800&q=80')
+        image = process_image_input(request)
         
         doctors = []
         if category == 'hospitals':
             doc_names = request.form.getlist('doc_name[]')
             doc_specs = request.form.getlist('doc_spec[]')
-            doc_times = request.form.getlist('doc_time[]')
+            doc_app_times = request.form.getlist('doc_app_time[]')
+            doc_clinic_times = request.form.getlist('doc_clinic_time[]')
             doc_clinics = request.form.getlist('doc_clinic[]')
 
             for i in range(len(doc_names)):
@@ -138,7 +157,8 @@ def register_business():
                     doctors.append({
                         'name': doc_names[i].strip(),
                         'specialty': doc_specs[i].strip() if i < len(doc_specs) else 'Specialist',
-                        'timing': doc_times[i].strip() if i < len(doc_times) else '9 AM - 5 PM',
+                        'appointment_timing': doc_app_times[i].strip() if i < len(doc_app_times) else '9 AM - 2 PM',
+                        'clinic_timing': doc_clinic_times[i].strip() if i < len(doc_clinic_times) else 'Mon - Sat (9 AM - 5 PM)',
                         'clinic': doc_clinics[i].strip() if i < len(doc_clinics) else 'Main OPD'
                     })
 
@@ -152,7 +172,7 @@ def register_business():
             'doctors': doctors,
             'joined_date': datetime.now(),
             'last_paid_date': datetime.now(),
-            'status': 'trial'  # Automatic 30 days free trial
+            'status': 'trial'
         }
         return redirect(url_for('business_detail', b_id=b_id))
 
