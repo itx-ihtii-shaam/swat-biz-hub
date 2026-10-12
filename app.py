@@ -1,4 +1,4 @@
-"""SwatBiz Hub - Complete & Fully Featured Application with Admin Dashboard & Search."""
+"""SwatBiz Hub - Stable & Complete Application."""
 from datetime import datetime, timedelta
 import os
 from flask import Flask, abort, redirect, render_template_string, request, url_for, session
@@ -52,82 +52,70 @@ BUSINESSES = {
 }
 
 CATEGORIES = {
-    'hospitals': {'title': 'Hospitals & Healthcare', 'icon': '🏥', 'search_hint': 'Search name or location (e.g. Mingora, Saidu)...'},
-    'pharmacies': {'title': 'Pharmacies & Medical Stores', 'icon': '💊', 'search_hint': 'Search medicine, store or location...'},
-    'restaurants': {'title': 'Restaurants & Cafes', 'icon': '🍽️', 'search_hint': 'Search restaurant, dish or area...'},
-    'supermarts': {'title': 'Supermarts & Grocery', 'icon': '🛒', 'search_hint': 'Search store, item or location...'},
-    'property': {'title': 'Property Dealers', 'icon': '🏠', 'search_hint': 'Search plot, house or area...'},
-    'hotels': {'title': 'Hotels & Guest Houses', 'icon': '🏨', 'search_hint': 'Search hotel or location...'},
-    'education': {'title': 'Educational Institutes', 'icon': '🎓', 'search_hint': 'Search school, college, area...'}
+    'hospitals': {'title': 'Hospitals & Healthcare', 'icon': '🏥', 'search_hint': 'Search name or location...'},
+    'pharmacies': {'title': 'Pharmacies & Medical Stores', 'icon': '💊', 'search_hint': 'Search medicine or store...'},
+    'restaurants': {'title': 'Restaurants & Cafes', 'icon': '🍽️', 'search_hint': 'Search restaurant...'},
+    'supermarts': {'title': 'Supermarts & Grocery', 'icon': '🛒', 'search_hint': 'Search store or item...'},
+    'property': {'title': 'Property Dealers', 'icon': '🏠', 'search_hint': 'Search plot or house...'},
+    'hotels': {'title': 'Hotels & Guest Houses', 'icon': '🏨', 'search_hint': 'Search hotel...'},
+    'education': {'title': 'Educational Institutes', 'icon': '🎓', 'search_hint': 'Search school or college...'}
 }
 
-SUB_CATEGORIES = {
-    'education': [
-        {'slug': 'all', 'title': 'All Institutes', 'icon': '🎓'},
-        {'slug': 'schools', 'title': 'Schools', 'icon': '🏫'},
-        {'slug': 'colleges', 'title': 'Colleges', 'icon': '🏛️'}
-    ],
-    'supermarts': [
-        {'slug': 'all', 'title': 'All Stores', 'icon': '🛒'},
-        {'slug': 'general', 'title': 'General Store & Mart', 'icon': '🏪'}
-    ]
-}
-
-BASE_HEAD = """
+BASE_HEAD = '''
 <!DOCTYPE html>
 <html lang="en" id="html-root" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>""" + SITE_NAME + """</title>
+    <title>''' + SITE_NAME + '''</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>tailwind.config = { darkMode: 'class' }</script>
 </head>
 <body class="bg-gray-950 text-gray-100 min-h-screen">
     <header class="bg-gradient-to-r from-slate-900 via-blue-950 to-indigo-950 text-white shadow-xl">
         <div class="max-w-7xl mx-auto px-4 py-6 flex justify-between items-center">
-            <a href="/" class="text-2xl font-extrabold tracking-tight">🏙️ """ + SITE_NAME + """</a>
+            <a href="/" class="text-2xl font-extrabold tracking-tight">🏙️ ''' + SITE_NAME + '''</a>
             <div class="flex items-center space-x-3">
                 <a href="/register" class="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-xl text-sm font-bold shadow-lg transition">＋ Register Business</a>
             </div>
         </div>
     </header>
-"""
+'''
 
-FOOTER = """
+FOOTER = '''
     <footer class="text-center py-8 text-sm text-gray-500 border-t border-gray-800 mt-20">
-        <p>&copy; 2026 """ + SITE_NAME + """. All rights reserved.</p>
+        <p>&copy; 2026 ''' + SITE_NAME + '''. All rights reserved.</p>
     </footer>
 </body>
 </html>
-"""
+'''
 
 @app.route('/')
 def home():
-    items_html = ""
+    cards = ""
     for slug, cat in CATEGORIES.items():
-        items_html += f"""
-        <a href="/category/{slug}" class="bg-gray-900 p-8 rounded-3xl border border-gray-800 shadow-sm hover:shadow-2xl transition-all flex items-center space-x-5 group">
-            <span class="text-5xl p-4 bg-gray-800 rounded-2xl">{cat["icon"]}</span>
+        cards += '''
+        <a href="/category/''' + slug + '''" class="bg-gray-900 p-8 rounded-3xl border border-gray-800 shadow-sm hover:shadow-2xl transition-all flex items-center space-x-5 group">
+            <span class="text-5xl p-4 bg-gray-800 rounded-2xl">''' + cat["icon"] + '''</span>
             <div>
-                <h3 class="text-xl font-bold group-hover:text-blue-500 transition-colors">{cat["title"]}</h3>
-                <p class="text-sm text-gray-400 mt-1">Browse listings & items →</p>
+                <h3 class="text-xl font-bold group-hover:text-blue-500 transition-colors">''' + cat["title"] + '''</h3>
+                <p class="text-sm text-gray-400 mt-1">Browse listings →</p>
             </div>
         </a>
-        """
+        '''
     
-    body = f"""
+    html = BASE_HEAD + '''
     <section class="py-16 px-4 text-center">
         <h2 class="text-4xl md:text-5xl font-black tracking-tight">Discover Swat & Mingora Businesses</h2>
         <p class="text-gray-400 text-lg mt-2">Find verified local services instantly.</p>
     </section>
     <main class="max-w-7xl mx-auto px-4 pb-20">
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {items_html}
+            ''' + cards + '''
         </div>
     </main>
-    """
-    return render_template_string(BASE_HEAD + body + FOOTER)
+    ''' + FOOTER
+    return render_template_string(html)
 
 @app.route('/category/<cat_slug>')
 def category_page(cat_slug):
@@ -136,119 +124,49 @@ def category_page(cat_slug):
     
     cat = CATEGORIES[cat_slug]
     search_query = request.args.get('q', '').lower().strip()
-    sub_query = request.args.get('sub', 'all')
     
-    all_cat_biz = [b for b in BUSINESSES.values() if b.get('category') == cat_slug and b.get('status'] == 'approved']
-    
-    filtered_biz = []
-    for b in all_cat_biz:
-        if sub_query != 'all' and b.get('sub_category') != sub_query:
-            continue
+    all_biz = [b for b in BUSINESSES.values() if b.get('category') == cat_slug and b.get('status') == 'approved']
+    filtered = []
+    for b in all_biz:
         if search_query:
             if search_query in b.get('name', '').lower() or search_query in b.get('address', '').lower():
-                filtered_biz.append(b)
+                filtered.append(b)
         else:
-            filtered_biz.append(b)
-    
-    sub_tabs_html = ""
-    if cat_slug in SUB_CATEGORIES:
-        for sub in SUB_CATEGORIES[cat_slug]:
-            active_class = "bg-blue-600 text-white shadow-lg" if sub_query == sub['slug'] else "bg-gray-900 border border-gray-800 text-gray-300 hover:bg-gray-800"
-            sub_tabs_html += f"""
-            <a href="/category/{cat_slug}?sub={sub['slug']}" class="px-5 py-2.5 rounded-xl font-semibold text-sm transition-all {active_class}">
-                {sub['icon']} {sub['title']}
-            </a>
-            """
-        sub_tabs_html = f'<div class="flex flex-wrap justify-center gap-2 mt-6">{sub_tabs_html}</div>'
+            filtered.append(b)
 
     cards = ""
-    for b in filtered_biz:
-        image_url = b.get('image', 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=800&q=80')
-        cards += f"""
-        <div class="bg-gray-900 rounded-2xl shadow-sm hover:shadow-2xl transition-all border border-gray-800 overflow-hidden flex flex-col justify-between">
-            <img src="{image_url}" alt="{b['name']}" class="w-full h-48 object-cover">
+    for b in filtered:
+        cards += '''
+        <div class="bg-gray-900 rounded-2xl shadow-sm border border-gray-800 overflow-hidden">
+            <img src="''' + b.get('image', '') + '''" class="w-full h-48 object-cover">
             <div class="p-6">
-                <h3 class="text-xl font-bold">{b['name']}</h3>
-                <p class="text-sm text-gray-400 mt-1">📍 {b['address']}</p>
-                <p class="text-xs text-blue-400 mt-2">📞 {b.get('phones', ['N/A'])[0]}</p>
+                <h3 class="text-xl font-bold">''' + b['name'] + '''</h3>
+                <p class="text-sm text-gray-400 mt-1">📍 ''' + b['address'] + '''</p>
+                <p class="text-xs text-blue-400 mt-2">📞 ''' + b.get('phones', ['N/A'])[0] + '''</p>
             </div>
         </div>
-        """
+        '''
     if not cards:
-        cards = '<div class="col-span-3 text-center py-20 text-gray-500"><p class="text-xl">No listings found matching your criteria.</p></div>'
+        cards = '<div class="col-span-3 text-center py-20 text-gray-500"><p class="text-xl">No listings found.</p></div>'
 
-    listings_json = ", ".join([f'{{name: "{b["name"]}", address: "{b["address"]}"}}' for b in all_cat_biz])
-
-    body = f"""
+    html = BASE_HEAD + '''
     <main class="max-w-7xl mx-auto px-4 py-12">
         <div class="mb-8 text-center">
-            <span class="text-6xl">{cat['icon']}</span>
-            <h2 class="text-4xl font-extrabold mt-4">{cat['title']}</h2>
-            <p class="text-gray-400 mt-2">Explore verified listings in Swat & Mingora</p>
-            
-            {sub_tabs_html}
-
-            <div class="mt-6 max-w-xl mx-auto relative">
-                <form method="GET" action="/category/{cat_slug}" class="flex gap-3">
-                    {'<input type="hidden" name="sub" value="' + sub_query + '">' if sub_query != 'all' else ''}
-                    <input type="text" id="searchInput" name="q" value="{search_query}" placeholder="{cat['search_hint']}" autocomplete="off" class="w-full px-5 py-3.5 rounded-2xl bg-gray-900 border border-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
-                    <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-white px-6 py-3.5 rounded-2xl font-semibold transition">Search</button>
+            <span class="text-6xl">''' + cat['icon'] + '''</span>
+            <h2 class="text-4xl font-extrabold mt-4">''' + cat['title'] + '''</h2>
+            <div class="mt-6 max-w-xl mx-auto">
+                <form method="GET" action="/category/''' + cat_slug + '''" class="flex gap-3">
+                    <input type="text" name="q" value="''' + search_query + '''" placeholder="''' + cat['search_hint'] + '''" class="w-full px-5 py-3.5 rounded-2xl bg-gray-900 border border-gray-800 text-sm">
+                    <button type="submit" class="bg-blue-600 text-white px-6 py-3.5 rounded-2xl font-semibold">Search</button>
                 </form>
-                <div id="suggestionsBox" class="absolute left-0 right-0 mt-2 bg-gray-900 border border-gray-800 rounded-2xl shadow-xl hidden z-50 overflow-hidden text-left"></div>
             </div>
         </div>
-
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {cards}
+            ''' + cards + '''
         </div>
     </main>
-
-    <script>
-        const allListings = [{listings_json}];
-        const searchInput = document.getElementById('searchInput');
-        const suggestionsBox = document.getElementById('suggestionsBox');
-
-        if(searchInput) {{
-            searchInput.addEventListener('input', function() {{
-                const query = this.value.toLowerCase().trim();
-                if (!query) {{
-                    suggestionsBox.classList.add('hidden');
-                    suggestionsBox.innerHTML = '';
-                    return;
-                }}
-                const matches = allListings.filter(b => 
-                    b.name.toLowerCase().includes(query) || b.address.toLowerCase().includes(query)
-                );
-                if (matches.length > 0) {{
-                    let html = '';
-                    matches.forEach(match => {{
-                        html += `<div class="px-5 py-3 hover:bg-gray-800 cursor-pointer border-b border-gray-800 last:border-none" onclick="selectSuggestion('${{match.name}}')">
-                            <div class="text-sm font-medium">${{match.name}}</div>
-                            <div class="text-xs text-gray-400">📍 ${{match.address}}</div>
-                        </div>`;
-                    }});
-                    suggestionsBox.innerHTML = html;
-                    suggestionsBox.classList.remove('hidden');
-                }} else {{
-                    suggestionsBox.classList.add('hidden');
-                }}
-            }});
-        }}
-
-        function selectSuggestion(val) {{
-            searchInput.value = val;
-            suggestionsBox.classList.add('hidden');
-            searchInput.form.submit();
-        }
-
-        document.addEventListener('click', function(e) {{
-            if (searchInput && suggestionsBox && !searchInput.contains(e.target) && !suggestionsBox.contains(e.target)) {{
-                suggestionsBox.classList.add('hidden');
-            }}
-        }});
-    </script>
-    """
-    return render_template_string(BASE_HEAD + body + FOOTER)
+    ''' + FOOTER
+    return render_template_string(html)
 
 @app.route('/register', methods=['GET', 'POST'])
 def register_business():
@@ -257,7 +175,6 @@ def register_business():
         BUSINESSES[b_id] = {
             'id': b_id,
             'category': request.form.get('category'),
-            'sub_category': request.form.get('sub_category', ''),
             'name': request.form.get('name'),
             'address': request.form.get('address'),
             'phones': [request.form.get('phone', '')],
@@ -269,15 +186,16 @@ def register_business():
         }
         return redirect('/')
 
-    opts = "".join([f'<option value="{k}">{v["title"]}</option>' for k, v in CATEGORIES.items()])
-    
-    body = f"""
+    opts = ""
+    for k, v in CATEGORIES.items():
+        opts += '<option value="' + k + '">' + v["title"] + '</option>'
+
+    html = BASE_HEAD + '''
     <main class="max-w-2xl mx-auto px-4 py-12">
         <h2 class="text-3xl font-bold text-center mb-6">Register Business</h2>
         <form method="POST" class="space-y-4">
             <input type="text" name="name" required placeholder="Business Name" class="w-full p-3 rounded-xl bg-gray-900 border border-gray-800">
-            <select name="category" class="w-full p-3 rounded-xl bg-gray-900 border border-gray-800">{opts}</select>
-            <input type="text" name="sub_category" placeholder="Sub-category slug (optional, e.g. schools)" class="w-full p-3 rounded-xl bg-gray-900 border border-gray-800">
+            <select name="category" class="w-full p-3 rounded-xl bg-gray-900 border border-gray-800">''' + opts + '''</select>
             <input type="text" name="address" required placeholder="Address" class="w-full p-3 rounded-xl bg-gray-900 border border-gray-800">
             <input type="text" name="phone" required placeholder="Phone Number" class="w-full p-3 rounded-xl bg-gray-900 border border-gray-800">
             <select name="payment_method" class="w-full p-3 rounded-xl bg-gray-900 border border-gray-800">
@@ -289,8 +207,8 @@ def register_business():
             <button type="submit" class="w-full bg-blue-600 py-3 rounded-xl font-bold">Submit Business</button>
         </form>
     </main>
-    """
-    return render_template_string(BASE_HEAD + body + FOOTER)
+    ''' + FOOTER
+    return render_template_string(html)
 
 @app.route('/admin', methods=['GET', 'POST'])
 def admin_panel():
@@ -300,7 +218,7 @@ def admin_panel():
             return redirect('/admin')
 
     if not session.get('admin_logged_in'):
-        body = """
+        html = BASE_HEAD + '''
         <main class="max-w-md mx-auto px-4 py-20 text-center">
             <div class="bg-gray-900 p-8 rounded-3xl border border-gray-800">
                 <h2 class="text-2xl font-bold mb-4">🔒 Admin Portal Login</h2>
@@ -310,8 +228,8 @@ def admin_panel():
                 </form>
             </div>
         </main>
-        """
-        return render_template_string(BASE_HEAD + body + FOOTER)
+        ''' + FOOTER
+        return render_template_string(html)
 
     module = request.args.get('module')
     tab = request.args.get('tab', 'pending')
@@ -330,7 +248,7 @@ def admin_panel():
             BUSINESSES[biz_id]['expiry_date'] = datetime.now() + timedelta(days=30)
         elif action == 'delete':
             BUSINESSES[biz_id]['status'] = 'deleted'
-        return redirect(f'/admin?module={module}&tab={tab}')
+        return redirect('/admin?module=' + str(module) + '&tab=' + str(tab))
 
     now = datetime.now()
     pending_biz = {k: v for k, v in BUSINESSES.items() if v.get('status') == 'pending'}
@@ -342,7 +260,7 @@ def admin_panel():
     expired_subs = {k: v for k, v in BUSINESSES.items() if (v.get('expiry_date') - now).days < 0 and v.get('status') != 'deleted'}
 
     if not module:
-        body = f"""
+        html = BASE_HEAD + '''
         <main class="max-w-5xl mx-auto px-4 py-12">
             <div class="flex justify-between items-center mb-10">
                 <h2 class="text-3xl font-extrabold">🛠️ Admin Control Center</h2>
@@ -354,14 +272,14 @@ def admin_panel():
                     <div>
                         <div class="flex justify-between items-center mb-6">
                             <span class="text-6xl">🏢</span>
-                            <span class="bg-yellow-500/20 text-yellow-400 text-xs px-3 py-1.5 rounded-full font-bold">{len(pending_biz)} Pending</span>
+                            <span class="bg-yellow-500/20 text-yellow-400 text-xs px-3 py-1.5 rounded-full font-bold">''' + str(len(pending_biz)) + ''' Pending</span>
                         </div>
                         <h3 class="text-2xl font-black group-hover:text-blue-500 transition-colors">1. Business Directory Module</h3>
                         <p class="text-gray-400 text-sm mt-2">Manage new business registration approvals and live directory listings.</p>
                     </div>
                     <div class="mt-8 text-blue-500 font-bold text-sm flex justify-between items-center">
                         <span>Open Business Portal →</span>
-                        <span class="text-xs text-gray-500">{len(approved_biz)} Live Listings</span>
+                        <span class="text-xs text-gray-500">''' + str(len(approved_biz)) + ''' Live Listings</span>
                     </div>
                 </a>
 
@@ -369,151 +287,121 @@ def admin_panel():
                     <div>
                         <div class="flex justify-between items-center mb-6">
                             <span class="text-6xl">💳</span>
-                            <span class="bg-red-500/20 text-red-400 text-xs px-3 py-1.5 rounded-full font-bold">{len(expired_subs)} Expired</span>
+                            <span class="bg-red-500/20 text-red-400 text-xs px-3 py-1.5 rounded-full font-bold">''' + str(len(expired_subs)) + ''' Expired</span>
                         </div>
                         <h3 class="text-2xl font-black group-hover:text-indigo-500 transition-colors">2. Payment & Subscription Module</h3>
                         <p class="text-gray-400 text-sm mt-2">Verify payments, 5-day expiry alerts, and fully expired subscriptions.</p>
                     </div>
                     <div class="mt-8 text-indigo-500 font-bold text-sm flex justify-between items-center">
                         <span>Open Payment Portal →</span>
-                        <span class="text-xs text-red-400 font-bold">{len(expired_subs)} Expired / {len(expiring_alerts)} Alerts</span>
+                        <span class="text-xs text-red-400 font-bold">''' + str(len(expired_subs)) + ''' Expired / ''' + str(len(expiring_alerts)) + ''' Alerts</span>
                     </div>
                 </a>
             </div>
         </main>
-        """
-        return render_template_string(BASE_HEAD + body + FOOTER)
+        ''' + FOOTER
+        return render_template_string(html)
 
     elif module == 'business':
         content = ""
         if tab == 'pending':
             for b_id, b in pending_biz.items():
-                content += f"""
+                content += '''
                 <div class="bg-gray-800/60 p-4 rounded-2xl flex justify-between items-center">
                     <div>
-                        <h4 class="font-bold">{b["name"]}</h4>
-                        <p class="text-xs text-gray-400">📍 {b["address"]}</p>
+                        <h4 class="font-bold">''' + b["name"] + '''</h4>
+                        <p class="text-xs text-gray-400">📍 ''' + b["address"] + '''</p>
                     </div>
                     <div class="flex gap-2">
-                        <a href="/admin?module=business&tab=pending&action=approve&id={b_id}" class="bg-green-600 px-4 py-2 rounded-xl text-xs font-bold">Approve</a>
-                        <a href="/admin?module=business&tab=pending&action=delete&id={b_id}" class="bg-red-600/20 text-red-400 px-3 py-2 rounded-xl text-xs font-bold">Delete</a>
+                        <a href="/admin?module=business&tab=pending&action=approve&id=''' + b_id + '''" class="bg-green-600 px-4 py-2 rounded-xl text-xs font-bold">Approve</a>
+                        <a href="/admin?module=business&tab=pending&action=delete&id=''' + b_id + '''" class="bg-red-600/20 text-red-400 px-3 py-2 rounded-xl text-xs font-bold">Delete</a>
                     </div>
                 </div>
-                """
+                '''
             if not content:
                 content = '<p class="text-gray-500 text-center py-8">No pending business approvals.</p>'
         else:
             for b_id, b in approved_biz.items():
-                content += f"""
+                content += '''
                 <div class="bg-gray-800/40 p-4 rounded-2xl flex justify-between items-center">
                     <div>
-                        <h4 class="font-bold">{b["name"]}</h4>
-                        <p class="text-xs text-gray-400">📍 {b["address"]}</p>
+                        <h4 class="font-bold">''' + b["name"] + '''</h4>
+                        <p class="text-xs text-gray-400">📍 ''' + b["address"] + '''</p>
                     </div>
-                    <a href="/admin?module=business&tab=approved&action=delete&id={b_id}" class="bg-red-600/20 text-red-400 px-3 py-1.5 rounded-xl text-xs font-bold">Delete</a>
+                    <a href="/admin?module=business&tab=approved&action=delete&id=''' + b_id + '''" class="bg-red-600/20 text-red-400 px-3 py-1.5 rounded-xl text-xs font-bold">Delete</a>
                 </div>
-                """
+                '''
 
-        body = f"""
+        html = BASE_HEAD + '''
         <main class="max-w-5xl mx-auto px-4 py-12">
             <div class="flex justify-between items-center mb-8">
                 <a href="/admin" class="text-sm font-bold text-blue-500 hover:underline">← Back to Admin Hub</a>
                 <h2 class="text-2xl font-extrabold">🏢 Business Directory Module</h2>
             </div>
-            <div class="flex space-x-3 mb-8">
-                <a href="/admin?module=business&tab=pending" class="px-5 py-2.5 rounded-xl text-sm font-bold {"bg-blue-600 text-white" if tab == "pending" else "bg-gray-900 text-gray-400"}">
-                    Pending Approvals ({len(pending_biz)})
-                </a>
-                <a href="/admin?module=business&tab=approved" class="px-5 py-2.5 rounded-xl text-sm font-bold {"bg-blue-600 text-white" if tab == "approved" else "bg-gray-900 text-gray-400"}">
-                    Approved Directory ({len(approved_biz)})
-                </a>
-            </div>
             <div class="bg-gray-900 p-6 rounded-3xl border border-gray-800 space-y-4">
-                {content}
+                ''' + content + '''
             </div>
         </main>
-        """
-        return render_template_string(BASE_HEAD + body + FOOTER)
+        ''' + FOOTER
+        return render_template_string(html)
 
     elif module == 'payment':
         content = ""
         if tab == 'pending':
             for b_id, b in pending_pay.items():
-                content += f"""
+                content += '''
                 <div class="bg-gray-800/60 p-4 rounded-2xl flex justify-between items-center">
                     <div>
-                        <h4 class="font-bold">{b["name"]}</h4>
-                        <p class="text-xs text-blue-400">Method: {b.get("payment_method")} | Ref: <code>{b.get("payment_ref")}</code></p>
+                        <h4 class="font-bold">''' + b["name"] + '''</h4>
+                        <p class="text-xs text-blue-400">Method: ''' + b.get("payment_method") + ''' | Ref: <code>''' + b.get("payment_ref") + '''</code></p>
                     </div>
-                    <a href="/admin?module=payment&tab=pending&action=approve_pay&id={b_id}" class="bg-blue-600 px-4 py-2 rounded-xl text-xs font-bold">Confirm Payment</a>
+                    <a href="/admin?module=payment&tab=pending&action=approve_pay&id=''' + b_id + '''" class="bg-blue-600 px-4 py-2 rounded-xl text-xs font-bold">Confirm Payment</a>
                 </div>
-                """
+                '''
             if not content:
-                content = '<p class="text-gray-500 text-center py-8">No pending payments to verify.</p>'
-        elif tab == 'alerts':
-            for b_id, b in expiring_alerts.items():
-                content += f"""
-                <div class="bg-red-950/40 border border-red-500/50 p-4 rounded-2xl flex justify-between items-center">
-                    <div>
-                        <h4 class="font-bold text-white">{b["name"]}</h4>
-                        <p class="text-xs text-red-400 font-bold mt-1">⏳ Expiry Alert: Less than 5 Days Remaining!</p>
-                    </div>
-                    <a href="/admin?module=payment&tab=alerts&action=approve_pay&id={b_id}" class="bg-red-600 px-4 py-2 rounded-xl text-xs font-bold">Renew (+30 Days)</a>
-                </div>
-                """
-            if not content:
-                content = '<p class="text-gray-500 text-center py-8">No 5-day expiry alerts right now.</p>'
+                content = '<p class="text-gray-500 text-center py-8">No pending payments.</p>'
         elif tab == 'expired':
             for b_id, b in expired_subs.items():
                 days_ago = abs((b.get('expiry_date') - now).days)
-                content += f"""
+                content += '''
                 <div class="bg-red-900/30 border-2 border-red-600 p-4 rounded-2xl flex justify-between items-center">
                     <div>
-                        <h4 class="font-bold text-white">{b["name"]}</h4>
-                        <p class="text-xs text-gray-400">📞 {b.get("phones", ["N/A"])[0]} | 📍 {b["address"]}</p>
-                        <p class="text-xs text-red-400 font-bold mt-1">❌ Subscription Ended {days_ago} day(s) ago!</p>
+                        <h4 class="font-bold text-white">''' + b["name"] + '''</h4>
+                        <p class="text-xs text-gray-400">📞 ''' + b.get("phones", ["N/A"])[0] + ''' | 📍 ''' + b["address"] + '''</p>
+                        <p class="text-xs text-red-400 font-bold mt-1">❌ Subscription Ended ''' + str(days_ago) + ''' day(s) ago!</p>
                     </div>
-                    <a href="/admin?module=payment&tab=expired&action=approve_pay&id={b_id}" class="bg-red-600 hover:bg-red-500 px-4 py-2 rounded-xl text-xs font-bold text-white shadow">Remind / Renew (+30 Days)</a>
+                    <a href="/admin?module=payment&tab=expired&action=approve_pay&id=''' + b_id + '''" class="bg-red-600 px-4 py-2 rounded-xl text-xs font-bold text-white">Renew (+30 Days)</a>
                 </div>
-                """
+                '''
             if not content:
-                content = '<p class="text-gray-500 text-center py-8">No expired subscriptions found. Great!</p>'
+                content = '<p class="text-gray-500 text-center py-8">No expired subscriptions found.</p>'
         else:
             for b_id, b in paid_pay.items():
-                content += f"""
+                content += '''
                 <div class="bg-gray-800/40 p-4 rounded-2xl">
-                    <h4 class="font-bold">{b["name"]}</h4>
-                    <p class="text-xs text-gray-400 mt-1">Method: {b.get("payment_method")} | Ref: <code>{b.get("payment_ref")}</code></p>
-                    <span class="text-xs font-bold text-green-400 mt-1 block">✓ Active Subscription</span>
+                    <h4 class="font-bold">''' + b["name"] + '''</h4>
+                    <p class="text-xs text-gray-400 mt-1">Method: ''' + b.get("payment_method") + '''</p>
+                    <span class="text-xs font-bold text-green-400 mt-1 block">✓ Active</span>
                 </div>
-                """
+                '''
 
-        body = f"""
+        html = BASE_HEAD + '''
         <main class="max-w-5xl mx-auto px-4 py-12">
             <div class="flex justify-between items-center mb-8">
                 <a href="/admin" class="text-sm font-bold text-indigo-500 hover:underline">← Back to Admin Hub</a>
                 <h2 class="text-2xl font-extrabold">💳 Payment & Subscription Module</h2>
             </div>
             <div class="flex flex-wrap gap-3 mb-8">
-                <a href="/admin?module=payment&tab=pending" class="px-5 py-2.5 rounded-xl text-sm font-bold {"bg-indigo-600 text-white" if tab == "pending" else "bg-gray-900 text-gray-400"}">
-                    Unpaid ({len(pending_pay)})
-                </a>
-                <a href="/admin?module=payment&tab=alerts" class="px-5 py-2.5 rounded-xl text-sm font-bold {"bg-red-600 text-white" if tab == "alerts" else "bg-gray-900 text-gray-400"}">
-                    🚨 5-Day Alerts ({len(expiring_alerts)})
-                </a>
-                <a href="/admin?module=payment&tab=expired" class="px-5 py-2.5 rounded-xl text-sm font-bold {"bg-red-700 text-white animate-pulse" if tab == "expired" else "bg-gray-900 text-red-400"}">
-                    ❌ Expired / Ended ({len(expired_subs)})
-                </a>
-                <a href="/admin?module=payment&tab=history" class="px-5 py-2.5 rounded-xl text-sm font-bold {"bg-indigo-600 text-white" if tab == "history" else "bg-gray-900 text-gray-400"}">
-                    Verified History ({len(paid_pay)})
-                </a>
+                <a href="/admin?module=payment&tab=pending" class="px-5 py-2.5 rounded-xl text-sm font-bold bg-gray-900 text-gray-300">Unpaid</a>
+                <a href="/admin?module=payment&tab=expired" class="px-5 py-2.5 rounded-xl text-sm font-bold bg-red-700 text-white">Expired / Ended (''' + str(len(expired_subs)) + ''' )</a>
+                <a href="/admin?module=payment&tab=history" class="px-5 py-2.5 rounded-xl text-sm font-bold bg-gray-900 text-gray-300">History</a>
             </div>
             <div class="bg-gray-900 p-6 rounded-3xl border border-gray-800 space-y-4">
-                {content}
+                ''' + content + '''
             </div>
         </main>
-        """
-        return render_template_string(BASE_HEAD + body + FOOTER)
+        ''' + FOOTER
+        return render_template_string(html)
 
 handler = app
 
