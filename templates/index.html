@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ site_name }} - Local Business Directory</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <header class="bg-blue-600 text-white shadow-md">
+        <div class="max-w-7xl mx-auto px-4 py-6 flex justify-between items-center">
+            <h1 class="text-2xl font-bold"><a href="{{ url_for('home') }}">{{ site_name }}</a></h1>
+            <a href="{{ url_for('admin_panel') }}" class="bg-white text-blue-600 px-4 py-2 rounded-lg font-semibold shadow hover:bg-blue-50 transition">Admin Panel</a>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 py-12">
+        <div class="text-center mb-12">
+            <h2 class="text-4xl font-extrabold text-gray-900 mb-4">Find Trusted Businesses in Swat & Mingora</h2>
+            <p class="text-lg text-gray-600">Explore top healthcare, restaurants, property dealers, and more with verified subscriptions.</p>
+        </div>
+
+        <!-- Categories Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {% for slug, cat in categories.items() %}
+            <a href="{{ url_for('category_page', cat_slug=slug) }}" class="bg-white p-8 rounded-xl shadow-sm hover:shadow-md transition border border-gray-100 flex items-center space-x-5">
+                <span class="text-5xl">{{ cat.icon }}</span>
+                <div>
+                    <h3 class="text-xl font-bold text-gray-800">{{ cat.title }}</h3>
+                    <p class="text-gray-500 text-sm mt-1">Browse listings & details</p>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </main>
+</body>
+</html>
