@@ -121,6 +121,7 @@ INDEX_BASE_HEAD = '''
         <div class="max-w-7xl mx-auto px-4 py-6 flex justify-between items-center">
             <a href="/" class="text-2xl font-extrabold tracking-tight">🏙️ ''' + SITE_NAME + '''</a>
             <div class="flex items-center space-x-3">
+                <a href="/admin" class="bg-white/10 hover:bg-white/20 px-3.5 py-2 rounded-xl text-sm font-semibold transition">🛠️ Admin</a>
                 <a href="/register" class="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-xl text-sm font-bold shadow-lg transition">＋ Register Business</a>
                 <button onclick="document.getElementById('html-root').classList.toggle('dark')" class="bg-white/10 hover:bg-white/25 px-3.5 py-2 rounded-xl text-sm font-medium transition">🌓</button>
             </div>
@@ -144,6 +145,7 @@ BASE_HEAD = '''
         <div class="max-w-7xl mx-auto px-4 py-6 flex justify-between items-center">
             <a href="/" class="text-xl font-bold hover:underline">← Back to Home</a>
             <div class="flex items-center space-x-3">
+                <a href="/admin" class="bg-white/10 hover:bg-white/20 px-3.5 py-2 rounded-xl text-sm font-semibold transition">🛠️ Admin</a>
                 <a href="/register" class="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-xl text-sm font-bold shadow-lg transition">＋ Register Business</a>
                 <button onclick="document.getElementById('html-root').classList.toggle('dark')" class="bg-white/10 hover:bg-white/25 px-3.5 py-2 rounded-xl text-sm font-medium transition">🌓</button>
             </div>
@@ -312,7 +314,6 @@ def category_page(cat_slug):
     all_cat_biz = []
 
     for b in BUSINESSES.values():
-        # Only show approved businesses on public pages
         if b.get('category') == cat_slug and b.get('status') == 'approved':
             all_cat_biz.append(b)
             
@@ -384,7 +385,7 @@ def register_business():
             'doctors': [],
             'items': [],
             'joined_date': datetime.now(),
-            'status': 'pending'  # Require Admin Approval
+            'status': 'pending'
         }
         return render_template_string(BASE_HEAD + '''
         <main class="max-w-2xl mx-auto px-4 py-20 text-center">
@@ -473,7 +474,6 @@ def register_business():
     return render_template_string(reg_html, categories=CATEGORIES, title="Register")
 
 
-# --- ADMIN APPROVAL PANEL ---
 @app.route('/admin')
 def admin_panel():
     action = request.args.get('action')
