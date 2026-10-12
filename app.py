@@ -54,8 +54,8 @@ BUSINESSES = {
     '4': {
         'id': '4',
         'category': 'education',
-        'sub_category': 'schools',
-        'name': 'Swat Public School',
+        'sub_category': 'school_college',
+        'name': 'Swat Public School & College',
         'address': 'Circular Road, Mingora, Swat',
         'phones': ['+92 946 7112233'],
         'image': 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&w=800&q=80',
@@ -92,6 +92,7 @@ SUB_CATEGORIES = {
         {'slug': 'all', 'title': 'All Institutes', 'icon': '🎓'},
         {'slug': 'schools', 'title': 'Schools', 'icon': '🏫'},
         {'slug': 'colleges', 'title': 'Colleges', 'icon': '🏛️'},
+        {'slug': 'school_college', 'title': 'School & College', 'icon': '🏫🏛️'},
         {'slug': 'universities', 'title': 'Universities', 'icon': '🎓'},
         {'slug': 'academies', 'title': 'Academies', 'icon': '📚'}
     ],
@@ -385,7 +386,7 @@ def register_business():
             <form method="POST" class="space-y-4">
                 <div>
                     <label class="block text-sm font-medium mb-1">Name</label>
-                    <input type="text" name="name" required placeholder="e.g. City Model School" class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-700 outline-none">
+                    <input type="text" name="name" required placeholder="e.g. Swat Public School & College" class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-700 outline-none">
                 </div>
                 <div>
                     <label class="block text-sm font-medium mb-1">Category</label>
@@ -419,6 +420,7 @@ def register_business():
             'education': [
                 {value: 'schools', text: '🏫 School'},
                 {value: 'colleges', text: '🏛️ College'},
+                {value: 'school_college', text: '🏫🏛️ School & College'},
                 {value: 'universities', text: '🎓 University'},
                 {value: 'academies', text: '📚 Academy'}
             ],
