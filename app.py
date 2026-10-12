@@ -1,4 +1,4 @@
-"""SwatBiz Hub - Complete Application with Business Details, Doctor Info & Tests Feature."""
+"""SwatBiz Hub - Final Application with Reordered Contact Position."""
 from datetime import datetime, timedelta
 import os
 from flask import Flask, abort, redirect, render_template_string, request, url_for, session
@@ -303,9 +303,13 @@ def business_detail(b_id):
                     <span class="bg-blue-600/20 text-blue-400 text-xs px-3 py-1 rounded-full font-bold uppercase tracking-wider">Verified Listing</span>
                     <h1 class="text-3xl md:text-4xl font-black mt-3">''' + b['name'] + '''</h1>
                     <p class="text-gray-400 mt-1 text-base">📍 ''' + b['address'] + '''</p>
+                    <div class="mt-4 inline-flex items-center gap-2 bg-blue-600/10 border border-blue-500/20 px-4 py-2 rounded-xl">
+                        <span class="text-blue-400 text-sm font-bold">📞 Contact:</span>
+                        <a href="tel:''' + b.get('phones', [''])[0] + '''" class="text-base font-extrabold text-white hover:text-blue-400 transition">''' + b.get('phones', ['N/A'])[0] + '''</a>
+                    </div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-gray-800">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2 border-t border-gray-800">
                     <div class="bg-gray-800/50 p-6 rounded-2xl border border-gray-700/50">
                         <h3 class="text-lg font-bold text-blue-400 mb-2">👨‍⚕️ Doctor & Specialist Info</h3>
                         <p class="text-gray-300 text-sm leading-relaxed">''' + doc_info + '''</p>
@@ -316,12 +320,8 @@ def business_detail(b_id):
                     </div>
                 </div>
 
-                <div class="pt-4 border-t border-gray-800 flex items-center justify-between">
-                    <div>
-                        <span class="text-xs text-gray-500 block">Contact Phone</span>
-                        <a href="tel:''' + b.get('phones', [''])[0] + '''" class="text-lg font-bold text-white hover:text-blue-400 transition">📞 ''' + b.get('phones', ['N/A'])[0] + '''</a>
-                    </div>
-                    <a href="/category/''' + b['category'] + '''" class="bg-gray-800 hover:bg-gray-700 px-5 py-2.5 rounded-xl text-sm font-semibold transition">← Back to Category</a>
+                <div class="pt-4 border-t border-gray-800 flex justify-end">
+                    <a href="/category/''' + b['category'] + '''" class="bg-gray-800 hover:bg-gray-700 px-5 py-2.5 rounded-xl text-sm font-semibold transition transform hover:-translate-x-1">← Back to Category</a>
                 </div>
             </div>
         </div>
@@ -421,10 +421,10 @@ def admin_panel():
         return redirect('/admin?module=' + str(module) + '&tab=' + str(tab))
 
     now = datetime.now()
-    pending_biz = {k: v for k, v in BUSINESSES.items() if v.get('status') == 'pending'}
-    approved_biz = {k: v for k, v in BUSINESSES.items() if v.get('status') == 'approved'}
-    pending_pay = {k: v for k, v in BUSINESSES.items() if v.get('payment_status') == 'unpaid'}
-    paid_pay = {k: v for k, v in BUSINESSES.items() if v.get('payment_status') == 'paid' and v.get('expiry_date', now) >= now}
+    pending_biz = {k: v for k, v in BUSINESSES.items() if v.get('status'] == 'pending'}
+    approved_biz = {k: v for k, v in BUSINESSES.items() if v.get('status'] == 'approved'}
+    pending_pay = {k: v for k, v in BUSINESSES.items() if v.get('payment_status'] == 'unpaid'}
+    paid_pay = {k: v for k, v in BUSINESSES.items() if v.get('payment_status'] == 'paid' and v.get('expiry_date', now) >= now}
     
     expiring_alerts = {}
     for k, v in BUSINESSES.items():
