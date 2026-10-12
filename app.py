@@ -22,7 +22,7 @@ BUSINESSES = {
         'category': 'hospitals',
         'name': 'Saidu Group of Teaching Hospital',
         'address': 'Saidu Sharif, Mingora, Swat',
-        'phone': '+92 946 9240123',
+        'phones': ['+92 946 9240123', '+92 300 1234567'],
         'image': 'https://images.unsplash.com/photo-1587351021759-3e566b6af7cc?auto=format&fit=crop&w=800&q=80',
         'doctors': [
             {
@@ -43,7 +43,7 @@ BUSINESSES = {
         'category': 'restaurants',
         'name': 'Rock City Restaurant & Hotel',
         'address': 'By-pass Road, Mingora, Swat',
-        'phone': '+92 946 7112233',
+        'phones': ['+92 946 7112233'],
         'image': 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=800&q=80',
         'doctors': [],
         'items': [
@@ -143,7 +143,13 @@ def register_business():
         name = request.form.get('name')
         category = request.form.get('category')
         address = request.form.get('address')
-        phone = request.form.get('phone')
+        
+        # Multiple Phone Numbers processing
+        phone_inputs = request.form.getlist('phone[]')
+        phones = [p.strip() for p in phone_inputs if p.strip()]
+        if not phones:
+            phones = ['+92 946 0000000']
+
         image = process_image_input(request, 'image_file', 'image_url')
         
         doctors = []
@@ -193,7 +199,8 @@ def register_business():
             'category': category,
             'name': name,
             'address': address,
-            'phone': phone,
+            'phones': phones,
+            'phone': phones[0],  # for backward compatibility
             'image': image,
             'doctors': doctors,
             'items': items,
