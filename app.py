@@ -1,4 +1,4 @@
-"""SwatBiz Hub - Complete Application with Enhanced Search Suggestions."""
+"""SwatBiz Hub - Final Complete Application with Back to Home Button."""
 from datetime import datetime, timedelta
 import os
 from flask import Flask, abort, redirect, render_template_string, request, url_for, session
@@ -74,7 +74,7 @@ BASE_HEAD = '''
 <body class="bg-gray-950 text-gray-100 min-h-screen transition-colors duration-300">
     <header class="bg-gradient-to-r from-slate-900 via-blue-950 to-indigo-950 text-white shadow-xl">
         <div class="max-w-7xl mx-auto px-4 py-6 flex justify-between items-center">
-            <a href="/" class="text-2xl font-extrabold tracking-tight hover:opacity-85 transition">🏙️ ''' + SITE_NAME + '''</a>
+            <a href="/" class="text-xl font-bold hover:underline flex items-center gap-2">← Back to Home</a>
             <div class="flex items-center space-x-3">
                 <a href="/register" class="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-xl text-sm font-bold shadow-lg transform hover:-translate-y-0.5 transition-all">＋ Register Business</a>
             </div>
@@ -104,16 +104,34 @@ def home():
         </a>
         '''
     
-    html = BASE_HEAD + '''
-    <section class="py-16 px-4 text-center">
-        <h2 class="text-4xl md:text-5xl font-black tracking-tight">Discover Swat & Mingora Businesses</h2>
-        <p class="text-gray-400 text-lg mt-2">Find verified local services instantly.</p>
-    </section>
-    <main class="max-w-7xl mx-auto px-4 pb-20">
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            ''' + cards + '''
-        </div>
-    </main>
+    html = '''
+    <!DOCTYPE html>
+    <html lang="en" id="html-root" class="dark">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>''' + SITE_NAME + '''</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <script>tailwind.config = { darkMode: 'class' }</script>
+    </head>
+    <body class="bg-gray-950 text-gray-100 min-h-screen transition-colors duration-300">
+        <header class="bg-gradient-to-r from-slate-900 via-blue-950 to-indigo-950 text-white shadow-xl">
+            <div class="max-w-7xl mx-auto px-4 py-6 flex justify-between items-center">
+                <a href="/" class="text-2xl font-extrabold tracking-tight hover:opacity-85 transition">🏙️ ''' + SITE_NAME + '''</a>
+                <div class="flex items-center space-x-3">
+                    <a href="/register" class="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-xl text-sm font-bold shadow-lg transform hover:-translate-y-0.5 transition-all">＋ Register Business</a>
+                </div>
+            </div>
+        </header>
+        <section class="py-16 px-4 text-center">
+            <h2 class="text-4xl md:text-5xl font-black tracking-tight">Discover Swat & Mingora Businesses</h2>
+            <p class="text-gray-400 text-lg mt-2">Find verified local services instantly.</p>
+        </section>
+        <main class="max-w-7xl mx-auto px-4 pb-20">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                ''' + cards + '''
+            </div>
+        </main>
     ''' + FOOTER
     return render_template_string(html)
 
@@ -149,7 +167,6 @@ def category_page(cat_slug):
     if not cards:
         cards = '<div class="col-span-3 text-center py-20 text-gray-500"><p class="text-xl">No listings found.</p></div>'
 
-    # Build JSON array for live suggestions with Name and Address
     json_list = ""
     for b in all_biz:
         json_list += '{"name": "' + b['name'].replace('"', '\\"') + '", "address": "' + b['address'].replace('"', '\\"') + '"},'
@@ -242,7 +259,7 @@ def register_business():
 
     html = BASE_HEAD + '''
     <main class="max-w-2xl mx-auto px-4 py-12">
-        <h2 class="text-3xl font-bold text-center mb-6">Register Business</h2>
+        <h2 class="3xl font-bold text-center mb-6 text-3xl font-extrabold">Register Business</h2>
         <form method="POST" class="space-y-4">
             <input type="text" name="name" required placeholder="Business Name" class="w-full p-3 rounded-xl bg-gray-900 border border-gray-800 focus:ring-2 focus:ring-blue-500 outline-none">
             <select name="category" class="w-full p-3 rounded-xl bg-gray-900 border border-gray-800">''' + opts + '''</select>
@@ -474,7 +491,7 @@ def admin_panel():
                 <a href="/admin?module=payment&tab=expired" class="px-5 py-2.5 rounded-xl text-sm font-bold ''' + ('bg-red-700 text-white animate-pulse' if tab=='expired' else 'bg-gray-900 text-red-400') + '''">❌ Expired (''' + str(len(expired_subs)) + ''' )</a>
                 <a href="/admin?module=payment&tab=history" class="px-5 py-2.5 rounded-xl text-sm font-bold ''' + ('bg-indigo-600 text-white' if tab=='history' else 'bg-gray-900 text-gray-400') + '''">History (''' + str(len(paid_pay)) + ''' )</a>
             </div>
-            <div class="bg-gray-900 p-6 rounded-3xl border border-gray-800 shadow-xl space-y-4">
+            <div class="bg-gray-900p-6 rounded-3xl border border-gray-800 shadow-xl space-y-4">
                 ''' + content + '''
             </div>
         </main>
