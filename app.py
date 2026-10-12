@@ -1,16 +1,16 @@
-"""SwatBiz Hub - Advanced Admin Panel with Password Protection & Security."""
+"""SwatBiz Hub - Clean Grid-Categorized Admin Control Center."""
 from datetime import datetime, timedelta
 import os
 import base64
 from flask import Flask, abort, redirect, render_template_string, request, url_for, session
 
 SITE_NAME = 'SwatBiz Hub'
-ADMIN_PASSWORD = 'admin123'  # Aap apni pasand ka password rakh sakte hain
+ADMIN_PASSWORD = 'admin123'
 
 app = Flask(__name__)
 app.secret_key = 'swat_biz_hub_secret_key'
 
-# Demo Data
+# Business Data
 BUSINESSES = {
     '1': {
         'id': '1',
@@ -135,7 +135,6 @@ SUB_CATEGORIES = {
     ]
 }
 
-# Header without Admin Button for general public
 INDEX_BASE_HEAD = '''
 <!DOCTYPE html>
 <html lang="en" id="html-root" class="dark">
@@ -523,10 +522,9 @@ def register_business():
     return render_template_string(reg_html, categories=CATEGORIES, title="Register")
 
 
-# --- ADMIN LOGIN & CONTROL CENTER ---
+# --- CLEAN & CATEGORIZED GRID ADMIN HUB ---
 @app.route('/admin', methods=['GET', 'POST'])
 def admin_panel():
-    # Handle Login Form Submit
     if request.method == 'POST':
         password = request.form.get('password')
         if password == ADMIN_PASSWORD:
@@ -544,7 +542,6 @@ def admin_panel():
             </main>
             ''' + FOOTER, title="Access Denied")
 
-    # If Not Logged In, Show Password Login Form
     if not session.get('admin_logged_in'):
         return render_template_string(BASE_HEAD + '''
         <main class="max-w-md mx-auto px-4 py-20">
@@ -564,13 +561,14 @@ def admin_panel():
         </main>
         ''' + FOOTER, title="Admin Login")
 
-    # Logout Action
     action = request.args.get('action')
     if action == 'logout':
         session.pop('admin_logged_in', None)
         return redirect('/')
 
     biz_id = request.args.get('id')
+    view = request.args.get('view', 'hub') # 'hub', 'listings', 'payments', 'alerts'
+
     if action and biz_id in BUSINESSES:
         if action == 'approve':
             BUSINESSES[biz_id]['status'] = 'approved'
@@ -580,7 +578,7 @@ def admin_panel():
             BUSINESSES[biz_id]['expiry_date'] = datetime.now() + timedelta(days=30)
         elif action == 'delete':
             BUSINESSES[biz_id]['status'] = 'deleted'
-        return redirect('/admin')
+        return redirect(f'/admin?view={view}')
 
     now = datetime.now()
 
@@ -611,157 +609,172 @@ def admin_panel():
         if days_left <= 5:
             expiring_soon[b_id] = biz
 
-    admin_html = BASE_HEAD + '''
-    <main class="max-w-7xl mx-auto px-4 py-12">
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-            <div>
-                <h2 class="text-3xl font-extrabold">🛠️ Admin Control Center</h2>
-                <p class="text-gray-400 text-sm mt-1">Manage Listings, Payments & Subscription Alerts</p>
-            </div>
-            
-            <div class="flex items-center gap-3">
-                <div class="flex flex-wrap gap-2 text-xs font-bold">
-                    <span class="bg-yellow-500/20 text-yellow-400 px-3 py-1.5 rounded-xl">Pending Biz: {{ pending_biz|length }}</span>
-                    <span class="bg-orange-500/20 text-orange-400 px-3 py-1.5 rounded-xl">Pending Payments: {{ pending_pay|length }}</span>
-                    <span class="bg-red-500/20 text-red-400 px-3 py-1.5 rounded-xl animate-pulse">⚠️ Expiry Alerts: {{ expiring|length }}</span>
-                </div>
-                <a href="/admin?action=logout" class="bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white px-3 py-1.5 rounded-xl text-xs font-bold transition">Logout</a>
-            </div>
-        </div>
-
-        {% if expiring %}
-        <div class="mb-12 bg-red-950/30 border border-red-500/30 rounded-3xl p-6 shadow-2xl">
-            <h3 class="text-xl font-bold text-red-400 mb-4 flex items-center space-x-2">
-                <span>⚠️ Subscriptions Expiring Soon (Short Time Alert - Less than 5 Days)</span>
-            </h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {% for b_id, biz in expiring.items() %}
-                <div class="bg-gray-900 border-2 border-red-500/60 rounded-2xl p-5 shadow-lg flex justify-between items-center">
-                    <div>
-                        <h4 class="font-bold text-lg text-white">{{ biz.name }}</h4>
-                        <p class="text-xs text-gray-400 mt-1">📍 {{ biz.address }} | 📞 {{ biz.phones[0] if biz.phones else 'N/A' }}</p>
-                        <p class="text-xs font-bold text-red-400 mt-2">⏳ Days Remaining: {{ biz.days_left }} Day(s) Left!</p>
-                    </div>
-                    <div>
-                        <a href="/admin?action=approve_payment&id={{ b_id }}" class="bg-red-600 hover:bg-red-500 text-white text-xs px-4 py-2.5 rounded-xl font-bold shadow transition">Renew (+30 Days)</a>
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-        </div>
-        {% endif %}
-
-        <div class="space-y-10">
-            <div class="bg-white dark:bg-gray-900 rounded-3xl p-6 border border-gray-100 dark:border-gray-800 shadow-xl space-y-6">
-                <h3 class="text-2xl font-black text-blue-400 flex items-center gap-2">
-                    <span>🏢 Business Listings Management</span>
-                </h3>
-
+    # 1. MAIN GRID HUB VIEW
+    if view == 'hub':
+        admin_hub_html = BASE_HEAD + '''
+        <main class="max-w-6xl mx-auto px-4 py-12">
+            <div class="flex justify-between items-center mb-10">
                 <div>
-                    <h4 class="text-md font-bold text-yellow-400 uppercase tracking-wider mb-3 flex items-center gap-2">
-                        <span>⏳ Pending Business Listings (Need Approval)</span>
-                        <span class="bg-yellow-500/20 text-yellow-300 text-xs px-2 py-0.5 rounded-full">{{ pending_biz|length }}</span>
-                    </h4>
+                    <h2 class="text-3xl font-extrabold">🛠️ Admin Control Center</h2>
+                    <p class="text-gray-400 text-sm mt-1">Select a category to manage listings and payments</p>
+                </div>
+                <a href="/admin?action=logout" class="bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white px-4 py-2 rounded-xl text-sm font-bold transition">Logout</a>
+            </div>
+
+            <!-- GRID CARDS -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                
+                <!-- CARD 1: LISTINGS -->
+                <a href="/admin?view=listings" class="bg-white dark:bg-gray-900 p-8 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-xl hover:border-blue-500 transition-all transform hover:-translate-y-2 group flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between items-center mb-4">
+                            <span class="text-5xl">🏢</span>
+                            {% if pending_biz %}
+                            <span class="bg-yellow-500/20 text-yellow-400 text-xs px-3 py-1.5 rounded-full font-bold">{% len pending_biz %} Pending</span>
+                            {% else %}
+                            <span class="bg-green-500/20 text-green-400 text-xs px-3 py-1.5 rounded-full font-bold">All Approved</span>
+                            {% endif %}
+                        </div>
+                        <h3 class="text-2xl font-bold group-hover:text-blue-500 transition-colors">Business Listings</h3>
+                        <p class="text-sm text-gray-400 mt-2">Approve new registrations or manage live businesses.</p>
+                    </div>
+                    <div class="mt-6 text-sm font-bold text-blue-500 flex items-center justify-between">
+                        <span>Manage Listings →</span>
+                        <span class="text-xs text-gray-500">Total: {% len approved_biz + len pending_biz %}</span>
+                    </div>
+                </a>
+
+                <!-- CARD 2: PAYMENTS -->
+                <a href="/admin?view=payments" class="bg-white dark:bg-gray-900 p-8 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-xl hover:border-indigo-500 transition-all transform hover:-translate-y-2 group flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between items-center mb-4">
+                            <span class="text-5xl">💳</span>
+                            {% if pending_pay %}
+                            <span class="bg-orange-500/20 text-orange-400 text-xs px-3 py-1.5 rounded-full font-bold">{% len pending_pay %} Unpaid</span>
+                            {% else %}
+                            <span class="bg-blue-500/20 text-blue-400 text-xs px-3 py-1.5 rounded-full font-bold">Verified</span>
+                            {% endif %}
+                        </div>
+                        <h3 class="text-2xl font-bold group-hover:text-indigo-500 transition-colors">Payment Approvals</h3>
+                        <p class="text-sm text-gray-400 mt-2">Verify EasyPaisa, JazzCash & Bank Transfer TID proofs.</p>
+                    </div>
+                    <div class="mt-6 text-sm font-bold text-indigo-500 flex items-center justify-between">
+                        <span>View Payments →</span>
+                        <span class="text-xs text-gray-500">History & Status</span>
+                    </div>
+                </a>
+
+                <!-- CARD 3: EXPIRY ALERTS -->
+                <a href="/admin?view=alerts" class="bg-white dark:bg-gray-900 p-8 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-xl hover:border-red-500 transition-all transform hover:-translate-y-2 group flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between items-center mb-4">
+                            <span class="text-5xl">⚠️</span>
+                            {% if expiring %}
+                            <span class="bg-red-500/20 text-red-400 text-xs px-3 py-1.5 rounded-full font-bold animate-pulse">{% len expiring %} Alerts</span>
+                            {% else %}
+                            <span class="bg-green-500/20 text-green-400 text-xs px-3 py-1.5 rounded-full font-bold">No Alerts</span>
+                            {% endif %}
+                        </div>
+                        <h3 class="text-2xl font-bold group-hover:text-red-500 transition-colors">Expiry Alerts</h3>
+                        <p class="text-sm text-gray-400 mt-2">Subscriptions expiring in 5 days or less.</p>
+                    </div>
+                    <div class="mt-6 text-sm font-bold text-red-500 flex items-center justify-between">
+                        <span>Check Expiry (<5 Days) →</span>
+                        <span class="text-xs text-gray-500">Quick Renew</span>
+                    </div>
+                </a>
+
+            </div>
+        </main>
+        ''' + FOOTER
+        return render_template_string(
+            admin_hub_html, 
+            pending_biz=pending_businesses, 
+            approved_biz=approved_businesses, 
+            pending_pay=pending_payments, 
+            expiring=expiring_soon,
+            title="Admin Hub"
+        )
+
+    # 2. VIEW 1: BUSINESS LISTINGS
+    elif view == 'listings':
+        listings_html = BASE_HEAD + '''
+        <main class="max-w-5xl mx-auto px-4 py-12">
+            <div class="mb-8 flex justify-between items-center">
+                <a href="/admin?view=hub" class="text-sm font-bold text-blue-500 hover:underline">← Back to Admin Hub</a>
+                <h2 class="text-2xl font-extrabold">🏢 Business Listings Management</h2>
+            </div>
+
+            <div class="space-y-8">
+                <!-- PENDING LISTINGS -->
+                <div class="bg-white dark:bg-gray-900 p-6 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-xl">
+                    <h3 class="text-lg font-bold text-yellow-400 mb-4 flex items-center justify-between">
+                        <span>⏳ Pending Approvals</span>
+                        <span class="bg-yellow-500/20 text-yellow-300 text-xs px-2.5 py-1 rounded-full">{% len pending_biz %}</span>
+                    </h3>
                     {% if pending_biz %}
                         <div class="space-y-3">
                             {% for b_id, biz in pending_biz.items() %}
                             <div class="bg-gray-50 dark:bg-gray-800/60 p-4 rounded-2xl border border-yellow-500/30 flex justify-between items-center">
                                 <div>
-                                    <h5 class="font-bold text-base">{{ biz.name }}</h5>
-                                    <p class="text-xs text-gray-400">📍 {{ biz.address }} | 📞 {{ biz.phones[0] if biz.phones else 'N/A' }} | Cat: {{ biz.category }}</p>
+                                    <h4 class="font-bold">{{ biz.name }}</h4>
+                                    <p class="text-xs text-gray-400">📍 {{ biz.address }} | 📞 {{ biz.phones[0] if biz.phones else 'N/A' }}</p>
                                 </div>
                                 <div class="flex gap-2">
-                                    <a href="/admin?action=approve&id={{ b_id }}" class="bg-green-600 hover:bg-green-500 text-white px-3.5 py-1.5 rounded-xl text-xs font-bold shadow transition">Approve Listing</a>
-                                    <a href="/admin?action=delete&id={{ b_id }}" class="bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white px-3 py-1.5 rounded-xl text-xs font-bold transition">Delete</a>
+                                    <a href="/admin?action=approve&id={{ b_id }}&view=listings" class="bg-green-600 hover:bg-green-500 text-white px-3.5 py-1.5 rounded-xl text-xs font-bold transition">Approve</a>
+                                    <a href="/admin?action=delete&id={{ b_id }}&view=listings" class="bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white px-3 py-1.5 rounded-xl text-xs font-bold transition">Delete</a>
                                 </div>
                             </div>
                             {% endfor %}
                         </div>
                     {% else %}
-                        <p class="text-sm text-gray-500 italic bg-gray-800/30 p-3 rounded-xl">No pending business approvals right now.</p>
+                        <p class="text-sm text-gray-500 italic">No pending business listings.</p>
                     {% endif %}
                 </div>
 
-                <div class="pt-4 border-t border-gray-800">
-                    <h4 class="text-md font-bold text-green-400 uppercase tracking-wider mb-3 flex items-center gap-2">
-                        <span>✅ Approved & Live Businesses</span>
-                        <span class="bg-green-500/20 text-green-300 text-xs px-2 py-0.5 rounded-full">{{ approved_biz|length }}</span>
-                    </h4>
+                <!-- APPROVED LISTINGS -->
+                <div class="bg-white dark:bg-gray-900 p-6 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-xl">
+                    <h3 class="text-lg font-bold text-green-400 mb-4 flex items-center justify-between">
+                        <span>✅ Live & Approved Businesses</span>
+                        <span class="bg-green-500/20 text-green-300 text-xs px-2.5 py-1 rounded-full">{% len approved_biz %}</span>
+                    </h3>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {% for b_id, biz in approved_biz.items() %}
                         <div class="bg-gray-50 dark:bg-gray-800/40 p-4 rounded-2xl border border-gray-200 dark:border-gray-800 flex justify-between items-center">
                             <div>
-                                <h5 class="font-bold text-base">{{ biz.name }}</h5>
-                                <p class="text-xs text-gray-400">📍 {{ biz.address }} | 📞 {{ biz.phones[0] if biz.phones else 'N/A' }}</p>
+                                <h4 class="font-bold">{{ biz.name }}</h4>
+                                <p class="text-xs text-gray-400">📍 {{ biz.address }}</p>
                             </div>
-                            <a href="/admin?action=delete&id={{ b_id }}" class="bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white px-3 py-1.5 rounded-xl text-xs font-bold transition">Delete</a>
+                            <a href="/admin?action=delete&id={{ b_id }}&view=listings" class="bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white px-3 py-1.5 rounded-xl text-xs font-bold transition">Delete</a>
                         </div>
                         {% endfor %}
                     </div>
                 </div>
             </div>
+        </main>
+        ''' + FOOTER
+        return render_template_string(listings_html, pending_biz=pending_businesses, approved_biz=approved_businesses, title="Listings Management")
 
-            <div class="bg-white dark:bg-gray-900 rounded-3xl p-6 border border-gray-100 dark:border-gray-800 shadow-xl space-y-6">
-                <h3 class="text-2xl font-black text-indigo-400 flex items-center gap-2">
-                    <span>💳 Payment Approvals & History</span>
-                </h3>
+    # 3. VIEW 2: PAYMENTS
+    elif view == 'payments':
+        payments_html = BASE_HEAD + '''
+        <main class="max-w-5xl mx-auto px-4 py-12">
+            <div class="mb-8 flex justify-between items-center">
+                <a href="/admin?view=hub" class="text-sm font-bold text-indigo-500 hover:underline">← Back to Admin Hub</a>
+                <h2 class="text-2xl font-extrabold">💳 Payment Approvals & Record</h2>
+            </div>
 
-                <div>
-                    <h4 class="text-md font-bold text-orange-400 uppercase tracking-wider mb-3 flex items-center gap-2">
-                        <span>⚠️ Pending Payment Approvals (Needs Verification)</span>
-                        <span class="bg-orange-500/20 text-orange-300 text-xs px-2 py-0.5 rounded-full">{{ pending_pay|length }}</span>
-                    </h4>
+            <div class="space-y-8">
+                <!-- PENDING PAYMENTS -->
+                <div class="bg-white dark:bg-gray-900 p-6 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-xl">
+                    <h3 class="text-lg font-bold text-orange-400 mb-4 flex items-center justify-between">
+                        <span>⚠️ Unpaid / Pending Verification</span>
+                        <span class="bg-orange-500/20 text-orange-300 text-xs px-2.5 py-1 rounded-full">{% len pending_pay %}</span>
+                    </h3>
                     {% if pending_pay %}
                         <div class="space-y-3">
                             {% for b_id, biz in pending_pay.items() %}
                             <div class="bg-gray-50 dark:bg-gray-800/60 p-4 rounded-2xl border border-orange-500/30 flex justify-between items-center">
                                 <div>
-                                    <h5 class="font-bold text-base">{{ biz.name }}</h5>
-                                    <p class="text-xs text-blue-400">Method: <strong>{{ biz.get('payment_method', 'N/A') }}</strong> | Ref/TID: <code>{{ biz.get('payment_ref', 'N/A') }}</code></p>
-                                </div>
-                                <div>
-                                    <a href="/admin?action=approve_payment&id={{ b_id }}" class="bg-blue-600 hover:bg-blue-500 text-white px-3.5 py-2 rounded-xl text-xs font-bold shadow transition">Confirm Payment</a>
-                                </div>
-                            </div>
-                            {% endfor %}
-                        </div>
-                    {% else %}
-                        <p class="text-sm text-gray-500 italic bg-gray-800/30 p-3 rounded-xl">No pending payments to verify.</p>
-                    {% endif %}
-                </div>
-
-                <div class="pt-4 border-t border-gray-800">
-                    <h4 class="text-md font-bold text-blue-400 uppercase tracking-wider mb-3 flex items-center gap-2">
-                        <span>💳 Confirmed & Paid Subscriptions</span>
-                        <span class="bg-blue-500/20 text-blue-300 text-xs px-2 py-0.5 rounded-full">{{ confirmed_pay|length }}</span>
-                    </h4>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {% for b_id, biz in confirmed_pay.items() %}
-                        <div class="bg-gray-50 dark:bg-gray-800/40 p-4 rounded-2xl border border-gray-200 dark:border-gray-800">
-                            <h5 class="font-bold text-base">{{ biz.name }}</h5>
-                            <p class="text-xs text-gray-400 mt-0.5">Method: {{ biz.get('payment_method') }} | Ref: <code>{{ biz.get('payment_ref') }}</code></p>
-                            <p class="text-xs text-green-400 font-bold mt-1">Status: Paid & Active</p>
-                        </div>
-                        {% endfor %}
-                    </div>
-                </div>
-            </div>
-
-        </div>
-    </main>
-    ''' + FOOTER
-    return render_template_string(
-        admin_html, 
-        pending_biz=pending_businesses,
-        approved_biz=approved_businesses,
-        pending_pay=pending_payments,
-        confirmed_pay=confirmed_payments,
-        expiring=expiring_soon,
-        title="Admin Control Center"
-    )
-
-
-handler = app
-
-if __name__ == '__main__':
-    app.run(debug=True)
+                                    <h4 class="font-bold">{{ biz.name }}</h4>
+                                    <p class="text-xs text-blue-400 mt-1">Method: <strong>{{ biz.get('payment_method') }}</strong> | Ref: <code>{{ biz.get('payment_ref') }}</code></p>
