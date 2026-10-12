@@ -63,6 +63,31 @@ CATEGORIES = {
     'education': {'title': 'Educational Institutes', 'icon': '🎓'}
 }
 
+# Header specifically for Home Page (Shows Logo instead of Back button)
+INDEX_BASE_HEAD = '''
+<!DOCTYPE html>
+<html lang="en" id="html-root" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }} - ''' + SITE_NAME + '''</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏙️</text></svg>">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>tailwind.config = { darkMode: 'class' }</script>
+</head>
+<body class="bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 min-h-screen">
+    <header class="bg-gradient-to-r from-slate-900 via-blue-950 to-indigo-950 text-white shadow-xl">
+        <div class="max-w-7xl mx-auto px-4 py-6 flex justify-between items-center">
+            <a href="/" class="text-2xl font-extrabold tracking-tight">🏙️ ''' + SITE_NAME + '''</a>
+            <div class="flex items-center space-x-3">
+                <a href="/register" class="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-xl text-sm font-bold shadow-lg transition">＋ Register Business</a>
+                <button onclick="document.getElementById('html-root').classList.toggle('dark')" class="bg-white/10 hover:bg-white/25 px-3.5 py-2 rounded-xl text-sm font-medium transition">🌓</button>
+            </div>
+        </div>
+    </header>
+'''
+
+# Header for Inner Pages (Shows Back to Home button)
 BASE_HEAD = '''
 <!DOCTYPE html>
 <html lang="en" id="html-root" class="dark">
@@ -94,7 +119,7 @@ FOOTER = '''
 </html>
 '''
 
-INDEX_TEMPLATE = BASE_HEAD + '''
+INDEX_TEMPLATE = INDEX_BASE_HEAD + '''
     <section class="py-16 px-4 text-center bg-gradient-to-b from-blue-950/20 to-transparent">
         <div class="max-w-3xl mx-auto space-y-4">
             <h2 class="text-4xl md:text-5xl font-black tracking-tight">Discover Swat & Mingora Businesses</h2>
