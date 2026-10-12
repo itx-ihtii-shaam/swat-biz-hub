@@ -1,4 +1,4 @@
-"""SwatBiz Hub - Final Complete Application with Back to Home Button."""
+"""SwatBiz Hub - Final Complete Application with Favicon & Admin Modules."""
 from datetime import datetime, timedelta
 import os
 from flask import Flask, abort, redirect, render_template_string, request, url_for, session
@@ -68,6 +68,7 @@ BASE_HEAD = '''
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>''' + SITE_NAME + '''</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏙️</text></svg>">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>tailwind.config = { darkMode: 'class' }</script>
 </head>
@@ -111,6 +112,7 @@ def home():
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>''' + SITE_NAME + '''</title>
+        <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏙️</text></svg>">
         <script src="https://cdn.tailwindcss.com"></script>
         <script>tailwind.config = { darkMode: 'class' }</script>
     </head>
@@ -259,7 +261,7 @@ def register_business():
 
     html = BASE_HEAD + '''
     <main class="max-w-2xl mx-auto px-4 py-12">
-        <h2 class="3xl font-bold text-center mb-6 text-3xl font-extrabold">Register Business</h2>
+        <h2 class="text-3xl font-extrabold text-center mb-6">Register Business</h2>
         <form method="POST" class="space-y-4">
             <input type="text" name="name" required placeholder="Business Name" class="w-full p-3 rounded-xl bg-gray-900 border border-gray-800 focus:ring-2 focus:ring-blue-500 outline-none">
             <select name="category" class="w-full p-3 rounded-xl bg-gray-900 border border-gray-800">''' + opts + '''</select>
@@ -491,7 +493,7 @@ def admin_panel():
                 <a href="/admin?module=payment&tab=expired" class="px-5 py-2.5 rounded-xl text-sm font-bold ''' + ('bg-red-700 text-white animate-pulse' if tab=='expired' else 'bg-gray-900 text-red-400') + '''">❌ Expired (''' + str(len(expired_subs)) + ''' )</a>
                 <a href="/admin?module=payment&tab=history" class="px-5 py-2.5 rounded-xl text-sm font-bold ''' + ('bg-indigo-600 text-white' if tab=='history' else 'bg-gray-900 text-gray-400') + '''">History (''' + str(len(paid_pay)) + ''' )</a>
             </div>
-            <div class="bg-gray-900p-6 rounded-3xl border border-gray-800 shadow-xl space-y-4">
+            <div class="bg-gray-900 p-6 rounded-3xl border border-gray-800 shadow-xl space-y-4">
                 ''' + content + '''
             </div>
         </main>
