@@ -1,9 +1,11 @@
 <!DOCTYPE html>
-<html lang="en" id="html-root">
+<html lang="en" id="html-root" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ site_name }} - Local Business Directory</title>
+    <!-- Favicon using main logo emoji -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏙️</text></svg>">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = { darkMode: 'class' }
@@ -39,7 +41,7 @@
             
             <!-- Interactive Search Box -->
             <div class="relative max-w-2xl mx-auto">
-                <input type="text" id="searchInput" onkeyup="filterBusinesses()" placeholder="Search doctors, restaurants, specialists, or locations..." class="w-full px-6 py-4 rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800 dark:text-gray-200 placeholder-gray-400 transition-all">
+                <input type="text" id="searchInput" placeholder="Search doctors, restaurants, specialists, or locations..." class="w-full px-6 py-4 rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800 dark:text-gray-200 placeholder-gray-400 transition-all">
                 <span class="absolute right-5 top-4 text-2xl">🔍</span>
             </div>
         </div>
@@ -62,12 +64,6 @@
         function toggleDarkMode() {
             const root = document.getElementById('html-root');
             root.classList.toggle('dark');
-        }
-
-        function filterBusinesses() {
-            // Live search preparation for future dynamic expansion
-            let input = document.getElementById('searchInput').value.toLowerCase();
-            // User can easily search categories or keywords
         }
     </script>
 </body>
