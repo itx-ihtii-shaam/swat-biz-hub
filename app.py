@@ -1,4 +1,4 @@
-"""SwatBiz Hub - Clean Home Header Update."""
+"""SwatBiz Hub - Final Stable Application with Animated Back Links & Admin Favicon."""
 from datetime import datetime, timedelta
 import os
 from flask import Flask, abort, redirect, render_template_string, request, url_for, session
@@ -75,7 +75,7 @@ HOME_HEAD = '''
 <body class="bg-gray-950 text-gray-100 min-h-screen transition-colors duration-300">
     <header class="bg-gradient-to-r from-slate-900 via-blue-950 to-indigo-950 text-white shadow-xl">
         <div class="max-w-7xl mx-auto px-4 py-6 flex justify-between items-center">
-            <a href="/" class="text-2xl font-extrabold tracking-tight hover:opacity-85 transition">🏙️ ''' + SITE_NAME + '''</a>
+            <a href="/" class="text-2xl font-extrabold tracking-tight hover:opacity-85 transition transform hover:scale-105">🏙️ ''' + SITE_NAME + '''</a>
             <div class="flex items-center space-x-3">
                 <a href="/register" class="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-xl text-sm font-bold shadow-lg transform hover:-translate-y-0.5 transition-all">＋ Register Business</a>
             </div>
@@ -97,7 +97,7 @@ BASE_HEAD = '''
 <body class="bg-gray-950 text-gray-100 min-h-screen transition-colors duration-300">
     <header class="bg-gradient-to-r from-slate-900 via-blue-950 to-indigo-950 text-white shadow-xl">
         <div class="max-w-7xl mx-auto px-4 py-6 flex justify-between items-center">
-            <a href="/" class="text-xl font-bold hover:underline flex items-center gap-2">← Back to Home</a>
+            <a href="/" class="text-xl font-bold hover:text-blue-400 transition-all transform hover:-translate-x-1 flex items-center gap-2">← Back to Home</a>
             <div class="flex items-center space-x-3">
                 <a href="/register" class="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-xl text-sm font-bold shadow-lg transform hover:-translate-y-0.5 transition-all">＋ Register Business</a>
             </div>
@@ -121,7 +121,7 @@ ADMIN_HEAD = '''
         <div class="max-w-7xl mx-auto px-4 py-6 flex justify-between items-center">
             <span class="text-xl font-bold">🛠️ Admin Control Center</span>
             <div class="flex items-center space-x-3">
-                <a href="/admin?action=logout" class="bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white px-4 py-2 rounded-xl text-sm font-bold transition">Logout</a>
+                <a href="/admin?action=logout" class="bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white px-4 py-2 rounded-xl text-sm font-bold transition transform hover:scale-105">Logout</a>
             </div>
         </div>
     </header>
@@ -141,9 +141,9 @@ ADMIN_SUB_HEAD = '''
 <body class="bg-gray-950 text-gray-100 min-h-screen transition-colors duration-300">
     <header class="bg-gradient-to-r from-slate-900 via-blue-950 to-indigo-950 text-white shadow-xl">
         <div class="max-w-7xl mx-auto px-4 py-6 flex justify-between items-center">
-            <a href="/admin" class="text-xl font-bold hover:underline flex items-center gap-2">← Back to Admin Hub</a>
+            <a href="/admin" class="text-xl font-bold hover:text-indigo-400 transition-all transform hover:-translate-x-1 flex items-center gap-2">← Back to Admin Hub</a>
             <div class="flex items-center space-x-3">
-                <a href="/admin?action=logout" class="bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white px-4 py-2 rounded-xl text-sm font-bold transition">Logout</a>
+                <a href="/admin?action=logout" class="bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white px-4 py-2 rounded-xl text-sm font-bold transition transform hover:scale-105">Logout</a>
             </div>
         </div>
     </header>
@@ -192,7 +192,7 @@ def category_page(cat_slug):
     cat = CATEGORIES[cat_slug]
     search_query = request.args.get('q', '').lower().strip()
     
-    all_biz = [b for b in BUSINESSES.values() if b.get('category'] == cat_slug and b.get('status') == 'approved']
+    all_biz = [b for b in BUSINESSES.values() if b.get('category') == cat_slug and b.get('status') == 'approved']
     filtered = []
     for b in all_biz:
         if search_query:
@@ -228,7 +228,7 @@ def category_page(cat_slug):
             <div class="mt-6 max-w-xl mx-auto relative">
                 <form method="GET" action="/category/''' + cat_slug + '''" class="flex gap-3">
                     <input type="text" id="searchInput" name="q" value="''' + search_query + '''" placeholder="''' + cat['search_hint'] + '''" autocomplete="off" class="w-full px-5 py-3.5 rounded-2xl bg-gray-900 border border-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
-                    <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-white px-6 py-3.5 rounded-2xl font-semibold transition">Search</button>
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-white px-6 py-3.5 rounded-2xl font-semibold transition transform hover:scale-105">Search</button>
                 </form>
                 <div id="suggestionsBox" class="absolute left-0 right-0 mt-2 bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl hidden z-50 overflow-hidden text-left"></div>
             </div>
@@ -320,7 +320,7 @@ def register_business():
                 <option value="Bank Transfer">Bank Transfer</option>
             </select>
             <input type="text" name="payment_ref" placeholder="TID / Ref Number" class="w-full p-3 rounded-xl bg-gray-900 border border-gray-800">
-            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 py-3 rounded-xl font-bold transition">Submit Business</button>
+            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 py-3 rounded-xl font-bold transition transform hover:-translate-y-0.5">Submit Business</button>
         </form>
     </main>
     ''' + FOOTER
