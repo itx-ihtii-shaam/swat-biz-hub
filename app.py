@@ -1,4 +1,4 @@
-"""SwatBiz Hub - Updated Admin Navigation Logic."""
+"""SwatBiz Hub - Stable & Clean Admin Navigation Fixed."""
 from datetime import datetime, timedelta
 import os
 from flask import Flask, abort, redirect, render_template_string, request, url_for, session
@@ -170,7 +170,7 @@ def category_page(cat_slug):
     cat = CATEGORIES[cat_slug]
     search_query = request.args.get('q', '').lower().strip()
     
-    all_biz = [b for b in BUSINESSES.values() if b.get('category') == cat_slug and b.get('status'] == 'approved']
+    all_biz = [b for b in BUSINESSES.values() if b.get('category') == cat_slug and b.get('status') == 'approved']
     filtered = []
     for b in all_biz:
         if search_query:
@@ -347,7 +347,7 @@ def admin_panel():
     now = datetime.now()
     pending_biz = {k: v for k, v in BUSINESSES.items() if v.get('status') == 'pending'}
     approved_biz = {k: v for k, v in BUSINESSES.items() if v.get('status') == 'approved'}
-    pending_pay = {k: v for k, v in BUSINESSES.items() if v.get('payment_status'] == 'unpaid'}
+    pending_pay = {k: v for k, v in BUSINESSES.items() if v.get('payment_status') == 'unpaid'}
     paid_pay = {k: v for k, v in BUSINESSES.items() if v.get('payment_status') == 'paid' and v.get('expiry_date', now) >= now}
     
     expiring_alerts = {}
