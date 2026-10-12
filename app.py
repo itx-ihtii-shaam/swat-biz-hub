@@ -15,7 +15,7 @@ app = Flask(
 )
 app.secret_key = 'swat_biz_hub_secret_key'
 
-# Mock Database
+# Mock Database with Expanded Categories
 BUSINESSES = {
     '1': {
         'id': '1',
@@ -58,12 +58,56 @@ BUSINESSES = {
         'last_paid_date': datetime.now() - timedelta(days=40),
         'status': 'active',
     },
+    '3': {
+        'id': '3',
+        'category': 'pharmacies',
+        'name': 'Shifa Medical & Pharmacy',
+        'address': 'Green Chowk, Mingora, Swat',
+        'phones': ['+92 946 7123456'],
+        'image': 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=800&q=80',
+        'doctors': [],
+        'items': [
+            {
+                'name': 'First Aid Emergency Kit',
+                'price': '1500',
+                'offer': 'Free Delivery',
+                'image': 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=500&q=80'
+            }
+        ],
+        'joined_date': datetime.now() - timedelta(days=5),
+        'last_paid_date': datetime.now(),
+        'status': 'trial',
+    },
+    '4': {
+        'id': '4',
+        'category': 'supermarts',
+        'name': 'Swat Grand Supermart',
+        'address': 'Station Chowk, Mingora, Swat',
+        'phones': ['+92 946 8889999'],
+        'image': 'https://images.unsplash.com/photo-1578916171728-46686eac8d58?auto=format&fit=crop&w=800&q=80',
+        'doctors': [],
+        'items': [
+            {
+                'name': 'Cooking Oil (5 Litre)',
+                'price': '2800',
+                'offer': 'Sale',
+                'image': 'https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?auto=format&fit=crop&w=500&q=80'
+            }
+        ],
+        'joined_date': datetime.now() - timedelta(days=2),
+        'last_paid_date': datetime.now(),
+        'status': 'trial',
+    }
 }
 
 CATEGORIES = {
     'hospitals': {'title': 'Hospitals & Healthcare', 'icon': '🏥'},
+    'pharmacies': {'title': 'Pharmacies & Medical Stores', 'icon': '💊'},
     'restaurants': {'title': 'Restaurants & Cafes', 'icon': '🍽️'},
+    'supermarts': {'title': 'Supermarts & Grocery', 'icon': '🛒'},
     'property': {'title': 'Property Dealers', 'icon': '🏠'},
+    'hotels': {'title': 'Hotels & Guest Houses', 'icon': '🏨'},
+    'education': {'title': 'Educational Institutes', 'icon': '🎓'}
 }
 
 
@@ -144,7 +188,6 @@ def register_business():
         category = request.form.get('category')
         address = request.form.get('address')
         
-        # Multiple Phone Numbers processing
         phone_inputs = request.form.getlist('phone[]')
         phones = [p.strip() for p in phone_inputs if p.strip()]
         if not phones:
@@ -200,7 +243,7 @@ def register_business():
             'name': name,
             'address': address,
             'phones': phones,
-            'phone': phones[0],  # for backward compatibility
+            'phone': phones[0],
             'image': image,
             'doctors': doctors,
             'items': items,
