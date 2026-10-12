@@ -63,7 +63,6 @@ CATEGORIES = {
     'education': {'title': 'Educational Institutes', 'icon': '🎓'}
 }
 
-# Base Layout Template
 BASE_HEAD = '''
 <!DOCTYPE html>
 <html lang="en" id="html-root" class="dark">
@@ -94,7 +93,6 @@ FOOTER = '''
 </html>
 '''
 
-# Home Page Template
 INDEX_TEMPLATE = BASE_HEAD + '''
     <section class="py-16 px-4 text-center bg-gradient-to-b from-blue-950/20 to-transparent">
         <div class="max-w-3xl mx-auto space-y-4">
@@ -117,7 +115,6 @@ INDEX_TEMPLATE = BASE_HEAD + '''
     </main>
 ''' + FOOTER
 
-# Category Page Template with Live Search
 CATEGORY_TEMPLATE = BASE_HEAD + '''
     <main class="max-w-7xl mx-auto px-4 py-12">
         <div class="mb-10 text-center">
