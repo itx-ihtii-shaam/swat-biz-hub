@@ -103,7 +103,7 @@ INDEX_TEMPLATE = BASE_HEAD + '''
     <main class="max-w-7xl mx-auto px-4 pb-20">
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {% for slug, cat in categories.items() %}
-            <a href="{{ url_for('category_page', cat_slug=slug) }}" class="bg-white dark:bg-gray-900 p-8 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1.5 flex items-center space-x-5 group">
+            <a href="/category/{{ slug }}" class="bg-white dark:bg-gray-900 p-8 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1.5 flex items-center space-x-5 group">
                 <span class="text-5xl p-4 bg-gray-50 dark:bg-gray-800 rounded-2xl group-hover:scale-110 transition-transform">{{ cat.icon }}</span>
                 <div>
                     <h3 class="text-xl font-bold group-hover:text-blue-500 transition-colors">{{ cat.title }}</h3>
@@ -122,11 +122,11 @@ CATEGORY_TEMPLATE = BASE_HEAD + '''
             <h2 class="text-4xl font-extrabold mt-4">{{ category.title }}</h2>
             <p class="text-gray-500 dark:text-gray-400 mt-2">Explore verified listings in Swat & Mingora</p>
             
-            <form method="GET" action="{{ url_for('category_page', cat_slug=cat_slug) }}" class="mt-8 max-w-xl mx-auto flex gap-3">
+            <form method="GET" action="/category/{{ cat_slug }}" class="mt-8 max-w-xl mx-auto flex gap-3">
                 <input type="text" name="q" value="{{ search_query }}" placeholder="Search specific item, medicine, or property..." class="w-full px-5 py-3.5 rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
                 <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-white px-6 py-3.5 rounded-2xl font-semibold shadow-md transition">Search</button>
                 {% if search_query %}
-                <a href="{{ url_for('category_page', cat_slug=cat_slug) }}" class="bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300 px-4 py-3.5 rounded-2xl font-semibold flex items-center justify-center">Reset</a>
+                <a href="/category/{{ cat_slug }}" class="bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300 px-4 py-3.5 rounded-2xl font-semibold flex items-center justify-center">Reset</a>
                 {% endif %}
             </form>
         </div>
@@ -138,7 +138,7 @@ CATEGORY_TEMPLATE = BASE_HEAD + '''
                     <img src="{{ biz.image }}" alt="{{ biz.name }}" class="w-full h-48 object-cover">
                     <div class="p-6">
                         <h3 class="text-xl font-bold hover:text-blue-500 transition-colors">
-                            <a href="{{ url_for('business_detail', b_id=biz.id) }}">{{ biz.name }}</a>
+                            <a href="/business/{{ biz.id }}">{{ biz.name }}</a>
                         </h3>
                         <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">📍 {{ biz.address }}</p>
                         
@@ -156,13 +156,13 @@ CATEGORY_TEMPLATE = BASE_HEAD + '''
                     </div>
                 </div>
                 <div class="p-6 pt-0">
-                    <a href="{{ url_for('business_detail', b_id=biz.id) }}" class="block w-full text-center bg-blue-600 hover:bg-blue-500 text-white py-2.5 rounded-xl text-sm font-semibold transition">View Details & Contact</a>
+                    <a href="/business/{{ biz.id }}" class="block w-full text-center bg-blue-600 hover:bg-blue-500 text-white py-2.5 rounded-xl text-sm font-semibold transition">View Details & Contact</a>
                 </div>
             </div>
             {% else %}
             <div class="col-span-3 text-center py-20 text-gray-500">
                 <p class="text-xl">No businesses or items found matching your search.</p>
-                <a href="{{ url_for('category_page', cat_slug=cat_slug) }}" class="inline-block mt-4 text-blue-500 underline font-semibold">View all in this category</a>
+                <a href="/category/{{ cat_slug }}" class="inline-block mt-4 text-blue-500 underline font-semibold">View all in this category</a>
             </div>
             {% endfor %}
         </div>
