@@ -132,39 +132,29 @@ CATEGORY_TEMPLATE = BASE_HEAD + '''
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {% for biz in businesses %}
-            <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-sm hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-100 dark:border-gray-800 overflow-hidden flex flex-col justify-between">
-                <div>
-                    <img src="{{ biz.image }}" alt="{{ biz.name }}" class="w-full h-48 object-cover">
-                    <div class="p-6">
-                        <h3 class="text-xl font-bold hover:text-blue-500 transition-colors">
-                            <a href="/business/{{ biz.id }}">{{ biz.name }}</a>
-                        </h3>
-                        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">📍 {{ biz.address }}</p>
-                        
-                        {% if biz.items %}
-                        <div class="mt-4 pt-4 border-t border-gray-100 dark:border-gray-800 space-y-2">
-                            <span class="text-xs font-bold text-blue-500 uppercase">Available Items / Stock:</span>
-                            {% for item in biz.items %}
-                            <div class="flex justify-between items-center text-sm bg-gray-50 dark:bg-gray-800/60 p-2 rounded-xl">
-                                <span class="font-medium truncate max-w-[150px]">{{ item.name }}</span>
-                                <span class="text-emerald-600 dark:text-emerald-400 font-bold">Rs. {{ item.price }}</span>
-                            </div>
-                            {% endfor %}
+            {% if businesses %}
+                {% for biz in businesses %}
+                <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-sm hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-100 dark:border-gray-800 overflow-hidden flex flex-col justify-between">
+                    <div>
+                        <img src="{{ biz.image }}" alt="{{ biz.name }}" class="w-full h-48 object-cover">
+                        <div class="p-6">
+                            <h3 class="text-xl font-bold hover:text-blue-500 transition-colors">
+                                <a href="/business/{{ biz.id }}">{{ biz.name }}</a>
+                            </h3>
+                            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">📍 {{ biz.address }}</p>
                         </div>
-                        {% endif %}
+                    </div>
+                    <div class="p-6 pt-0">
+                        <a href="/business/{{ biz.id }}" class="block w-full text-center bg-blue-600 hover:bg-blue-500 text-white py-2.5 rounded-xl text-sm font-semibold transition">View Details & Contact</a>
                     </div>
                 </div>
-                <div class="p-6 pt-0">
-                    <a href="/business/{{ biz.id }}" class="block w-full text-center bg-blue-600 hover:bg-blue-500 text-white py-2.5 rounded-xl text-sm font-semibold transition">View Details & Contact</a>
-                </div>
-            </div>
+                {% endfor %}
             {% else %}
-            <div class="col-span-3 text-center py-20 text-gray-500">
-                <p class="text-xl">No businesses or items found matching your search.</p>
-                <a href="/category/{{ cat_slug }}" class="inline-block mt-4 text-blue-500 underline font-semibold">View all in this category</a>
-            </div>
-            {% endfor %}
+                <div class="col-span-3 text-center py-20 text-gray-500">
+                    <p class="text-xl">No businesses found in this category yet.</p>
+                    <a href="/" class="inline-block mt-4 text-blue-500 underline font-semibold">Back to Home</a>
+                </div>
+            {% endif %}
         </div>
     </main>
 ''' + FOOTER
@@ -182,13 +172,11 @@ def category_page(cat_slug):
     
     search_query = request.args.get('q', '').lower().strip()
     cat_businesses = []
+    
     for b in BUSINESSES.values():
-        if b.get('category') == cat_slug and b.get('status') != 'deleted':
+        if b.get('category') == cat_slug and b.get('status', 'trial') != 'deleted':
             if search_query:
-                matched = search_query in b.get('name', '').lower()
-                matched_items = [item for item in b.get('items', []) if search_query in item.get('name', '').lower()]
-                matched_doctors = [doc for doc in b.get('doctors', []) if search_query in doc.get('name', '').lower()]
-                if matched or matched_items or matched_doctors:
+                if search_query in b.get('name', '').lower():
                     cat_businesses.append(b)
             else:
                 cat_businesses.append(b)
@@ -206,7 +194,7 @@ def category_page(cat_slug):
 @app.route('/business/<b_id>')
 def business_detail(b_id):
     biz = BUSINESSES.get(b_id)
-    if not biz or biz['status'] == 'deleted':
+    if not biz:
         abort(404)
     
     detail_html = BASE_HEAD + f'''
@@ -230,23 +218,17 @@ def register_business():
         name = request.form.get('name')
         category = request.form.get('category')
         address = request.form.get('address')
-        phone_inputs = request.form.getlist('phone[]')
-        phones = [p.strip() for p in phone_inputs if p.strip()] or ['+92 946 0000000']
-        
-        image_url = request.form.get('image_url')
-        image = image_url.strip() if image_url and image_url.strip() else 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=800&q=80'
+        phone = request.form.get('phone[]', '+92 946 0000000')
 
         BUSINESSES[b_id] = {
             'id': b_id,
             'category': category,
             'name': name,
             'address': address,
-            'phones': phones,
-            'image': image,
+            'phones': [phone],
+            'image': 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=800&q=80',
             'doctors': [],
             'items': [],
-            'joined_date': datetime.now(),
-            'last_paid_date': datetime.now(),
             'status': 'trial'
         }
         return redirect(url_for('home'))
@@ -276,28 +258,12 @@ def register_business():
                     <label class="block text-sm font-medium mb-1">Address</label>
                     <input type="text" name="address" required placeholder="Mingora, Swat" class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-700 outline-none">
                 </div>
-                <div>
-                    <label class="block text-sm font-medium mb-1">Image URL</label>
-                    <input type="url" name="image_url" placeholder="https://images.unsplash.com/..." class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-700 outline-none">
-                </div>
                 <button type="submit" class="w-full bg-blue-600 text-white font-bold py-3.5 rounded-xl shadow-lg mt-4">Submit Listing</button>
             </form>
         </div>
     </main>
     ''' + FOOTER
     return render_template_string(reg_html, categories=CATEGORIES, title="Register")
-
-
-@app.route('/admin')
-def admin_panel():
-    return render_template_string(BASE_HEAD + '''
-    <main class="max-w-5xl mx-auto px-4 py-12">
-        <h2 class="text-3xl font-bold mb-6">Admin Panel - Listings</h2>
-        <div class="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow border border-gray-800">
-            <p class="text-gray-400">Total Businesses Registered: ''' + str(len(BUSINESSES)) + '''</p>
-        </div>
-    </main>
-    ''' + FOOTER, title="Admin")
 
 
 handler = app
