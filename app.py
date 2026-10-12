@@ -1,4 +1,4 @@
-"""SwatBiz Hub - Final Complete Application with Favicon & Admin Modules."""
+"""SwatBiz Hub - Updated Admin Navigation Logic."""
 from datetime import datetime, timedelta
 import os
 from flask import Flask, abort, redirect, render_template_string, request, url_for, session
@@ -83,6 +83,50 @@ BASE_HEAD = '''
     </header>
 '''
 
+ADMIN_HEAD = '''
+<!DOCTYPE html>
+<html lang="en" id="html-root" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - ''' + SITE_NAME + '''</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛠️</text></svg>">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>tailwind.config = { darkMode: 'class' }</script>
+</head>
+<body class="bg-gray-950 text-gray-100 min-h-screen transition-colors duration-300">
+    <header class="bg-gradient-to-r from-slate-900 via-blue-950 to-indigo-950 text-white shadow-xl">
+        <div class="max-w-7xl mx-auto px-4 py-6 flex justify-between items-center">
+            <span class="text-xl font-bold">🛠️ Admin Control Center</span>
+            <div class="flex items-center space-x-3">
+                <a href="/admin?action=logout" class="bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white px-4 py-2 rounded-xl text-sm font-bold transition">Logout</a>
+            </div>
+        </div>
+    </header>
+'''
+
+ADMIN_SUB_HEAD = '''
+<!DOCTYPE html>
+<html lang="en" id="html-root" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - ''' + SITE_NAME + '''</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛠️</text></svg>">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>tailwind.config = { darkMode: 'class' }</script>
+</head>
+<body class="bg-gray-950 text-gray-100 min-h-screen transition-colors duration-300">
+    <header class="bg-gradient-to-r from-slate-900 via-blue-950 to-indigo-950 text-white shadow-xl">
+        <div class="max-w-7xl mx-auto px-4 py-6 flex justify-between items-center">
+            <a href="/admin" class="text-xl font-bold hover:underline flex items-center gap-2">← Back to Admin Hub</a>
+            <div class="flex items-center space-x-3">
+                <a href="/admin?action=logout" class="bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white px-4 py-2 rounded-xl text-sm font-bold transition">Logout</a>
+            </div>
+        </div>
+    </header>
+'''
+
 FOOTER = '''
     <footer class="text-center py-8 text-sm text-gray-500 border-t border-gray-800 mt-20">
         <p>&copy; 2026 ''' + SITE_NAME + '''. All rights reserved.</p>
@@ -105,35 +149,16 @@ def home():
         </a>
         '''
     
-    html = '''
-    <!DOCTYPE html>
-    <html lang="en" id="html-root" class="dark">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>''' + SITE_NAME + '''</title>
-        <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏙️</text></svg>">
-        <script src="https://cdn.tailwindcss.com"></script>
-        <script>tailwind.config = { darkMode: 'class' }</script>
-    </head>
-    <body class="bg-gray-950 text-gray-100 min-h-screen transition-colors duration-300">
-        <header class="bg-gradient-to-r from-slate-900 via-blue-950 to-indigo-950 text-white shadow-xl">
-            <div class="max-w-7xl mx-auto px-4 py-6 flex justify-between items-center">
-                <a href="/" class="text-2xl font-extrabold tracking-tight hover:opacity-85 transition">🏙️ ''' + SITE_NAME + '''</a>
-                <div class="flex items-center space-x-3">
-                    <a href="/register" class="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-xl text-sm font-bold shadow-lg transform hover:-translate-y-0.5 transition-all">＋ Register Business</a>
-                </div>
-            </div>
-        </header>
-        <section class="py-16 px-4 text-center">
-            <h2 class="text-4xl md:text-5xl font-black tracking-tight">Discover Swat & Mingora Businesses</h2>
-            <p class="text-gray-400 text-lg mt-2">Find verified local services instantly.</p>
-        </section>
-        <main class="max-w-7xl mx-auto px-4 pb-20">
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                ''' + cards + '''
-            </div>
-        </main>
+    html = BASE_HEAD + '''
+    <section class="py-16 px-4 text-center">
+        <h2 class="text-4xl md:text-5xl font-black tracking-tight">Discover Swat & Mingora Businesses</h2>
+        <p class="text-gray-400 text-lg mt-2">Find verified local services instantly.</p>
+    </section>
+    <main class="max-w-7xl mx-auto px-4 pb-20">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            ''' + cards + '''
+        </div>
+    </main>
     ''' + FOOTER
     return render_template_string(html)
 
@@ -145,7 +170,7 @@ def category_page(cat_slug):
     cat = CATEGORIES[cat_slug]
     search_query = request.args.get('q', '').lower().strip()
     
-    all_biz = [b for b in BUSINESSES.values() if b.get('category') == cat_slug and b.get('status') == 'approved']
+    all_biz = [b for b in BUSINESSES.values() if b.get('category') == cat_slug and b.get('status'] == 'approved']
     filtered = []
     for b in all_biz:
         if search_query:
@@ -322,7 +347,7 @@ def admin_panel():
     now = datetime.now()
     pending_biz = {k: v for k, v in BUSINESSES.items() if v.get('status') == 'pending'}
     approved_biz = {k: v for k, v in BUSINESSES.items() if v.get('status') == 'approved'}
-    pending_pay = {k: v for k, v in BUSINESSES.items() if v.get('payment_status') == 'unpaid'}
+    pending_pay = {k: v for k, v in BUSINESSES.items() if v.get('payment_status'] == 'unpaid'}
     paid_pay = {k: v for k, v in BUSINESSES.items() if v.get('payment_status') == 'paid' and v.get('expiry_date', now) >= now}
     
     expiring_alerts = {}
@@ -339,11 +364,10 @@ def admin_panel():
                 expired_subs[k] = v
 
     if not module:
-        html = BASE_HEAD + '''
+        html = ADMIN_HEAD + '''
         <main class="max-w-5xl mx-auto px-4 py-12">
             <div class="flex justify-between items-center mb-10">
                 <h2 class="text-3xl font-extrabold">🛠️ Admin Control Center</h2>
-                <a href="/admin?action=logout" class="bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white px-4 py-2 rounded-xl text-sm font-bold transition">Logout</a>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -411,10 +435,9 @@ def admin_panel():
                 </div>
                 '''
 
-        html = BASE_HEAD + '''
+        html = ADMIN_SUB_HEAD + '''
         <main class="max-w-5xl mx-auto px-4 py-12">
-            <div class="flex justify-between items-center mb-8">
-                <a href="/admin" class="text-sm font-bold text-blue-500 hover:underline">← Back to Admin Hub</a>
+            <div class="mb-8">
                 <h2 class="text-2xl font-extrabold">🏢 Business Directory Module</h2>
             </div>
             <div class="flex space-x-3 mb-6">
@@ -481,10 +504,9 @@ def admin_panel():
                 </div>
                 '''
 
-        html = BASE_HEAD + '''
+        html = ADMIN_SUB_HEAD + '''
         <main class="max-w-5xl mx-auto px-4 py-12">
-            <div class="flex justify-between items-center mb-8">
-                <a href="/admin" class="text-sm font-bold text-indigo-500 hover:underline">← Back to Admin Hub</a>
+            <div class="mb-8">
                 <h2 class="text-2xl font-extrabold">💳 Payment & Subscription Module</h2>
             </div>
             <div class="flex flex-wrap gap-3 mb-8">
