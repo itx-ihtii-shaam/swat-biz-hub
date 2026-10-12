@@ -1,4 +1,4 @@
-"""SwatBiz Hub - Stable & Clean Admin Navigation Fixed."""
+"""SwatBiz Hub - Clean Home Header Update."""
 from datetime import datetime, timedelta
 import os
 from flask import Flask, abort, redirect, render_template_string, request, url_for, session
@@ -60,6 +60,28 @@ CATEGORIES = {
     'hotels': {'title': 'Hotels & Guest Houses', 'icon': '🏨', 'search_hint': 'Search hotel...'},
     'education': {'title': 'Educational Institutes', 'icon': '🎓', 'search_hint': 'Search school or college...'}
 }
+
+HOME_HEAD = '''
+<!DOCTYPE html>
+<html lang="en" id="html-root" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>''' + SITE_NAME + '''</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏙️</text></svg>">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>tailwind.config = { darkMode: 'class' }</script>
+</head>
+<body class="bg-gray-950 text-gray-100 min-h-screen transition-colors duration-300">
+    <header class="bg-gradient-to-r from-slate-900 via-blue-950 to-indigo-950 text-white shadow-xl">
+        <div class="max-w-7xl mx-auto px-4 py-6 flex justify-between items-center">
+            <a href="/" class="text-2xl font-extrabold tracking-tight hover:opacity-85 transition">🏙️ ''' + SITE_NAME + '''</a>
+            <div class="flex items-center space-x-3">
+                <a href="/register" class="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-xl text-sm font-bold shadow-lg transform hover:-translate-y-0.5 transition-all">＋ Register Business</a>
+            </div>
+        </div>
+    </header>
+'''
 
 BASE_HEAD = '''
 <!DOCTYPE html>
@@ -149,7 +171,7 @@ def home():
         </a>
         '''
     
-    html = BASE_HEAD + '''
+    html = HOME_HEAD + '''
     <section class="py-16 px-4 text-center">
         <h2 class="text-4xl md:text-5xl font-black tracking-tight">Discover Swat & Mingora Businesses</h2>
         <p class="text-gray-400 text-lg mt-2">Find verified local services instantly.</p>
@@ -170,7 +192,7 @@ def category_page(cat_slug):
     cat = CATEGORIES[cat_slug]
     search_query = request.args.get('q', '').lower().strip()
     
-    all_biz = [b for b in BUSINESSES.values() if b.get('category') == cat_slug and b.get('status') == 'approved']
+    all_biz = [b for b in BUSINESSES.values() if b.get('category'] == cat_slug and b.get('status') == 'approved']
     filtered = []
     for b in all_biz:
         if search_query:
