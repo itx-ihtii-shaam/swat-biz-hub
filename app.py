@@ -50,6 +50,22 @@ BUSINESSES = {
         'joined_date': datetime.now() - timedelta(days=5),
         'last_paid_date': datetime.now(),
         'status': 'trial',
+    },
+    '4': {
+        'id': '4',
+        'category': 'education',
+        'name': 'Swat Public School & College',
+        'address': 'Circular Road, Wadpachha, Mingora, Swat',
+        'phones': ['+92 946 7112233'],
+        'image': 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&w=800&q=80',
+        'doctors': [],
+        'items': [
+            {'name': 'Primary & Middle School Section', 'price': 'Monthly Fee', 'offer': 'Admissions Open'},
+            {'name': 'Higher Secondary College (FSc/FA)', 'price': 'Semester Fee', 'offer': 'Scholarships Available'}
+        ],
+        'joined_date': datetime.now() - timedelta(days=2),
+        'last_paid_date': datetime.now(),
+        'status': 'trial',
     }
 }
 
@@ -60,7 +76,7 @@ CATEGORIES = {
     'supermarts': {'title': 'Supermarts & Grocery', 'icon': '🛒', 'search_hint': 'Search grocery item or store...'},
     'property': {'title': 'Property Dealers', 'icon': '🏠', 'search_hint': 'Search plot, house or dealer...'},
     'hotels': {'title': 'Hotels & Guest Houses', 'icon': '🏨', 'search_hint': 'Search hotel or room type...'},
-    'education': {'title': 'Educational Institutes', 'icon': '🎓', 'search_hint': 'Search school, college or academy...'}
+    'education': {'title': 'Schools, Colleges & Universities', 'icon': '🎓', 'search_hint': 'Search school, college, university or academy...'}
 }
 
 INDEX_BASE_HEAD = '''
@@ -121,7 +137,7 @@ INDEX_TEMPLATE = INDEX_BASE_HEAD + '''
     <section class="py-16 px-4 text-center bg-gradient-to-b from-blue-950/20 to-transparent">
         <div class="max-w-3xl mx-auto space-y-4">
             <h2 class="text-4xl md:text-5xl font-black tracking-tight">Discover Swat & Mingora Businesses</h2>
-            <p class="text-gray-500 dark:text-gray-400 text-lg">Find top hospitals, pharmacies, restaurants, supermarts, hotels, and education institutes instantly.</p>
+            <p class="text-gray-500 dark:text-gray-400 text-lg">Find top hospitals, pharmacies, restaurants, supermarts, hotels, and educational institutes instantly.</p>
         </div>
     </section>
     <main class="max-w-7xl mx-auto px-4 pb-20">
@@ -179,7 +195,7 @@ CATEGORY_TEMPLATE = BASE_HEAD + '''
                 {% endfor %}
             {% else %}
                 <div class="col-span-3 text-center py-20 text-gray-500">
-                    <p class="text-xl">No businesses found matching your criteria.</p>
+                    <p class="text-xl">No institutions found matching your criteria.</p>
                     <a href="/category/{{ cat_slug }}" class="inline-block mt-4 text-blue-500 underline font-semibold">Reset Search</a>
                 </div>
             {% endif %}
@@ -313,11 +329,11 @@ def register_business():
     reg_html = BASE_HEAD + '''
     <main class="max-w-3xl mx-auto px-4 py-12">
         <div class="bg-white dark:bg-gray-900 p-8 rounded-3xl shadow-2xl border border-gray-100 dark:border-gray-800">
-            <h2 class="text-3xl font-extrabold text-center mb-6">Register Your Business</h2>
+            <h2 class="text-3xl font-extrabold text-center mb-6">Register Your Business or Institution</h2>
             <form method="POST" class="space-y-4">
                 <div>
-                    <label class="block text-sm font-medium mb-1">Business Name</label>
-                    <input type="text" name="name" required placeholder="e.g. Swat Mart" class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-700 outline-none">
+                    <label class="block text-sm font-medium mb-1">Name (Business / School / College)</label>
+                    <input type="text" name="name" required placeholder="e.g. City Model School" class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-700 outline-none">
                 </div>
                 <div>
                     <label class="block text-sm font-medium mb-1">Category</label>
@@ -349,7 +365,7 @@ def admin_panel():
     <main class="max-w-5xl mx-auto px-4 py-12">
         <h2 class="text-3xl font-bold mb-6">Admin Panel - Listings</h2>
         <div class="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow border border-gray-800">
-            <p class="text-gray-400">Total Businesses Registered: ''' + str(len(BUSINESSES)) + '''</p>
+            <p class="text-gray-400">Total Registered: ''' + str(len(BUSINESSES)) + '''</p>
         </div>
     </main>
     ''' + FOOTER, title="Admin")
