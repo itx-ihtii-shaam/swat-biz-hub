@@ -1,4 +1,4 @@
-"""SwatBiz Hub - Local Business Directory with Subscription & Expiry System."""
+"""SwatBiz Hub - Advanced Admin Panel with Tabs, Categorized Approvals & Expiry Alerts."""
 from datetime import datetime, timedelta
 import os
 import base64
@@ -9,6 +9,7 @@ SITE_NAME = 'SwatBiz Hub'
 app = Flask(__name__)
 app.secret_key = 'swat_biz_hub_secret_key'
 
+# Demo Data with varying expiry & payment status
 BUSINESSES = {
     '1': {
         'id': '1',
@@ -27,9 +28,28 @@ BUSINESSES = {
             },
         ],
         'items': [],
-        'joined_date': datetime.now() - timedelta(days=10),
-        'last_paid_date': datetime.now(),
+        'joined_date': datetime.now() - timedelta(days=25),
+        'expiry_date': datetime.now() + timedelta(days=3), # Expiry in 3 days (RED ALERT)
         'status': 'approved',
+        'payment_method': 'Bank Transfer',
+        'payment_ref': 'TXN-984210',
+        'payment_status': 'paid'
+    },
+    '2': {
+        'id': '2',
+        'category': 'restaurants',
+        'name': 'Khyber Shinwari Restaurant',
+        'address': 'Fizagat, Swat',
+        'phones': ['+92 946 881122'],
+        'image': 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=800&q=80',
+        'doctors': [],
+        'items': [],
+        'joined_date': datetime.now() - timedelta(days=1),
+        'expiry_date': datetime.now() + timedelta(days=30),
+        'status': 'pending', # Pending Business Approval
+        'payment_method': 'EasyPaisa',
+        'payment_ref': 'TID-9920182',
+        'payment_status': 'unpaid' # Pending Payment Approval
     },
     '3': {
         'id': '3',
@@ -48,8 +68,11 @@ BUSINESSES = {
             }
         ],
         'joined_date': datetime.now() - timedelta(days=5),
-        'last_paid_date': datetime.now(),
+        'expiry_date': datetime.now() + timedelta(days=25),
         'status': 'approved',
+        'payment_method': 'EasyPaisa',
+        'payment_ref': 'TID-7782194',
+        'payment_status': 'paid'
     },
     '4': {
         'id': '4',
@@ -60,8 +83,11 @@ BUSINESSES = {
         'phones': ['+92 946 7112233'],
         'image': 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&w=800&q=80',
         'joined_date': datetime.now() - timedelta(days=2),
-        'last_paid_date': datetime.now(),
+        'expiry_date': datetime.now() + timedelta(days=2), # Expiry in 2 days (RED ALERT)
         'status': 'approved',
+        'payment_method': 'Bank Transfer',
+        'payment_ref': 'Meezan Bank - 001283',
+        'payment_status': 'paid'
     },
     '5': {
         'id': '5',
@@ -72,8 +98,11 @@ BUSINESSES = {
         'phones': ['+92 946 7144556'],
         'image': 'https://images.unsplash.com/photo-1578916171728-46686eac8d58?auto=format&fit=crop&w=800&q=80',
         'joined_date': datetime.now() - timedelta(days=4),
-        'last_paid_date': datetime.now(),
+        'expiry_date': datetime.now() + timedelta(days=26),
         'status': 'approved',
+        'payment_method': 'JazzCash',
+        'payment_ref': 'TID-8849102',
+        'payment_status': 'paid'
     }
 }
 
@@ -191,7 +220,6 @@ CATEGORY_TEMPLATE = BASE_HEAD + '''
             <p class="text-gray-500 dark:text-gray-400 mt-2">Explore verified listings in Swat & Mingora</p>
             
             {% if sub_categories %}
-            <!-- Sub Categories Tabs -->
             <div class="flex flex-wrap justify-center gap-2 mt-6">
                 {% for sub in sub_categories %}
                 <a href="/category/{{ cat_slug }}?sub={{ sub.slug }}" class="px-5 py-2.5 rounded-xl font-semibold text-sm transition-all {% if active_sub == sub.slug %} bg-blue-600 text-white shadow-lg {% else %} bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 {% endif %}">
@@ -212,7 +240,6 @@ CATEGORY_TEMPLATE = BASE_HEAD + '''
                     <a href="/category/{{ cat_slug }}{% if active_sub %}?sub={{ active_sub }}{% endif %}" class="bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300 px-4 py-3.5 rounded-2xl font-semibold flex items-center justify-center">Reset</a>
                     {% endif %}
                 </form>
-                <!-- Live Suggestions Dropdown -->
                 <div id="suggestionsBox" class="absolute left-0 right-0 mt-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-xl hidden z-50 overflow-hidden text-left"></div>
             </div>
         </div>
@@ -317,11 +344,9 @@ def category_page(cat_slug):
         if b.get('category') == cat_slug and b.get('status') == 'approved':
             all_cat_biz.append(b)
             
-            # Sub-category filter
             if sub_query != 'all' and b.get('sub_category') != sub_query:
                 continue
                 
-            # Search query filter (checks name AND location address)
             if search_query:
                 b_name = b.get('name', '').lower()
                 b_addr = b.get('address', '').lower()
@@ -373,6 +398,8 @@ def register_business():
         sub_category = request.form.get('sub_category', '')
         address = request.form.get('address')
         phone = request.form.get('phone[]', '+92 946 0000000')
+        payment_method = request.form.get('payment_method', 'Other')
+        payment_ref = request.form.get('payment_ref', 'N/A')
 
         BUSINESSES[b_id] = {
             'id': b_id,
@@ -385,14 +412,18 @@ def register_business():
             'doctors': [],
             'items': [],
             'joined_date': datetime.now(),
-            'status': 'pending'
+            'expiry_date': datetime.now() + timedelta(days=30), # Default 30 days subscription
+            'status': 'pending',
+            'payment_method': payment_method,
+            'payment_ref': payment_ref,
+            'payment_status': 'unpaid'
         }
         return render_template_string(BASE_HEAD + '''
         <main class="max-w-2xl mx-auto px-4 py-20 text-center">
             <div class="bg-white dark:bg-gray-900 p-8 rounded-3xl shadow-xl border border-gray-100 dark:border-gray-800 space-y-4">
                 <span class="text-6xl">🎉</span>
                 <h2 class="text-3xl font-bold">Registration Submitted!</h2>
-                <p class="text-gray-400">Your listing has been submitted for review. It will be live on SwatBiz Hub once approved by Admin.</p>
+                <p class="text-gray-400">Your listing and payment details have been submitted for review. It will be live on SwatBiz Hub once approved by Admin.</p>
                 <a href="/" class="inline-block mt-4 bg-blue-600 text-white px-6 py-3 rounded-xl font-semibold">Return to Home</a>
             </div>
         </main>
@@ -429,7 +460,25 @@ def register_business():
                     <label class="block text-sm font-medium mb-1">Address / Location</label>
                     <input type="text" name="address" required placeholder="e.g. Circular Road, Mingora, Swat" class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-700 outline-none">
                 </div>
-                <button type="submit" class="w-full bg-blue-600 text-white font-bold py-3.5 rounded-xl shadow-lg mt-4">Submit Listing</button>
+                <div class="pt-4 border-t border-gray-200 dark:border-gray-800">
+                    <h3 class="text-lg font-bold mb-3">💳 Payment Proof / Details</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-1">Payment Method</label>
+                            <select name="payment_method" class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-700 outline-none cursor-pointer">
+                                <option value="EasyPaisa">📱 EasyPaisa</option>
+                                <option value="JazzCash">📱 JazzCash</option>
+                                <option value="Bank Transfer">🏦 Bank Transfer (Meezan/HBL etc.)</option>
+                                <option value="Cash">💵 Cash / Hand-to-Hand</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1">TID / Transaction Ref / Sender Name</label>
+                            <input type="text" name="payment_ref" placeholder="e.g. TID: 994820 or Account Title" class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-700 outline-none">
+                        </div>
+                    </div>
+                </div>
+                <button type="submit" class="w-full bg-blue-600 text-white font-bold py-3.5 rounded-xl shadow-lg mt-6">Submit Listing & Payment</button>
             </form>
         </div>
     </main>
@@ -474,6 +523,7 @@ def register_business():
     return render_template_string(reg_html, categories=CATEGORIES, title="Register")
 
 
+# --- ADVANCED CATEGORIZED ADMIN PANEL ---
 @app.route('/admin')
 def admin_panel():
     action = request.args.get('action')
@@ -482,43 +532,202 @@ def admin_panel():
     if action and biz_id in BUSINESSES:
         if action == 'approve':
             BUSINESSES[biz_id]['status'] = 'approved'
+        elif action == 'approve_payment':
+            BUSINESSES[biz_id]['payment_status'] = 'paid'
+            BUSINESSES[biz_id]['last_paid_date'] = datetime.now()
+            BUSINESSES[biz_id]['expiry_date'] = datetime.now() + timedelta(days=30) # Renew for 30 days
         elif action == 'delete':
             BUSINESSES[biz_id]['status'] = 'deleted'
         return redirect('/admin')
 
-    admin_html = BASE_HEAD + '''
-    <main class="max-w-6xl mx-auto px-4 py-12">
-        <h2 class="text-3xl font-bold mb-8">🛠️ Admin Approval & Management Panel</h2>
+    now = datetime.now()
+
+    # Categorize Listings
+    pending_businesses = {}
+    approved_businesses = {}
+    pending_payments = {}
+    confirmed_payments = {}
+    expiring_soon = {} # Less than 5 days remaining
+
+    for b_id, biz in BUSINESSES.items():
+        if biz.get('status') == 'deleted':
+            continue
+
+        # Check Business Approval Status
+        if biz.get('status') == 'pending':
+            pending_businesses[b_id] = biz
+        else:
+            approved_businesses[b_id] = biz
+
+        # Check Payment Status
+        if biz.get('payment_status') == 'unpaid':
+            pending_payments[b_id] = biz
+        else:
+            confirmed_payments[b_id] = biz
+
+        # Check Expiry Alert (<= 5 Days left)
+        expiry_dt = biz.get('expiry_date', now + timedelta(days=30))
+        days_left = (expiry_dt - now).days
+        biz['days_left'] = days_left
         
-        <div class="space-y-6">
-            {% for b_id, biz in all_biz.items() %}
-            {% if biz.status != 'deleted' %}
-            <div class="bg-white dark:bg-gray-900 rounded-2xl p-6 border border-gray-200 dark:border-gray-800 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div>
-                    <div class="flex items-center space-x-3">
-                        <h3 class="text-xl font-bold">{{ biz.name }}</h3>
-                        {% if biz.status == 'approved' %}
-                        <span class="bg-green-500/20 text-green-400 text-xs px-3 py-1 rounded-full font-bold">Approved</span>
-                        {% else %}
-                        <span class="bg-yellow-500/20 text-yellow-400 text-xs px-3 py-1 rounded-full font-bold">Pending Review</span>
-                        {% endif %}
+        if days_left <= 5:
+            expiring_soon[b_id] = biz
+
+    admin_html = BASE_HEAD + '''
+    <main class="max-w-7xl mx-auto px-4 py-12">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+            <div>
+                <h2 class="text-3xl font-extrabold">🛠️ Admin Control Center</h2>
+                <p class="text-gray-400 text-sm mt-1">Manage Listings, Payments & Subscription Alerts</p>
+            </div>
+            
+            <!-- Category Alert Pills -->
+            <div class="flex flex-wrap gap-2 text-xs font-bold">
+                <span class="bg-yellow-500/20 text-yellow-400 px-3 py-1.5 rounded-xl">Pending Biz: {{ pending_biz|length }}</span>
+                <span class="bg-orange-500/20 text-orange-400 px-3 py-1.5 rounded-xl">Pending Payments: {{ pending_pay|length }}</span>
+                <span class="bg-red-500/20 text-red-400 px-3 py-1.5 rounded-xl animate-pulse">⚠️ Expiry Alerts: {{ expiring|length }}</span>
+            </div>
+        </div>
+
+        <!-- 🔴 SECTION 1: EXPIRING SOON ALERTS (< 5 DAYS) -->
+        {% if expiring %}
+        <div class="mb-12 bg-red-950/30 border border-red-500/30 rounded-3xl p-6 shadow-2xl">
+            <h3 class="text-xl font-bold text-red-400 mb-4 flex items-center space-x-2">
+                <span>⚠️ Subscriptions Expiring Soon (Short Time Alert - Less than 5 Days)</span>
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {% for b_id, biz in expiring.items() %}
+                <div class="bg-gray-900 border-2 border-red-500/60 rounded-2xl p-5 shadow-lg flex justify-between items-center">
+                    <div>
+                        <h4 class="font-bold text-lg text-white">{{ biz.name }}</h4>
+                        <p class="text-xs text-gray-400 mt-1">📍 {{ biz.address }} | 📞 {{ biz.phones[0] if biz.phones else 'N/A' }}</p>
+                        <p class="text-xs font-bold text-red-400 mt-2">⏳ Days Remaining: {{ biz.days_left }} Day(s) Left!</p>
                     </div>
-                    <p class="text-sm text-gray-400 mt-1">📍 {{ biz.address }} | 📞 {{ biz.phones[0] if biz.phones else 'N/A' }}</p>
-                    <p class="text-xs text-gray-500 mt-1">Category: {{ biz.category }} {% if biz.sub_category %}({{ biz.sub_category }}){% endif %}</p>
+                    <div>
+                        <a href="/admin?action=approve_payment&id={{ b_id }}" class="bg-red-600 hover:bg-red-500 text-white text-xs px-4 py-2.5 rounded-xl font-bold shadow transition">Renew (+30 Days)</a>
+                    </div>
                 </div>
-                <div class="flex items-center gap-3">
-                    {% if biz.status == 'pending' %}
-                    <a href="/admin?action=approve&id={{ b_id }}" class="bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded-xl text-sm font-bold shadow transition">Approve</a>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- TABS CONTAINER -->
+        <div class="space-y-10">
+            
+            <!-- 🏢 SECTION 2: BUSINESS LISTINGS (PENDING vs APPROVED) -->
+            <div class="bg-white dark:bg-gray-900 rounded-3xl p-6 border border-gray-100 dark:border-gray-800 shadow-xl space-y-6">
+                <h3 class="text-2xl font-black text-blue-400 flex items-center gap-2">
+                    <span>🏢 Business Listings Management</span>
+                </h3>
+
+                <!-- Category 1: Pending Listings -->
+                <div>
+                    <h4 class="text-md font-bold text-yellow-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                        <span>⏳ Pending Business Listings (Need Approval)</span>
+                        <span class="bg-yellow-500/20 text-yellow-300 text-xs px-2 py-0.5 rounded-full">{{ pending_biz|length }}</span>
+                    </h4>
+                    {% if pending_biz %}
+                        <div class="space-y-3">
+                            {% for b_id, biz in pending_biz.items() %}
+                            <div class="bg-gray-50 dark:bg-gray-800/60 p-4 rounded-2xl border border-yellow-500/30 flex justify-between items-center">
+                                <div>
+                                    <h5 class="font-bold text-base">{{ biz.name }}</h5>
+                                    <p class="text-xs text-gray-400">📍 {{ biz.address }} | 📞 {{ biz.phones[0] if biz.phones else 'N/A' }} | Cat: {{ biz.category }}</p>
+                                </div>
+                                <div class="flex gap-2">
+                                    <a href="/admin?action=approve&id={{ b_id }}" class="bg-green-600 hover:bg-green-500 text-white px-3.5 py-1.5 rounded-xl text-xs font-bold shadow transition">Approve Listing</a>
+                                    <a href="/admin?action=delete&id={{ b_id }}" class="bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white px-3 py-1.5 rounded-xl text-xs font-bold transition">Delete</a>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-sm text-gray-500 italic bg-gray-800/30 p-3 rounded-xl">No pending business approvals right now.</p>
                     {% endif %}
-                    <a href="/admin?action=delete&id={{ b_id }}" class="bg-red-600/20 hover:bg-red-600 text-red-400 hover:text-white px-4 py-2 rounded-xl text-sm font-bold transition">Delete</a>
+                </div>
+
+                <!-- Category 2: Approved Listings -->
+                <div class="pt-4 border-t border-gray-800">
+                    <h4 class="text-md font-bold text-green-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                        <span>✅ Approved & Live Businesses</span>
+                        <span class="bg-green-500/20 text-green-300 text-xs px-2 py-0.5 rounded-full">{{ approved_biz|length }}</span>
+                    </h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {% for b_id, biz in approved_biz.items() %}
+                        <div class="bg-gray-50 dark:bg-gray-800/40 p-4 rounded-2xl border border-gray-200 dark:border-gray-800 flex justify-between items-center">
+                            <div>
+                                <h5 class="font-bold text-base">{{ biz.name }}</h5>
+                                <p class="text-xs text-gray-400">📍 {{ biz.address }} | 📞 {{ biz.phones[0] if biz.phones else 'N/A' }}</p>
+                            </div>
+                            <a href="/admin?action=delete&id={{ b_id }}" class="bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white px-3 py-1.5 rounded-xl text-xs font-bold transition">Delete</a>
+                        </div>
+                        {% endfor %}
+                    </div>
                 </div>
             </div>
-            {% endif %}
-            {% endfor %}
+
+            <!-- 💳 SECTION 3: PAYMENTS (PENDING vs CONFIRMED) -->
+            <div class="bg-white dark:bg-gray-900 rounded-3xl p-6 border border-gray-100 dark:border-gray-800 shadow-xl space-y-6">
+                <h3 class="text-2xl font-black text-indigo-400 flex items-center gap-2">
+                    <span>💳 Payment Approvals & History</span>
+                </h3>
+
+                <!-- Category 1: Pending Payments -->
+                <div>
+                    <h4 class="text-md font-bold text-orange-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                        <span>⚠️ Pending Payment Approvals (Needs Verification)</span>
+                        <span class="bg-orange-500/20 text-orange-300 text-xs px-2 py-0.5 rounded-full">{{ pending_pay|length }}</span>
+                    </h4>
+                    {% if pending_pay %}
+                        <div class="space-y-3">
+                            {% for b_id, biz in pending_pay.items() %}
+                            <div class="bg-gray-50 dark:bg-gray-800/60 p-4 rounded-2xl border border-orange-500/30 flex justify-between items-center">
+                                <div>
+                                    <h5 class="font-bold text-base">{{ biz.name }}</h5>
+                                    <p class="text-xs text-blue-400">Method: <strong>{{ biz.get('payment_method', 'N/A') }}</strong> | Ref/TID: <code>{{ biz.get('payment_ref', 'N/A') }}</code></p>
+                                </div>
+                                <div>
+                                    <a href="/admin?action=approve_payment&id={{ b_id }}" class="bg-blue-600 hover:bg-blue-500 text-white px-3.5 py-2 rounded-xl text-xs font-bold shadow transition">Confirm Payment</a>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-sm text-gray-500 italic bg-gray-800/30 p-3 rounded-xl">No pending payments to verify.</p>
+                    {% endif %}
+                </div>
+
+                <!-- Category 2: Confirmed Payments -->
+                <div class="pt-4 border-t border-gray-800">
+                    <h4 class="text-md font-bold text-blue-400 uppercase tracking-wider mb-3 flex items-center gap-2">
+                        <span>💳 Confirmed & Paid Subscriptions</span>
+                        <span class="bg-blue-500/20 text-blue-300 text-xs px-2 py-0.5 rounded-full">{{ confirmed_pay|length }}</span>
+                    </h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {% for b_id, biz in confirmed_pay.items() %}
+                        <div class="bg-gray-50 dark:bg-gray-800/40 p-4 rounded-2xl border border-gray-200 dark:border-gray-800">
+                            <h5 class="font-bold text-base">{{ biz.name }}</h5>
+                            <p class="text-xs text-gray-400 mt-0.5">Method: {{ biz.get('payment_method') }} | Ref: <code>{{ biz.get('payment_ref') }}</code></p>
+                            <p class="text-xs text-green-400 font-bold mt-1">Status: Paid & Active</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
         </div>
     </main>
     ''' + FOOTER
-    return render_template_string(admin_html, all_biz=BUSINESSES, title="Admin Panel")
+    return render_template_string(
+        admin_html, 
+        pending_biz=pending_businesses,
+        approved_biz=approved_businesses,
+        pending_pay=pending_payments,
+        confirmed_pay=confirmed_payments,
+        expiring=expiring_soon,
+        title="Admin Control Center"
+    )
 
 
 handler = app
