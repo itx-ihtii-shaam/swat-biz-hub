@@ -29,7 +29,7 @@ BUSINESSES = {
         'items': [],
         'joined_date': datetime.now() - timedelta(days=10),
         'last_paid_date': datetime.now(),
-        'status': 'trial',
+        'status': 'approved',
     },
     '3': {
         'id': '3',
@@ -49,7 +49,7 @@ BUSINESSES = {
         ],
         'joined_date': datetime.now() - timedelta(days=5),
         'last_paid_date': datetime.now(),
-        'status': 'trial',
+        'status': 'approved',
     },
     '4': {
         'id': '4',
@@ -61,7 +61,7 @@ BUSINESSES = {
         'image': 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&w=800&q=80',
         'joined_date': datetime.now() - timedelta(days=2),
         'last_paid_date': datetime.now(),
-        'status': 'trial',
+        'status': 'approved',
     },
     '5': {
         'id': '5',
@@ -73,7 +73,7 @@ BUSINESSES = {
         'image': 'https://images.unsplash.com/photo-1578916171728-46686eac8d58?auto=format&fit=crop&w=800&q=80',
         'joined_date': datetime.now() - timedelta(days=4),
         'last_paid_date': datetime.now(),
-        'status': 'trial',
+        'status': 'approved',
     }
 }
 
@@ -260,7 +260,6 @@ CATEGORY_TEMPLATE = BASE_HEAD + '''
                 return;
             }
 
-            // Filter both name and location address
             const matches = allListings.filter(b => 
                 b.name.toLowerCase().includes(query) || b.address.toLowerCase().includes(query)
             );
@@ -311,10 +310,10 @@ def category_page(cat_slug):
     
     cat_businesses = []
     all_cat_biz = []
-    sub_cats = SUB_CATEGORIES.get(cat_slug, [])
 
     for b in BUSINESSES.values():
-        if b.get('category') == cat_slug and b.get('status', 'trial') != 'deleted':
+        # Only show approved businesses on public pages
+        if b.get('category') == cat_slug and b.get('status') == 'approved':
             all_cat_biz.append(b)
             
             # Sub-category filter
@@ -335,7 +334,7 @@ def category_page(cat_slug):
         category=CATEGORIES[cat_slug],
         businesses=cat_businesses,
         all_category_businesses=all_cat_biz,
-        sub_categories=sub_cats,
+        sub_categories=SUB_CATEGORIES.get(cat_slug, []),
         active_sub=sub_query,
         site_name=SITE_NAME,
         search_query=search_query,
@@ -347,7 +346,7 @@ def category_page(cat_slug):
 @app.route('/business/<b_id>')
 def business_detail(b_id):
     biz = BUSINESSES.get(b_id)
-    if not biz:
+    if not biz or biz.get('status') != 'approved':
         abort(404)
     
     detail_html = BASE_HEAD + f'''
@@ -384,9 +383,19 @@ def register_business():
             'image': 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=800&q=80',
             'doctors': [],
             'items': [],
-            'status': 'trial'
+            'joined_date': datetime.now(),
+            'status': 'pending'  # Require Admin Approval
         }
-        return redirect(url_for('home'))
+        return render_template_string(BASE_HEAD + '''
+        <main class="max-w-2xl mx-auto px-4 py-20 text-center">
+            <div class="bg-white dark:bg-gray-900 p-8 rounded-3xl shadow-xl border border-gray-100 dark:border-gray-800 space-y-4">
+                <span class="text-6xl">🎉</span>
+                <h2 class="text-3xl font-bold">Registration Submitted!</h2>
+                <p class="text-gray-400">Your listing has been submitted for review. It will be live on SwatBiz Hub once approved by Admin.</p>
+                <a href="/" class="inline-block mt-4 bg-blue-600 text-white px-6 py-3 rounded-xl font-semibold">Return to Home</a>
+            </div>
+        </main>
+        ''' + FOOTER, title="Submitted")
 
     reg_html = BASE_HEAD + '''
     <main class="max-w-3xl mx-auto px-4 py-12">
@@ -464,16 +473,52 @@ def register_business():
     return render_template_string(reg_html, categories=CATEGORIES, title="Register")
 
 
+# --- ADMIN APPROVAL PANEL ---
 @app.route('/admin')
 def admin_panel():
-    return render_template_string(BASE_HEAD + '''
-    <main class="max-w-5xl mx-auto px-4 py-12">
-        <h2 class="text-3xl font-bold mb-6">Admin Panel - Listings</h2>
-        <div class="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow border border-gray-800">
-            <p class="text-gray-400">Total Registered: ''' + str(len(BUSINESSES)) + '''</p>
+    action = request.args.get('action')
+    biz_id = request.args.get('id')
+
+    if action and biz_id in BUSINESSES:
+        if action == 'approve':
+            BUSINESSES[biz_id]['status'] = 'approved'
+        elif action == 'delete':
+            BUSINESSES[biz_id]['status'] = 'deleted'
+        return redirect('/admin')
+
+    admin_html = BASE_HEAD + '''
+    <main class="max-w-6xl mx-auto px-4 py-12">
+        <h2 class="text-3xl font-bold mb-8">🛠️ Admin Approval & Management Panel</h2>
+        
+        <div class="space-y-6">
+            {% for b_id, biz in all_biz.items() %}
+            {% if biz.status != 'deleted' %}
+            <div class="bg-white dark:bg-gray-900 rounded-2xl p-6 border border-gray-200 dark:border-gray-800 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <div class="flex items-center space-x-3">
+                        <h3 class="text-xl font-bold">{{ biz.name }}</h3>
+                        {% if biz.status == 'approved' %}
+                        <span class="bg-green-500/20 text-green-400 text-xs px-3 py-1 rounded-full font-bold">Approved</span>
+                        {% else %}
+                        <span class="bg-yellow-500/20 text-yellow-400 text-xs px-3 py-1 rounded-full font-bold">Pending Review</span>
+                        {% endif %}
+                    </div>
+                    <p class="text-sm text-gray-400 mt-1">📍 {{ biz.address }} | 📞 {{ biz.phones[0] if biz.phones else 'N/A' }}</p>
+                    <p class="text-xs text-gray-500 mt-1">Category: {{ biz.category }} {% if biz.sub_category %}({{ biz.sub_category }}){% endif %}</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    {% if biz.status == 'pending' %}
+                    <a href="/admin?action=approve&id={{ b_id }}" class="bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded-xl text-sm font-bold shadow transition">Approve</a>
+                    {% endif %}
+                    <a href="/admin?action=delete&id={{ b_id }}" class="bg-red-600/20 hover:bg-red-600 text-red-400 hover:text-white px-4 py-2 rounded-xl text-sm font-bold transition">Delete</a>
+                </div>
+            </div>
+            {% endif %}
+            {% endfor %}
         </div>
     </main>
-    ''' + FOOTER, title="Admin")
+    ''' + FOOTER
+    return render_template_string(admin_html, all_biz=BUSINESSES, title="Admin Panel")
 
 
 handler = app
