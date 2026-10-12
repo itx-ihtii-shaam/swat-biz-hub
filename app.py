@@ -65,24 +65,24 @@ BUSINESSES = {
     },
     '5': {
         'id': '5',
-        'category': 'education',
-        'sub_category': 'colleges',
-        'name': 'Government College Mingora',
-        'address': 'Saidu Sharif Road, Swat',
-        'phones': ['+92 946 9240011'],
-        'image': 'https://images.unsplash.com/photo-1562774053-701939374585?auto=format&fit=crop&w=800&q=80',
-        'joined_date': datetime.now() - timedelta(days=3),
+        'category': 'supermarts',
+        'sub_category': 'general',
+        'name': 'Mingora General Superstore',
+        'address': 'Bank Square, Mingora, Swat',
+        'phones': ['+92 946 7144556'],
+        'image': 'https://images.unsplash.com/photo-1578916171728-46686eac8d58?auto=format&fit=crop&w=800&q=80',
+        'joined_date': datetime.now() - timedelta(days=4),
         'last_paid_date': datetime.now(),
         'status': 'trial',
     },
     '6': {
         'id': '6',
-        'category': 'education',
-        'sub_category': 'universities',
-        'name': 'University of Swat',
-        'address': 'Charbagh, Swat',
-        'phones': ['+92 946 730504'],
-        'image': 'https://images.unsplash.com/photo-1541829070764-84a7d30dd3f3?auto=format&fit=crop&w=800&q=80',
+        'category': 'supermarts',
+        'sub_category': 'bakery',
+        'name': 'Swat Bakers & Sweets',
+        'address': 'Green Chowk, Mingora, Swat',
+        'phones': ['+92 946 7188990'],
+        'image': 'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=800&q=80',
         'joined_date': datetime.now() - timedelta(days=1),
         'last_paid_date': datetime.now(),
         'status': 'trial',
@@ -106,6 +106,13 @@ SUB_CATEGORIES = {
         {'slug': 'colleges', 'title': 'Colleges', 'icon': '🏛️'},
         {'slug': 'universities', 'title': 'Universities', 'icon': '🎓'},
         {'slug': 'academies', 'title': 'Academies', 'icon': '📚'}
+    ],
+    'supermarts': [
+        {'slug': 'all', 'title': 'All Stores', 'icon': '🛒'},
+        {'slug': 'general', 'title': 'General Store & Mart', 'icon': '🏪'},
+        {'slug': 'bakery', 'title': 'Bakery & Sweets', 'icon': '🍞'},
+        {'slug': 'meat', 'title': 'Meat & Vegetables', 'icon': ' vegetables'},
+        {'slug': 'wholesale', 'title': 'Wholesale Dealers', 'icon': '📦'}
     ]
 }
 
@@ -390,7 +397,7 @@ def register_business():
             <form method="POST" class="space-y-4">
                 <div>
                     <label class="block text-sm font-medium mb-1">Name</label>
-                    <input type="text" name="name" required placeholder="e.g. City Model School" class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-700 outline-none">
+                    <input type="text" name="name" required placeholder="e.g. Swat Superstore" class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-700 outline-none">
                 </div>
                 <div>
                     <label class="block text-sm font-medium mb-1">Category</label>
@@ -401,13 +408,17 @@ def register_business():
                     </select>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium mb-1">Sub-Category (Optional for Education)</label>
+                    <label class="block text-sm font-medium mb-1">Sub-Category (Optional for Education / Supermarts)</label>
                     <select name="sub_category" class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-700 outline-none cursor-pointer">
                         <option value="">None / Not Applicable</option>
-                        <option value="schools">🏫 School</option>
-                        <option value="colleges">🏛️ College</option>
-                        <option value="universities">🎓 University</option>
-                        <option value="academies">📚 Academy</option>
+                        <option value="schools">🏫 School (Education)</option>
+                        <option value="colleges">🏛️ College (Education)</option>
+                        <option value="universities">🎓 University (Education)</option>
+                        <option value="academies">📚 Academy (Education)</option>
+                        <option value="general">🏪 General Store (Supermarts)</option>
+                        <option value="bakery">🍞 Bakery & Sweets (Supermarts)</option>
+                        <option value="meat">🥩 Meat & Vegetables (Supermarts)</option>
+                        <option value="wholesale">📦 Wholesale Dealer (Supermarts)</option>
                     </select>
                 </div>
                 <div>
