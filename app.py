@@ -13,6 +13,7 @@ BUSINESSES = {
     '1': {
         'id': '1',
         'category': 'hospitals',
+        'subcategory': 'General Hospital',
         'name': 'Saidu Group of Teaching Hospital',
         'address': 'Saidu Sharif, Mingora, Swat',
         'phones': ['+92 946 9240123'],
@@ -30,6 +31,7 @@ BUSINESSES = {
     '2': {
         'id': '2',
         'category': 'restaurants',
+        'subcategory': 'Traditional / Shinwari',
         'name': 'Khyber Shinwari Restaurant',
         'address': 'Fizagat, Swat',
         'phones': ['+92 946 881122'],
@@ -47,6 +49,7 @@ BUSINESSES = {
     '3': {
         'id': '3',
         'category': 'pharmacies',
+        'subcategory': 'Medical Store',
         'name': 'Shifa Medical & Pharmacy',
         'address': 'Green Chowk, Mingora, Swat',
         'phones': ['+92 946 7123456'],
@@ -64,13 +67,34 @@ BUSINESSES = {
 }
 
 CATEGORIES = {
-    'hospitals': {'title': 'Hospitals & Healthcare', 'icon': '🏥', 'search_hint': 'Search name or location...', 'info_title': '👨‍⚕️ Doctor & Specialist Info', 'extra_title': '🔬 Available Tests & Services'},
-    'pharmacies': {'title': 'Pharmacies & Medical Stores', 'icon': '💊', 'search_hint': 'Search medicine or store...', 'info_title': '🧑‍⚕️ Pharmacist / Staff Info', 'extra_title': '💊 Medicines & Items'},
-    'restaurants': {'title': 'Restaurants & Cafes', 'icon': '🍽️', 'search_hint': 'Search restaurant...', 'info_title': '👨‍🍳 Chef & Speciality Info', 'extra_title': '🍲 Special Dishes & Menu'},
-    'supermarts': {'title': 'Supermarts & Grocery', 'icon': '🛒', 'search_hint': 'Search store or item...', 'info_title': '🏬 Store Info', 'extra_title': '🛍️ Available Items & Groceries'},
-    'property': {'title': 'Property Dealers', 'icon': '🏠', 'search_hint': 'Search plot or house...', 'info_title': '🧑‍💼 Dealer Info', 'extra_title': '🏡 Plots & Properties'},
-    'hotels': {'title': 'Hotels & Guest Houses', 'icon': '🏨', 'search_hint': 'Search hotel...', 'info_title': '🛎️ Management Info', 'extra_title': '🛏️ Rooms & Facilities'},
-    'education': {'title': 'Educational Institutes', 'icon': '🎓', 'search_hint': 'Search school or college...', 'info_title': '👨‍🏫 Principal & Faculty Info', 'extra_title': '📚 Courses & Programs'}
+    'hospitals': {
+        'title': 'Hospitals & Healthcare', 'icon': '🏥', 'search_hint': 'Search name or location...', 'info_title': '👨‍⚕️ Doctor & Specialist Info', 'extra_title': '🔬 Available Tests & Services',
+        'subcategories': ['General Hospital', 'Dental Clinic', 'Eye Specialist', 'Cardiology Clinic', 'Laboratory & Diagnostics']
+    },
+    'pharmacies': {
+        'title': 'Pharmacies & Medical Stores', 'icon': '💊', 'search_hint': 'Search medicine or store...', 'info_title': '🧑‍⚕️ Pharmacist / Staff Info', 'extra_title': '💊 Medicines & Items',
+        'subcategories': ['Medical Store', 'Homeopathic Store', 'Herbal & Organic', 'Surgical Equipment']
+    },
+    'restaurants': {
+        'title': 'Restaurants & Cafes', 'icon': '🍽️', 'search_hint': 'Search restaurant...', 'info_title': '👨‍🍳 Chef & Speciality Info', 'extra_title': '🍲 Special Dishes & Menu',
+        'subcategories': ['Traditional / Shinwari', 'Fast Food & Burgers', 'BBQ & Grill', 'Coffee Shop & Cafe', 'Desi Restaurant']
+    },
+    'supermarts': {
+        'title': 'Supermarts & Grocery', 'icon': '🛒', 'search_hint': 'Search store or item...', 'info_title': '🏬 Store Info', 'extra_title': '🛍️ Available Items & Groceries',
+        'subcategories': ['General Store', 'Supermarket', 'Vegetables & Fruits', 'Bakery & Sweets']
+    },
+    'property': {
+        'title': 'Property Dealers', 'icon': '🏠', 'search_hint': 'Search plot or house...', 'info_title': '🧑‍💼 Dealer Info', 'extra_title': '🏡 Plots & Properties',
+        'subcategories': ['Plot & Land Dealer', 'House & Villa Rentals', 'Commercial Plaza', 'Real Estate Agency']
+    },
+    'hotels': {
+        'title': 'Hotels & Guest Houses', 'icon': '🏨', 'search_hint': 'Search hotel...', 'info_title': '🛎️ Management Info', 'extra_title': '🛏️ Rooms & Facilities',
+        'subcategories': ['Luxury Hotel', 'Guest House', 'Resort', 'Budget Inn']
+    },
+    'education': {
+        'title': 'Educational Institutes', 'icon': '🎓', 'search_hint': 'Search school or college...', 'info_title': '👨‍🏫 Principal & Faculty Info', 'extra_title': '📚 Courses & Programs',
+        'subcategories': ['School & College', 'University', 'Academy & Tuition', 'Language & Computer Center']
+    }
 }
 
 HOME_HEAD = '''
@@ -209,17 +233,19 @@ def category_page(cat_slug):
     filtered = []
     for b in all_biz:
         if search_query:
-            if search_query in b.get('name', '').lower() or search_query in b.get('address', '').lower():
+            if search_query in b.get('name', '').lower() or search_query in b.get('address', '').lower() or search_query in b.get('subcategory', '').lower() or search_query in b.get('special_info', '').lower() or search_query in b.get('tests_dishes', '').lower():
                 filtered.append(b)
         else:
             filtered.append(b)
 
     cards = ""
     for b in filtered:
+        subcat_badge = '<span class="bg-indigo-600/20 text-indigo-400 text-xs px-2.5 py-1 rounded-md font-semibold">' + b.get('subcategory', 'General') + '</span>' if b.get('subcategory') else ''
         cards += '''
         <a href="/business/''' + b['id'] + '''" class="bg-gray-900 rounded-2xl shadow-sm hover:shadow-2xl hover:border-blue-500 transition-all duration-300 transform hover:-translate-y-1.5 border border-gray-800 overflow-hidden flex flex-col justify-between group">
             <img src="''' + b.get('image', 'https://images.unsplash.com/photo-1557804506-669a67965ba0?auto=format&fit=crop&w=800&q=80') + '''" class="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-500">
             <div class="p-6">
+                <div class="mb-2">''' + subcat_badge + '''</div>
                 <h3 class="text-xl font-bold group-hover:text-blue-400 transition-colors">''' + b['name'] + '''</h3>
                 <p class="text-sm text-gray-400 mt-1">📍 ''' + b['address'] + '''</p>
                 <p class="text-xs text-blue-400 mt-2 font-bold">📞 ''' + b.get('phones', ['N/A'])[0] + '''</p>
@@ -232,7 +258,7 @@ def category_page(cat_slug):
 
     json_list = ""
     for b in all_biz:
-        json_list += '{"id": "' + b['id'] + '", "name": "' + b['name'].replace('"', '\\"') + '", "address": "' + b['address'].replace('"', '\\"') + '"},'
+        json_list += '{"id": "' + b['id'] + '", "name": "' + b['name'].replace('"', '\\"') + '", "address": "' + b['address'].replace('"', '\\"') + '", "sub": "' + b.get('subcategory', '').replace('"', '\\"') + '", "info": "' + b.get('special_info', '').replace('"', '\\"') + '", "items": "' + b.get('tests_dishes', '').replace('"', '\\"') + '"},'
 
     html = BASE_HEAD + '''
     <main class="max-w-7xl mx-auto px-4 py-12">
@@ -265,13 +291,13 @@ def category_page(cat_slug):
                     return;
                 }
                 const matches = allListings.filter(b => 
-                    b.name.toLowerCase().includes(query) || b.address.toLowerCase().includes(query)
+                    b.name.toLowerCase().includes(query) || b.address.toLowerCase().includes(query) || b.sub.toLowerCase().includes(query) || b.info.toLowerCase().includes(query) || b.items.toLowerCase().includes(query)
                 );
                 if (matches.length > 0) {
                     let html = '';
                     matches.forEach(match => {
                         html += `<div class="px-5 py-3 hover:bg-gray-800 cursor-pointer border-b border-gray-800 last:border-none transition" onclick="window.location.href='/business/${match.id}'">
-                            <div class="text-sm font-bold text-white">🏥 ${match.name}</div>
+                            <div class="text-sm font-bold text-white">''' + cat['icon'] + ` ${match.name} <span class="text-xs text-indigo-400 font-normal">(${match.sub})</span></div>
                             <div class="text-xs text-gray-400">📍 ${match.address}</div>
                         </div>`;
                     });
@@ -344,7 +370,10 @@ def business_detail(b_id):
             <img src="''' + b.get('image', 'https://images.unsplash.com/photo-1557804506-669a67965ba0?auto=format&fit=crop&w=800&q=80') + '''" class="w-full h-72 object-cover">
             <div class="p-8 space-y-6">
                 <div>
-                    <span class="bg-blue-600/20 text-blue-400 text-xs px-3 py-1 rounded-full font-bold uppercase tracking-wider">Verified Listing</span>
+                    <div class="flex items-center gap-3 mb-2">
+                        <span class="bg-blue-600/20 text-blue-400 text-xs px-3 py-1 rounded-full font-bold uppercase tracking-wider">Verified Listing</span>
+                        <span class="bg-indigo-600/20 text-indigo-400 text-xs px-3 py-1 rounded-full font-semibold">''' + b.get('subcategory', 'General') + '''</span>
+                    </div>
                     <h1 class="text-3xl md:text-4xl font-black mt-3">''' + b['name'] + '''</h1>
                     <p class="text-gray-400 mt-1 text-base">📍 ''' + b['address'] + '''</p>
                     <div class="mt-4 inline-flex items-center gap-2 bg-blue-600/10 border border-blue-500/20 px-4 py-2 rounded-xl">
@@ -364,7 +393,8 @@ def business_detail(b_id):
                     </div>
                 </div>
 
-                <div class="pt-4 border-t border-gray-800 flex justify-end">
+                <div class="pt-4 border-t border-gray-800 flex justify-between items-center">
+                    <span class="text-xs text-gray-500">🔒 Secure Client Access Active</span>
                     <a href="/category/''' + b['category'] + '''" class="bg-gray-800 hover:bg-gray-700 px-5 py-2.5 rounded-xl text-sm font-semibold transition transform hover:-translate-x-1">← Back to Category</a>
                 </div>
             </div>
@@ -380,6 +410,7 @@ def register_business():
         BUSINESSES[b_id] = {
             'id': b_id,
             'category': request.form.get('category'),
+            'subcategory': request.form.get('subcategory', 'General'),
             'name': request.form.get('name'),
             'address': request.form.get('address'),
             'phones': [request.form.get('phone', '')],
@@ -405,7 +436,18 @@ def register_business():
         <p class="text-center text-sm text-gray-400 mb-8">Enjoy 2 Months Free Trial upon registration!</p>
         <form method="POST" class="space-y-4">
             <input type="text" name="name" required placeholder="Business / Hospital / Restaurant Name" class="w-full p-3.5 rounded-xl bg-gray-900 border border-gray-800 focus:ring-2 focus:ring-blue-500 outline-none transition">
-            <select name="category" class="w-full p-3.5 rounded-xl bg-gray-900 border border-gray-800 focus:ring-2 focus:ring-blue-500 outline-none transition">''' + opts + '''</select>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 mb-1">Category</label>
+                    <select name="category" id="categorySelect" class="w-full p-3.5 rounded-xl bg-gray-900 border border-gray-800 focus:ring-2 focus:ring-blue-500 outline-none transition">''' + opts + '''</select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-400 mb-1">Subcategory</label>
+                    <select name="subcategory" id="subcategorySelect" class="w-full p-3.5 rounded-xl bg-gray-900 border border-gray-800 focus:ring-2 focus:ring-blue-500 outline-none transition"></select>
+                </div>
+            </div>
+
             <input type="text" name="address" required placeholder="Address (e.g. Mingora, Swat)" class="w-full p-3.5 rounded-xl bg-gray-900 border border-gray-800 focus:ring-2 focus:ring-blue-500 outline-none transition">
             <input type="text" name="phone" required placeholder="Phone Number" class="w-full p-3.5 rounded-xl bg-gray-900 border border-gray-800 focus:ring-2 focus:ring-blue-500 outline-none transition">
             
@@ -415,9 +457,9 @@ def register_business():
             </div>
 
             <div class="border-t border-gray-800 pt-4 mt-4">
-                <label class="block text-xs font-bold text-gray-400 mb-2">Custom Business Details (Optional)</label>
-                <textarea name="special_info" placeholder="Doctor info, Chef details, or Management info..." class="w-full p-3.5 rounded-xl bg-gray-900 border border-gray-800 focus:ring-2 focus:ring-blue-500 outline-none text-sm transition" rows="2"></textarea>
-                <textarea name="tests_dishes" placeholder="Tests & Services, Special Dishes / Menu items, or Products..." class="w-full p-3.5 rounded-xl bg-gray-900 border border-gray-800 focus:ring-2 focus:ring-blue-500 outline-none text-sm mt-3 transition" rows="2"></textarea>
+                <label class="block text-xs font-bold text-gray-400 mb-2" id="dynamicLabel">Custom Business Details (Optional)</label>
+                <textarea name="special_info" id="infoField" placeholder="Doctor info, Chef details, or Management info..." class="w-full p-3.5 rounded-xl bg-gray-900 border border-gray-800 focus:ring-2 focus:ring-blue-500 outline-none text-sm transition" rows="2"></textarea>
+                <textarea name="tests_dishes" id="dishesField" placeholder="Tests & Services, Special Dishes / Menu items, or Products..." class="w-full p-3.5 rounded-xl bg-gray-900 border border-gray-800 focus:ring-2 focus:ring-blue-500 outline-none text-sm mt-3 transition" rows="2"></textarea>
             </div>
 
             <div class="border-t border-gray-800 pt-4 mt-4">
@@ -434,6 +476,54 @@ def register_business():
             <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 py-3.5 rounded-xl font-bold transition transform hover:-translate-y-0.5 shadow-lg">Submit Business</button>
         </form>
     </main>
+    <script>
+        const subcategoriesData = {
+            'hospitals': ['General Hospital', 'Dental Clinic', 'Eye Specialist', 'Cardiology Clinic', 'Laboratory & Diagnostics'],
+            'pharmacies': ['Medical Store', 'Homeopathic Store', 'Herbal & Organic', 'Surgical Equipment'],
+            'restaurants': ['Traditional / Shinwari', 'Fast Food & Burgers', 'BBQ & Grill', 'Coffee Shop & Cafe', 'Desi Restaurant'],
+            'supermarts': ['General Store', 'Supermarket', 'Vegetables & Fruits', 'Bakery & Sweets'],
+            'property': ['Plot & Land Dealer', 'House & Villa Rentals', 'Commercial Plaza', 'Real Estate Agency'],
+            'hotels': ['Luxury Hotel', 'Guest House', 'Resort', 'Budget Inn'],
+            'education': ['School & College', 'University', 'Academy & Tuition', 'Language & Computer Center']
+        };
+
+        const placeholders = {
+            'hospitals': {label: '🏥 Doctor & Specialist Info', info: 'Dr. Ahmad (Cardiologist), Dr. Bilal (Pediatrician)...', extra: 'MRI, X-Ray, Emergency Care...'},
+            'pharmacies': {label: '💊 Pharmacist & Staff Info', info: 'Dr. Usman (Chief Pharmacist)...', extra: 'Blood Pressure Check, Medicines, First Aid...'},
+            'restaurants': {label: '🍽️ Chef & Speciality Info', info: 'Chef Rashid (Special Shinwari Master)...', extra: 'Dumba Karahi, Special Tikka, Green Tea...'},
+            'supermarts': {label: '🏬 Store Management Info', info: 'Manager: Tariq Khan...', extra: 'Grocery, Fresh Vegetables, Household Items...'},
+            'property': {label: '🏡 Dealer Info', info: 'Dealer: Malik Zubair...', extra: 'Plots, Luxury Houses, Commercial Plazas...'},
+            'hotels': {label: '🏨 Management Info', info: 'Manager: Inayatullah...', extra: 'Deluxe Rooms, Free WiFi, Mountain View...'},
+            'education': {label: '🎓 Faculty & Principal Info', info: 'Principal: Prof. Rahim Ullah...', extra: 'FSc Pre-Medical, ICS, English Language Course...'}
+        };
+
+        const catSelect = document.getElementById('categorySelect');
+        const subcatSelect = document.getElementById('subcategorySelect');
+        const dynamicLabel = document.getElementById('dynamicLabel');
+        const infoField = document.getElementById('infoField');
+        const dishesField = document.getElementById('dishesField');
+
+        function updateFormFields() {
+            const val = catSelect.value;
+            subcatSelect.innerHTML = '';
+            if(subcategoriesData[val]) {
+                subcategoriesData[val].forEach(sub => {
+                    const opt = document.createElement('option');
+                    opt.value = sub;
+                    opt.textContent = sub;
+                    subcatSelect.appendChild(opt);
+                });
+            }
+            if(placeholders[val]) {
+                dynamicLabel.innerText = placeholders[val].label;
+                infoField.placeholder = placeholders[val].info;
+                dishesField.placeholder = placeholders[val].extra;
+            }
+        }
+
+        catSelect.addEventListener('change', updateFormFields);
+        window.addEventListener('DOMContentLoaded', updateFormFields);
+    </script>
     ''' + FOOTER
     return render_template_string(html)
 
@@ -546,7 +636,7 @@ def admin_panel():
                 content += '''
                 <div class="bg-gray-800/60 p-4 rounded-2xl flex justify-between items-center hover:bg-gray-800 transition">
                     <div>
-                        <h4 class="font-bold">''' + b["name"] + '''</h4>
+                        <h4 class="font-bold">''' + b["name"] + ''' <span class="text-xs text-indigo-400">(''' + b.get('subcategory', 'General') + ''')</span></h4>
                         <p class="text-xs text-gray-400">📍 ''' + b["address"] + ''' | 📅 Joined: <span class="text-blue-400 font-semibold">''' + j_date + '''</span></p>
                     </div>
                     <div class="flex gap-2 items-center">
@@ -564,7 +654,7 @@ def admin_panel():
                 content += '''
                 <div class="bg-gray-800/40 p-4 rounded-2xl flex justify-between items-center hover:bg-gray-800/70 transition">
                     <div>
-                        <h4 class="font-bold">''' + b["name"] + '''</h4>
+                        <h4 class="font-bold">''' + b["name"] + ''' <span class="text-xs text-indigo-400">(''' + b.get('subcategory', 'General') + ''')</span></h4>
                         <p class="text-xs text-gray-400">📍 ''' + b["address"] + ''' | 📅 Joined: <span class="text-blue-400 font-semibold">''' + j_date + '''</span></p>
                     </div>
                     <div class="flex gap-2 items-center">
