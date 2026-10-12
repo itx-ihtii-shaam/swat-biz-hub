@@ -50,12 +50,6 @@ BUSINESSES = {
                 'price': '50',
                 'offer': 'Available',
                 'image': 'https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?auto=format&fit=crop&w=500&q=80'
-            },
-            {
-                'name': 'Augmentin Syrup',
-                'price': '650',
-                'offer': 'In Stock',
-                'image': 'https://images.unsplash.com/photo-1471864190281-a93a3070b6de?auto=format&fit=crop&w=500&q=80'
             }
         ],
         'joined_date': datetime.now() - timedelta(days=5),
@@ -123,12 +117,11 @@ def category_page(cat_slug):
     
     cat_businesses = []
     for b in BUSINESSES.values():
-        if b['category'] == cat_slug and b['status'] != 'deleted':
+        if b.get('category') == cat_slug and b.get('status') != 'deleted':
             if search_query:
-                # Check if search matches business name or any item/medicine/property name
-                matched = search_query in b['name'].lower()
-                matched_items = [item for item in b.get('items', []) if search_query in item['name'].lower()]
-                matched_doctors = [doc for doc in b.get('doctors', []) if search_query in doc['name'].lower() or search_query in doc['specialty'].lower()]
+                matched = search_query in b.get('name', '').lower()
+                matched_items = [item for item in b.get('items', []) if search_query in item.get('name', '').lower()]
+                matched_doctors = [doc for doc in b.get('doctors', []) if search_query in doc.get('name', '').lower() or search_query in doc.get('specialty', '').lower()]
                 
                 if matched or matched_items or matched_doctors:
                     cat_businesses.append(b)
@@ -157,7 +150,87 @@ def business_detail(b_id):
 
 @app.route('/register', methods=['GET', 'POST'])
 def register_business():
-    # registration logic remains same as previous update
+    if request.method == 'POST':
+        b_id = str(len(BUSINESSES) + 1)
+        name = request.form.get('name')
+        category = request.form.get('category')
+        address = request.form.get('address')
+        
+        phone_inputs = request.form.getlist('phone[]')
+        phones = [p.strip() for p in phone_inputs if p.strip()]
+        if not phones:
+            phones = ['+92 946 0000000']
+
+        file = request.files.get('image_file')
+        image = 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=800&q=80'
+        if file and file.filename != '':
+            file_bytes = file.read()
+            encoded = base64.b64encode(file_bytes).decode('utf-8')
+            mime_type = file.mimetype or 'image/jpeg'
+            image = f"data:{mime_type};base64,{encoded}"
+        else:
+            image_url = request.form.get('image_url')
+            if image_url and image_url.strip():
+                image = image_url.strip()
+
+        doctors = []
+        items = []
+
+        if category == 'hospitals':
+            doc_names = request.form.getlist('doc_name[]')
+            doc_specs = request.form.getlist('doc_spec[]')
+            doc_app_times = request.form.getlist('doc_app_time[]')
+            doc_clinic_times = request.form.getlist('doc_clinic_time[]')
+            doc_clinics = request.form.getlist('doc_clinic[]')
+
+            for i in range(len(doc_names)):
+                if doc_names[i].strip():
+                    doctors.append({
+                        'name': doc_names[i].strip(),
+                        'specialty': doc_specs[i].strip() if i < len(doc_specs) else 'Specialist',
+                        'appointment_timing': doc_app_times[i].strip() if i < len(doc_app_times) else '9 AM - 2 PM',
+                        'clinic_timing': doc_clinic_times[i].strip() if i < len(doc_clinic_times) else 'Mon - Sat',
+                        'clinic': doc_clinics[i].strip() if i < len(doc_clinics) else 'Main OPD'
+                    })
+        else:
+            item_names = request.form.getlist('item_name[]')
+            item_prices = request.form.getlist('item_price[]')
+            item_offers = request.form.getlist('item_offer[]')
+            item_files = request.files.getlist('item_file[]')
+
+            for i in range(len(item_names)):
+                if item_names[i].strip():
+                    item_img = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=500&q=80'
+                    if i < len(item_files) and item_files[i].filename != '':
+                        f = item_files[i]
+                        fb = f.read()
+                        enc = base64.b64encode(fb).decode('utf-8')
+                        m = f.mimetype or 'image/jpeg'
+                        item_img = f"data:{m};base64,{enc}"
+
+                    items.append({
+                        'name': item_names[i].strip(),
+                        'price': item_prices[i].strip() if i < len(item_prices) else '0',
+                        'offer': item_offers[i].strip() if i < len(item_offers) else '',
+                        'image': item_img
+                    })
+
+        BUSINESSES[b_id] = {
+            'id': b_id,
+            'category': category,
+            'name': name,
+            'address': address,
+            'phones': phones,
+            'phone': phones[0],
+            'image': image,
+            'doctors': doctors,
+            'items': items,
+            'joined_date': datetime.now(),
+            'last_paid_date': datetime.now(),
+            'status': 'trial'
+        }
+        return redirect(url_for('business_detail', b_id=b_id))
+
     return render_template('register.html', categories=CATEGORIES, site_name=SITE_NAME)
 
 
