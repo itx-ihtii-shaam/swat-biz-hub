@@ -1,4 +1,4 @@
-"""SwatBiz Hub - Clean & Stable Categorized Admin Control Center."""
+"""SwatBiz Hub - Clean & Stable Categorized Admin Control Center with Expired Subscriptions Tab."""
 from datetime import datetime, timedelta
 import os
 from flask import Flask, abort, redirect, render_template_string, request, url_for, session
@@ -21,7 +21,7 @@ BUSINESSES = {
         'payment_method': 'Bank Transfer',
         'payment_ref': 'TXN-984210',
         'payment_status': 'paid',
-        'expiry_date': datetime.now() + timedelta(days=3)
+        'expiry_date': datetime.now() - timedelta(days=2)  # Expired 2 days ago (Test)
     },
     '2': {
         'id': '2',
@@ -47,7 +47,7 @@ BUSINESSES = {
         'payment_method': 'EasyPaisa',
         'payment_ref': 'TID-7782194',
         'payment_status': 'paid',
-        'expiry_date': datetime.now() + timedelta(days=25)
+        'expiry_date': datetime.now() + timedelta(days=3)  # Expiring in 3 days (5-Day Alert)
     }
 }
 
@@ -123,7 +123,7 @@ def category_page(cat_slug):
         abort(404)
     
     cat = CATEGORIES[cat_slug]
-    biz_list = [b for b in BUSINESSES.values() if b.get('category') == cat_slug and b.get('status') == 'approved']
+    biz_list = [b for b in BUSINESSES.values() if b.get('category') == cat_slug and b.get('status'] == 'approved']
     
     cards = ""
     for b in biz_list:
@@ -227,13 +227,18 @@ def admin_panel():
         return redirect(f'/admin?module={module}&tab={tab}')
 
     now = datetime.now()
-    pending_biz = {k: v for k, v in BUSINESSES.items() if v.get('status') == 'pending'}
-    approved_biz = {k: v for k, v in BUSINESSES.items() if v.get('status') == 'approved'}
-    pending_pay = {k: v for k, v in BUSINESSES.items() if v.get('payment_status') == 'unpaid'}
-    paid_pay = {k: v for k, v in BUSINESSES.items() if v.get('payment_status') == 'paid'}
-    expiring_alerts = {k: v for k, v in BUSINESSES.items() if (v.get('expiry_date') - now).days <= 5 and v.get('status') != 'deleted'}
+    pending_biz = {k: v for k, v in BUSINESSES.items() if v.get('status'] == 'pending'}
+    approved_biz = {k: v for k, v in BUSINESSES.items() if v.get('status'] == 'approved'}
+    pending_pay = {k: v for k, v in BUSINESSES.items() if v.get('payment_status'] == 'unpaid'}
+    paid_pay = {k: v for k, v in BUSINESSES.items() if v.get('payment_status'] == 'paid' and v.get('expiry_date', now) >= now}
+    
+    # Subscriptions expiring in <= 5 days (but not fully expired yet)
+    expiring_alerts = {k: v for k, v in BUSINESSES.items() if 0 <= (v.get('expiry_date') - now).days <= 5 and v.get('status'] != 'deleted'}
+    
+    # Fully expired subscriptions (remaining days < 0)
+    expired_subs = {k: v for k, v in BUSINESSES.items() if (v.get('expiry_date') - now).days < 0 and v.get('status'] != 'deleted'}
 
-    # 1. MAIN CLEAN HUB (2 CATEGORY MODULE CARDS)
+    # 1. MAIN CLEAN HUB
     if not module:
         body = f'''
         <main class="max-w-5xl mx-auto px-4 py-12">
@@ -262,14 +267,14 @@ def admin_panel():
                     <div>
                         <div class="flex justify-between items-center mb-6">
                             <span class="text-6xl">💳</span>
-                            <span class="bg-orange-500/20 text-orange-400 text-xs px-3 py-1.5 rounded-full font-bold">{len(pending_pay)} Pending</span>
+                            <span class="bg-red-500/20 text-red-400 text-xs px-3 py-1.5 rounded-full font-bold">{len(expired_subs)} Expired</span>
                         </div>
                         <h3 class="text-2xl font-black group-hover:text-indigo-500 transition-colors">2. Payment & Subscription Module</h3>
-                        <p class="text-gray-400 text-sm mt-2">Verify EasyPaisa/JazzCash/Bank receipts & 5-day expiry alerts.</p>
+                        <p class="text-gray-400 text-sm mt-2">Verify payments, 5-day expiry alerts, and fully expired subscriptions.</p>
                     </div>
                     <div class="mt-8 text-indigo-500 font-bold text-sm flex justify-between items-center">
                         <span>Open Payment Portal →</span>
-                        <span class="text-xs text-red-400 font-bold">{len(expiring_alerts)} Expiry Alerts</span>
+                        <span class="text-xs text-red-400 font-bold">{len(expired_subs)} Expired / {len(expiring_alerts)} Alerts</span>
                     </div>
                 </a>
             </div>
@@ -329,7 +334,7 @@ def admin_panel():
         '''
         return render_template_string(BASE_HEAD + body + FOOTER)
 
-    # 3. MODULE 2: PAYMENT & SUBSCRIPTIONS
+    # 3. MODULE 2: PAYMENT & SUBSCRIPTIONS (With Expired Tab)
     elif module == 'payment':
         content = ""
         if tab == 'pending':
@@ -358,6 +363,21 @@ def admin_panel():
                 '''
             if not content:
                 content = '<p class="text-gray-500 text-center py-8">No 5-day expiry alerts right now.</p>'
+        elif tab == 'expired':
+            for b_id, b in expired_subs.items():
+                days_ago = abs((b.get('expiry_date') - now).days)
+                content += f'''
+                <div class="bg-red-900/30 border-2 border-red-600 p-4 rounded-2xl flex justify-between items-center">
+                    <div>
+                        <h4 class="font-bold text-white">{b["name"]}</h4>
+                        <p class="text-xs text-gray-400">📞 {b.get("phones", ["N/A"])[0]} | 📍 {b["address"]}</p>
+                        <p class="text-xs text-red-400 font-bold mt-1">❌ Subscription Ended {days_ago} day(s) ago!</p>
+                    </div>
+                    <a href="/admin?module=payment&tab=expired&action=approve_pay&id={b_id}" class="bg-red-600 hover:bg-red-500 px-4 py-2 rounded-xl text-xs font-bold text-white shadow">Remind / Renew (+30 Days)</a>
+                </div>
+                '''
+            if not content:
+                content = '<p class="text-gray-500 text-center py-8">No expired subscriptions found. Great!</p>'
         else:
             for b_id, b in paid_pay.items():
                 content += f'''
@@ -380,6 +400,9 @@ def admin_panel():
                 </a>
                 <a href="/admin?module=payment&tab=alerts" class="px-5 py-2.5 rounded-xl text-sm font-bold {"bg-red-600 text-white" if tab == "alerts" else "bg-gray-900 text-gray-400"}">
                     🚨 5-Day Alerts ({len(expiring_alerts)})
+                </a>
+                <a href="/admin?module=payment&tab=expired" class="px-5 py-2.5 rounded-xl text-sm font-bold {"bg-red-700 text-white animate-pulse" if tab == "expired" else "bg-gray-900 text-red-400"}">
+                    ❌ Expired / Ended ({len(expired_subs)})
                 </a>
                 <a href="/admin?module=payment&tab=history" class="px-5 py-2.5 rounded-xl text-sm font-bold {"bg-indigo-600 text-white" if tab == "history" else "bg-gray-900 text-gray-400"}">
                     Verified History ({len(paid_pay)})
