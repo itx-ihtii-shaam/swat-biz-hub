@@ -15,7 +15,7 @@ app = Flask(
 )
 app.secret_key = 'swat_biz_hub_secret_key'
 
-# Mock Database with Base64/URL Image & Complete Doctor Details
+# Mock Database
 BUSINESSES = {
     '1': {
         'id': '1',
@@ -32,14 +32,8 @@ BUSINESSES = {
                 'clinic_timing': 'Mon - Sat (8 AM - 4 PM)',
                 'clinic': 'Room 12, OPD Block'
             },
-            {
-                'name': 'Dr. Fatima Ali', 
-                'specialty': 'Pediatrician', 
-                'appointment_timing': '10 AM - 4 PM', 
-                'clinic_timing': 'Mon - Fri (9 AM - 5 PM)',
-                'clinic': 'Room 04, Children Ward'
-            },
         ],
+        'items': [],
         'joined_date': datetime.now() - timedelta(days=10),
         'last_paid_date': datetime.now(),
         'status': 'trial',
@@ -52,6 +46,14 @@ BUSINESSES = {
         'phone': '+92 946 7112233',
         'image': 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=800&q=80',
         'doctors': [],
+        'items': [
+            {
+                'name': 'Special Chicken Karahi',
+                'price': '2200',
+                'offer': '10% OFF',
+                'image': 'https://images.unsplash.com/photo-1603894584373-5ac82b2ae398?auto=format&fit=crop&w=500&q=80'
+            }
+        ],
         'joined_date': datetime.now() - timedelta(days=45),
         'last_paid_date': datetime.now() - timedelta(days=40),
         'status': 'active',
@@ -83,15 +85,15 @@ def check_and_update_subscriptions():
             biz['status'] = 'locked'
 
 
-def process_image_input(request_obj):
-    file = request_obj.files.get('image_file')
+def process_image_input(request_obj, file_key='image_file', url_key='image_url'):
+    file = request_obj.files.get(file_key)
     if file and file.filename != '':
         file_bytes = file.read()
         encoded = base64.b64encode(file_bytes).decode('utf-8')
         mime_type = file.mimetype or 'image/jpeg'
         return f"data:{mime_type};base64,{encoded}"
     
-    image_url = request_obj.form.get('image_url')
+    image_url = request_obj.form.get(url_key)
     if image_url and image_url.strip():
         return image_url.strip()
         
@@ -142,9 +144,11 @@ def register_business():
         category = request.form.get('category')
         address = request.form.get('address')
         phone = request.form.get('phone')
-        image = process_image_input(request)
+        image = process_image_input(request, 'image_file', 'image_url')
         
         doctors = []
+        items = []
+
         if category == 'hospitals':
             doc_names = request.form.getlist('doc_name[]')
             doc_specs = request.form.getlist('doc_spec[]')
@@ -161,6 +165,28 @@ def register_business():
                         'clinic_timing': doc_clinic_times[i].strip() if i < len(doc_clinic_times) else 'Mon - Sat (9 AM - 5 PM)',
                         'clinic': doc_clinics[i].strip() if i < len(doc_clinics) else 'Main OPD'
                     })
+        else:
+            item_names = request.form.getlist('item_name[]')
+            item_prices = request.form.getlist('item_price[]')
+            item_offers = request.form.getlist('item_offer[]')
+            item_files = request.files.getlist('item_file[]')
+
+            for i in range(len(item_names)):
+                if item_names[i].strip():
+                    item_img = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=500&q=80'
+                    if i < len(item_files) and item_files[i].filename != '':
+                        f = item_files[i]
+                        fb = f.read()
+                        enc = base64.b64encode(fb).decode('utf-8')
+                        m = f.mimetype or 'image/jpeg'
+                        item_img = f"data:{m};base64,{enc}"
+
+                    items.append({
+                        'name': item_names[i].strip(),
+                        'price': item_prices[i].strip() if i < len(item_prices) else '0',
+                        'offer': item_offers[i].strip() if i < len(item_offers) else '',
+                        'image': item_img
+                    })
 
         BUSINESSES[b_id] = {
             'id': b_id,
@@ -170,6 +196,7 @@ def register_business():
             'phone': phone,
             'image': image,
             'doctors': doctors,
+            'items': items,
             'joined_date': datetime.now(),
             'last_paid_date': datetime.now(),
             'status': 'trial'
