@@ -1,4 +1,4 @@
-"""SwatBiz Hub - Stable & Clean Application."""
+"""SwatBiz Hub - Complete Application with Enhanced Search Suggestions."""
 from datetime import datetime, timedelta
 import os
 from flask import Flask, abort, redirect, render_template_string, request, url_for, session
@@ -149,22 +149,72 @@ def category_page(cat_slug):
     if not cards:
         cards = '<div class="col-span-3 text-center py-20 text-gray-500"><p class="text-xl">No listings found.</p></div>'
 
+    # Build JSON array for live suggestions with Name and Address
+    json_list = ""
+    for b in all_biz:
+        json_list += '{"name": "' + b['name'].replace('"', '\\"') + '", "address": "' + b['address'].replace('"', '\\"') + '"},'
+
     html = BASE_HEAD + '''
     <main class="max-w-7xl mx-auto px-4 py-12">
         <div class="mb-8 text-center">
             <span class="text-6xl inline-block animate-bounce">''' + cat['icon'] + '''</span>
             <h2 class="text-4xl font-extrabold mt-4">''' + cat['title'] + '''</h2>
-            <div class="mt-6 max-w-xl mx-auto">
+            <div class="mt-6 max-w-xl mx-auto relative">
                 <form method="GET" action="/category/''' + cat_slug + '''" class="flex gap-3">
-                    <input type="text" name="q" value="''' + search_query + '''" placeholder="''' + cat['search_hint'] + '''" class="w-full px-5 py-3.5 rounded-2xl bg-gray-900 border border-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                    <input type="text" id="searchInput" name="q" value="''' + search_query + '''" placeholder="''' + cat['search_hint'] + '''" autocomplete="off" class="w-full px-5 py-3.5 rounded-2xl bg-gray-900 border border-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
                     <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-white px-6 py-3.5 rounded-2xl font-semibold transition">Search</button>
                 </form>
+                <div id="suggestionsBox" class="absolute left-0 right-0 mt-2 bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl hidden z-50 overflow-hidden text-left"></div>
             </div>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             ''' + cards + '''
         </div>
     </main>
+    <script>
+        const allListings = [''' + json_list + '''];
+        const searchInput = document.getElementById('searchInput');
+        const suggestionsBox = document.getElementById('suggestionsBox');
+
+        if(searchInput) {
+            searchInput.addEventListener('input', function() {
+                const query = this.value.toLowerCase().trim();
+                if (!query) {
+                    suggestionsBox.classList.add('hidden');
+                    suggestionsBox.innerHTML = '';
+                    return;
+                }
+                const matches = allListings.filter(b => 
+                    b.name.toLowerCase().includes(query) || b.address.toLowerCase().includes(query)
+                );
+                if (matches.length > 0) {
+                    let html = '';
+                    matches.forEach(match => {
+                        html += `<div class="px-5 py-3 hover:bg-gray-800 cursor-pointer border-b border-gray-800 last:border-none transition" onclick="selectSuggestion('${match.name}')">
+                            <div class="text-sm font-bold text-white">🏥 ${match.name}</div>
+                            <div class="text-xs text-gray-400">📍 ${match.address}</div>
+                        </div>`;
+                    });
+                    suggestionsBox.innerHTML = html;
+                    suggestionsBox.classList.remove('hidden');
+                } else {
+                    suggestionsBox.classList.add('hidden');
+                }
+            });
+        }
+
+        function selectSuggestion(val) {
+            searchInput.value = val;
+            suggestionsBox.classList.add('hidden');
+            searchInput.form.submit();
+        }
+
+        document.addEventListener('click', function(e) {
+            if (searchInput && suggestionsBox && !searchInput.contains(e.target) && !suggestionsBox.contains(e.target)) {
+                suggestionsBox.classList.add('hidden');
+            }
+        });
+    </script>
     ''' + FOOTER
     return render_template_string(html)
 
@@ -203,7 +253,7 @@ def register_business():
                 <option value="JazzCash">JazzCash</option>
                 <option value="Bank Transfer">Bank Transfer</option>
             </select>
-            <input type="text" name="payment_ref" placeholder="TID / Ref Number" class="w-full p-3 rounded-xl bg-gray-900 border border-gray-800 focus:ring-2 focus:ring-blue-500 outline-none">
+            <input type="text" name="payment_ref" placeholder="TID / Ref Number" class="w-full p-3 rounded-xl bg-gray-900 border border-gray-800">
             <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 py-3 rounded-xl font-bold transition">Submit Business</button>
         </form>
     </main>
