@@ -70,6 +70,7 @@ BASE_HEAD = '''
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ title }} - ''' + SITE_NAME + '''</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏙️</text></svg>">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>tailwind.config = { darkMode: 'class' }</script>
 </head>
@@ -151,8 +152,8 @@ CATEGORY_TEMPLATE = BASE_HEAD + '''
                 {% endfor %}
             {% else %}
                 <div class="col-span-3 text-center py-20 text-gray-500">
-                    <p class="text-xl">No businesses found in this category yet.</p>
-                    <a href="/" class="inline-block mt-4 text-blue-500 underline font-semibold">Back to Home</a>
+                    <p class="text-xl">No businesses found matching your criteria.</p>
+                    <a href="/category/{{ cat_slug }}" class="inline-block mt-4 text-blue-500 underline font-semibold">Reset Search</a>
                 </div>
             {% endif %}
         </div>
@@ -264,6 +265,18 @@ def register_business():
     </main>
     ''' + FOOTER
     return render_template_string(reg_html, categories=CATEGORIES, title="Register")
+
+
+@app.route('/admin')
+def admin_panel():
+    return render_template_string(BASE_HEAD + '''
+    <main class="max-w-5xl mx-auto px-4 py-12">
+        <h2 class="text-3xl font-bold mb-6">Admin Panel - Listings</h2>
+        <div class="bg-white dark:bg-gray-900 rounded-2xl p-6 shadow border border-gray-800">
+            <p class="text-gray-400">Total Businesses Registered: ''' + str(len(BUSINESSES)) + '''</p>
+        </div>
+    </main>
+    ''' + FOOTER, title="Admin")
 
 
 handler = app
