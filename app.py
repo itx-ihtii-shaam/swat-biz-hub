@@ -1,15 +1,16 @@
-"""SwatBiz Hub - Advanced Admin Panel with Tabs, Categorized Approvals & Expiry Alerts."""
+"""SwatBiz Hub - Advanced Admin Panel with Password Protection & Security."""
 from datetime import datetime, timedelta
 import os
 import base64
-from flask import Flask, abort, redirect, render_template_string, request, url_for
+from flask import Flask, abort, redirect, render_template_string, request, url_for, session
 
 SITE_NAME = 'SwatBiz Hub'
+ADMIN_PASSWORD = 'admin123'  # Aap apni pasand ka password rakh sakte hain
 
 app = Flask(__name__)
 app.secret_key = 'swat_biz_hub_secret_key'
 
-# Demo Data with varying expiry & payment status
+# Demo Data
 BUSINESSES = {
     '1': {
         'id': '1',
@@ -29,7 +30,7 @@ BUSINESSES = {
         ],
         'items': [],
         'joined_date': datetime.now() - timedelta(days=25),
-        'expiry_date': datetime.now() + timedelta(days=3), # Expiry in 3 days (RED ALERT)
+        'expiry_date': datetime.now() + timedelta(days=3),
         'status': 'approved',
         'payment_method': 'Bank Transfer',
         'payment_ref': 'TXN-984210',
@@ -46,10 +47,10 @@ BUSINESSES = {
         'items': [],
         'joined_date': datetime.now() - timedelta(days=1),
         'expiry_date': datetime.now() + timedelta(days=30),
-        'status': 'pending', # Pending Business Approval
+        'status': 'pending',
         'payment_method': 'EasyPaisa',
         'payment_ref': 'TID-9920182',
-        'payment_status': 'unpaid' # Pending Payment Approval
+        'payment_status': 'unpaid'
     },
     '3': {
         'id': '3',
@@ -83,7 +84,7 @@ BUSINESSES = {
         'phones': ['+92 946 7112233'],
         'image': 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&w=800&q=80',
         'joined_date': datetime.now() - timedelta(days=2),
-        'expiry_date': datetime.now() + timedelta(days=2), # Expiry in 2 days (RED ALERT)
+        'expiry_date': datetime.now() + timedelta(days=2),
         'status': 'approved',
         'payment_method': 'Bank Transfer',
         'payment_ref': 'Meezan Bank - 001283',
@@ -134,6 +135,7 @@ SUB_CATEGORIES = {
     ]
 }
 
+# Header without Admin Button for general public
 INDEX_BASE_HEAD = '''
 <!DOCTYPE html>
 <html lang="en" id="html-root" class="dark">
@@ -150,7 +152,6 @@ INDEX_BASE_HEAD = '''
         <div class="max-w-7xl mx-auto px-4 py-6 flex justify-between items-center">
             <a href="/" class="text-2xl font-extrabold tracking-tight">🏙️ ''' + SITE_NAME + '''</a>
             <div class="flex items-center space-x-3">
-                <a href="/admin" class="bg-white/10 hover:bg-white/20 px-3.5 py-2 rounded-xl text-sm font-semibold transition">🛠️ Admin</a>
                 <a href="/register" class="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-xl text-sm font-bold shadow-lg transition">＋ Register Business</a>
                 <button onclick="document.getElementById('html-root').classList.toggle('dark')" class="bg-white/10 hover:bg-white/25 px-3.5 py-2 rounded-xl text-sm font-medium transition">🌓</button>
             </div>
@@ -174,7 +175,6 @@ BASE_HEAD = '''
         <div class="max-w-7xl mx-auto px-4 py-6 flex justify-between items-center">
             <a href="/" class="text-xl font-bold hover:underline">← Back to Home</a>
             <div class="flex items-center space-x-3">
-                <a href="/admin" class="bg-white/10 hover:bg-white/20 px-3.5 py-2 rounded-xl text-sm font-semibold transition">🛠️ Admin</a>
                 <a href="/register" class="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-xl text-sm font-bold shadow-lg transition">＋ Register Business</a>
                 <button onclick="document.getElementById('html-root').classList.toggle('dark')" class="bg-white/10 hover:bg-white/25 px-3.5 py-2 rounded-xl text-sm font-medium transition">🌓</button>
             </div>
@@ -412,7 +412,7 @@ def register_business():
             'doctors': [],
             'items': [],
             'joined_date': datetime.now(),
-            'expiry_date': datetime.now() + timedelta(days=30), # Default 30 days subscription
+            'expiry_date': datetime.now() + timedelta(days=30),
             'status': 'pending',
             'payment_method': payment_method,
             'payment_ref': payment_ref,
@@ -523,49 +523,87 @@ def register_business():
     return render_template_string(reg_html, categories=CATEGORIES, title="Register")
 
 
-# --- ADVANCED CATEGORIZED ADMIN PANEL ---
-@app.route('/admin')
+# --- ADMIN LOGIN & CONTROL CENTER ---
+@app.route('/admin', methods=['GET', 'POST'])
 def admin_panel():
-    action = request.args.get('action')
-    biz_id = request.args.get('id')
+    # Handle Login Form Submit
+    if request.method == 'POST':
+        password = request.form.get('password')
+        if password == ADMIN_PASSWORD:
+            session['admin_logged_in'] = True
+            return redirect('/admin')
+        else:
+            return render_template_string(BASE_HEAD + '''
+            <main class="max-w-md mx-auto px-4 py-20 text-center">
+                <div class="bg-white dark:bg-gray-900 p-8 rounded-3xl shadow-xl border border-red-500/50 space-y-4">
+                    <span class="text-5xl">🔒</span>
+                    <h2 class="text-2xl font-bold text-red-500">Incorrect Password!</h2>
+                    <p class="text-gray-400 text-sm">Please enter the correct admin password to access the panel.</p>
+                    <a href="/admin" class="inline-block bg-blue-600 text-white px-6 py-2.5 rounded-xl font-bold text-sm mt-2">Try Again</a>
+                </div>
+            </main>
+            ''' + FOOTER, title="Access Denied")
 
+    # If Not Logged In, Show Password Login Form
+    if not session.get('admin_logged_in'):
+        return render_template_string(BASE_HEAD + '''
+        <main class="max-w-md mx-auto px-4 py-20">
+            <div class="bg-white dark:bg-gray-900 p-8 rounded-3xl shadow-2xl border border-gray-100 dark:border-gray-800">
+                <div class="text-center mb-6">
+                    <span class="text-5xl">🔒</span>
+                    <h2 class="text-2xl font-black mt-3">Admin Portal Login</h2>
+                    <p class="text-xs text-gray-400 mt-1">Enter password to access control panel</p>
+                </div>
+                <form method="POST" class="space-y-4">
+                    <div>
+                        <input type="password" name="password" required placeholder="Enter Admin Password" class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-700 outline-none text-center">
+                    </div>
+                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl shadow-lg transition">Login to Panel</button>
+                </form>
+            </div>
+        </main>
+        ''' + FOOTER, title="Admin Login")
+
+    # Logout Action
+    action = request.args.get('action')
+    if action == 'logout':
+        session.pop('admin_logged_in', None)
+        return redirect('/')
+
+    biz_id = request.args.get('id')
     if action and biz_id in BUSINESSES:
         if action == 'approve':
             BUSINESSES[biz_id]['status'] = 'approved'
         elif action == 'approve_payment':
             BUSINESSES[biz_id]['payment_status'] = 'paid'
             BUSINESSES[biz_id]['last_paid_date'] = datetime.now()
-            BUSINESSES[biz_id]['expiry_date'] = datetime.now() + timedelta(days=30) # Renew for 30 days
+            BUSINESSES[biz_id]['expiry_date'] = datetime.now() + timedelta(days=30)
         elif action == 'delete':
             BUSINESSES[biz_id]['status'] = 'deleted'
         return redirect('/admin')
 
     now = datetime.now()
 
-    # Categorize Listings
     pending_businesses = {}
     approved_businesses = {}
     pending_payments = {}
     confirmed_payments = {}
-    expiring_soon = {} # Less than 5 days remaining
+    expiring_soon = {}
 
     for b_id, biz in BUSINESSES.items():
         if biz.get('status') == 'deleted':
             continue
 
-        # Check Business Approval Status
         if biz.get('status') == 'pending':
             pending_businesses[b_id] = biz
         else:
             approved_businesses[b_id] = biz
 
-        # Check Payment Status
         if biz.get('payment_status') == 'unpaid':
             pending_payments[b_id] = biz
         else:
             confirmed_payments[b_id] = biz
 
-        # Check Expiry Alert (<= 5 Days left)
         expiry_dt = biz.get('expiry_date', now + timedelta(days=30))
         days_left = (expiry_dt - now).days
         biz['days_left'] = days_left
@@ -581,15 +619,16 @@ def admin_panel():
                 <p class="text-gray-400 text-sm mt-1">Manage Listings, Payments & Subscription Alerts</p>
             </div>
             
-            <!-- Category Alert Pills -->
-            <div class="flex flex-wrap gap-2 text-xs font-bold">
-                <span class="bg-yellow-500/20 text-yellow-400 px-3 py-1.5 rounded-xl">Pending Biz: {{ pending_biz|length }}</span>
-                <span class="bg-orange-500/20 text-orange-400 px-3 py-1.5 rounded-xl">Pending Payments: {{ pending_pay|length }}</span>
-                <span class="bg-red-500/20 text-red-400 px-3 py-1.5 rounded-xl animate-pulse">⚠️ Expiry Alerts: {{ expiring|length }}</span>
+            <div class="flex items-center gap-3">
+                <div class="flex flex-wrap gap-2 text-xs font-bold">
+                    <span class="bg-yellow-500/20 text-yellow-400 px-3 py-1.5 rounded-xl">Pending Biz: {{ pending_biz|length }}</span>
+                    <span class="bg-orange-500/20 text-orange-400 px-3 py-1.5 rounded-xl">Pending Payments: {{ pending_pay|length }}</span>
+                    <span class="bg-red-500/20 text-red-400 px-3 py-1.5 rounded-xl animate-pulse">⚠️ Expiry Alerts: {{ expiring|length }}</span>
+                </div>
+                <a href="/admin?action=logout" class="bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white px-3 py-1.5 rounded-xl text-xs font-bold transition">Logout</a>
             </div>
         </div>
 
-        <!-- 🔴 SECTION 1: EXPIRING SOON ALERTS (< 5 DAYS) -->
         {% if expiring %}
         <div class="mb-12 bg-red-950/30 border border-red-500/30 rounded-3xl p-6 shadow-2xl">
             <h3 class="text-xl font-bold text-red-400 mb-4 flex items-center space-x-2">
@@ -612,16 +651,12 @@ def admin_panel():
         </div>
         {% endif %}
 
-        <!-- TABS CONTAINER -->
         <div class="space-y-10">
-            
-            <!-- 🏢 SECTION 2: BUSINESS LISTINGS (PENDING vs APPROVED) -->
             <div class="bg-white dark:bg-gray-900 rounded-3xl p-6 border border-gray-100 dark:border-gray-800 shadow-xl space-y-6">
                 <h3 class="text-2xl font-black text-blue-400 flex items-center gap-2">
                     <span>🏢 Business Listings Management</span>
                 </h3>
 
-                <!-- Category 1: Pending Listings -->
                 <div>
                     <h4 class="text-md font-bold text-yellow-400 uppercase tracking-wider mb-3 flex items-center gap-2">
                         <span>⏳ Pending Business Listings (Need Approval)</span>
@@ -647,7 +682,6 @@ def admin_panel():
                     {% endif %}
                 </div>
 
-                <!-- Category 2: Approved Listings -->
                 <div class="pt-4 border-t border-gray-800">
                     <h4 class="text-md font-bold text-green-400 uppercase tracking-wider mb-3 flex items-center gap-2">
                         <span>✅ Approved & Live Businesses</span>
@@ -667,13 +701,11 @@ def admin_panel():
                 </div>
             </div>
 
-            <!-- 💳 SECTION 3: PAYMENTS (PENDING vs CONFIRMED) -->
             <div class="bg-white dark:bg-gray-900 rounded-3xl p-6 border border-gray-100 dark:border-gray-800 shadow-xl space-y-6">
                 <h3 class="text-2xl font-black text-indigo-400 flex items-center gap-2">
                     <span>💳 Payment Approvals & History</span>
                 </h3>
 
-                <!-- Category 1: Pending Payments -->
                 <div>
                     <h4 class="text-md font-bold text-orange-400 uppercase tracking-wider mb-3 flex items-center gap-2">
                         <span>⚠️ Pending Payment Approvals (Needs Verification)</span>
@@ -698,7 +730,6 @@ def admin_panel():
                     {% endif %}
                 </div>
 
-                <!-- Category 2: Confirmed Payments -->
                 <div class="pt-4 border-t border-gray-800">
                     <h4 class="text-md font-bold text-blue-400 uppercase tracking-wider mb-3 flex items-center gap-2">
                         <span>💳 Confirmed & Paid Subscriptions</span>
