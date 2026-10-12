@@ -1,4 +1,4 @@
-"""SwatBiz Hub - Complete Application with Joining Date in Admin Panel."""
+"""SwatBiz Hub - Final Complete Application with 2-Month Free Trial, Dynamic Details & Animations."""
 from datetime import datetime, timedelta
 import os
 from flask import Flask, abort, redirect, render_template_string, request, url_for, session
@@ -18,13 +18,13 @@ BUSINESSES = {
         'phones': ['+92 946 9240123'],
         'image': 'https://images.unsplash.com/photo-1587351021759-3e566b6af7cc?auto=format&fit=crop&w=800&q=80',
         'status': 'approved',
-        'payment_method': 'Bank Transfer',
-        'payment_ref': 'TXN-984210',
+        'payment_method': 'Free Trial',
+        'payment_ref': 'TRIAL-FREE',
         'payment_status': 'paid',
-        'joining_date': datetime.now() - timedelta(days=60),
-        'expiry_date': datetime.now() - timedelta(days=2),
-        'doctor_info': 'Dr. Muhammad Ali (Cardiologist), Dr. Ayesha Khan (Pediatrician), Dr. Tariq Rahim (Surgeon)',
-        'tests_services': 'MRI, CT Scan, X-Ray, Ultrasound, Emergency Care, Complete Blood Count (CBC)'
+        'joining_date': datetime.now() - timedelta(days=10),
+        'expiry_date': datetime.now() + timedelta(days=50),
+        'special_info': 'Dr. Muhammad Ali (Cardiologist), Dr. Ayesha Khan (Pediatrician)',
+        'tests_dishes': 'MRI, CT Scan, X-Ray, Ultrasound, Emergency Care'
     },
     '2': {
         'id': '2',
@@ -34,13 +34,13 @@ BUSINESSES = {
         'phones': ['+92 946 881122'],
         'image': 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=800&q=80',
         'status': 'pending',
-        'payment_method': 'EasyPaisa',
-        'payment_ref': 'TID-9920182',
-        'payment_status': 'unpaid',
-        'joining_date': datetime.now() - timedelta(days=2),
-        'expiry_date': datetime.now() + timedelta(days=30),
-        'doctor_info': 'N/A',
-        'tests_services': 'Dumba Karahi, Shinwari Tikka, Green Tea'
+        'payment_method': 'Free Trial',
+        'payment_ref': 'TRIAL-FREE',
+        'payment_status': 'paid',
+        'joining_date': datetime.now(),
+        'expiry_date': datetime.now() + timedelta(days=60),
+        'special_info': 'Special Family Cabin Available',
+        'tests_dishes': 'Dumba Karahi, Shinwari Tikka, Mutton Kabab, Green Tea'
     },
     '3': {
         'id': '3',
@@ -54,20 +54,20 @@ BUSINESSES = {
         'payment_ref': 'TID-7782194',
         'payment_status': 'paid',
         'joining_date': datetime.now() - timedelta(days=45),
-        'expiry_date': datetime.now() + timedelta(days=3),
-        'doctor_info': 'Available Pharmacist: Dr. Bilal Ahmed',
-        'tests_services': 'Blood Pressure Check, Blood Glucose Testing, First Aid Supplies'
+        'expiry_date': datetime.now() + timedelta(days=15),
+        'special_info': 'Available Pharmacist: Dr. Bilal Ahmed',
+        'tests_dishes': 'Blood Pressure Check, Blood Glucose Testing, First Aid'
     }
 }
 
 CATEGORIES = {
-    'hospitals': {'title': 'Hospitals & Healthcare', 'icon': '🏥', 'search_hint': 'Search name or location...'},
-    'pharmacies': {'title': 'Pharmacies & Medical Stores', 'icon': '💊', 'search_hint': 'Search medicine or store...'},
-    'restaurants': {'title': 'Restaurants & Cafes', 'icon': '🍽️', 'search_hint': 'Search restaurant...'},
-    'supermarts': {'title': 'Supermarts & Grocery', 'icon': '🛒', 'search_hint': 'Search store or item...'},
-    'property': {'title': 'Property Dealers', 'icon': '🏠', 'search_hint': 'Search plot or house...'},
-    'hotels': {'title': 'Hotels & Guest Houses', 'icon': '🏨', 'search_hint': 'Search hotel...'},
-    'education': {'title': 'Educational Institutes', 'icon': '🎓', 'search_hint': 'Search school or college...'}
+    'hospitals': {'title': 'Hospitals & Healthcare', 'icon': '🏥', 'search_hint': 'Search name or location...', 'info_title': '👨‍⚕️ Doctor & Specialist Info', 'extra_title': '🔬 Available Tests & Services'},
+    'pharmacies': {'title': 'Pharmacies & Medical Stores', 'icon': '💊', 'search_hint': 'Search medicine or store...', 'info_title': '🧑‍⚕️ Pharmacist / Staff Info', 'extra_title': '💊 Medicines & Items'},
+    'restaurants': {'title': 'Restaurants & Cafes', 'icon': '🍽️', 'search_hint': 'Search restaurant...', 'info_title': '👨‍🍳 Chef & Speciality Info', 'extra_title': '🍲 Special Dishes & Menu'},
+    'supermarts': {'title': 'Supermarts & Grocery', 'icon': '🛒', 'search_hint': 'Search store or item...', 'info_title': '🏬 Store Info', 'extra_title': '🛍️ Available Items & Groceries'},
+    'property': {'title': 'Property Dealers', 'icon': '🏠', 'search_hint': 'Search plot or house...', 'info_title': '🧑‍💼 Dealer Info', 'extra_title': '🏡 Plots & Properties'},
+    'hotels': {'title': 'Hotels & Guest Houses', 'icon': '🏨', 'search_hint': 'Search hotel...', 'info_title': '🛎️ Management Info', 'extra_title': '🛏️ Rooms & Facilities'},
+    'education': {'title': 'Educational Institutes', 'icon': '🎓', 'search_hint': 'Search school or college...', 'info_title': '👨‍🏫 Principal & Faculty Info', 'extra_title': '📚 Courses & Programs'}
 }
 
 HOME_HEAD = '''
@@ -201,7 +201,9 @@ def category_page(cat_slug):
     cat = CATEGORIES[cat_slug]
     search_query = request.args.get('q', '').lower().strip()
     
-    all_biz = [b for b in BUSINESSES.values() if b.get('category') == cat_slug and b.get('status') == 'approved']
+    # Only approved and non-expired businesses are shown publicly
+    now = datetime.now()
+    all_biz = [b for b in BUSINESSES.values() if b.get('category') == cat_slug and b.get('status') == 'approved' and b.get('expiry_date', now) >= now]
     filtered = []
     for b in all_biz:
         if search_query:
@@ -214,17 +216,17 @@ def category_page(cat_slug):
     for b in filtered:
         cards += '''
         <a href="/business/''' + b['id'] + '''" class="bg-gray-900 rounded-2xl shadow-sm hover:shadow-2xl hover:border-blue-500 transition-all duration-300 transform hover:-translate-y-1.5 border border-gray-800 overflow-hidden flex flex-col justify-between group">
-            <img src="''' + b.get('image', '') + '''" class="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-500">
+            <img src="''' + b.get('image', 'https://images.unsplash.com/photo-1557804506-669a67965ba0?auto=format&fit=crop&w=800&q=80') + '''" class="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-500">
             <div class="p-6">
                 <h3 class="text-xl font-bold group-hover:text-blue-400 transition-colors">''' + b['name'] + '''</h3>
                 <p class="text-sm text-gray-400 mt-1">📍 ''' + b['address'] + '''</p>
-                <p class="text-xs text-blue-400 mt-2">📞 ''' + b.get('phones', ['N/A'])[0] + '''</p>
-                <span class="inline-block mt-4 text-xs font-bold text-blue-500 bg-blue-500/10 px-3 py-1.5 rounded-lg">View Details →</span>
+                <p class="text-xs text-blue-400 mt-2 font-bold">📞 ''' + b.get('phones', ['N/A'])[0] + '''</p>
+                <span class="inline-block mt-4 text-xs font-bold text-blue-500 bg-blue-500/10 px-3 py-1.5 rounded-lg group-hover:bg-blue-600 group-hover:text-white transition">View Details →</span>
             </div>
         </a>
         '''
     if not cards:
-        cards = '<div class="col-span-3 text-center py-20 text-gray-500"><p class="text-xl">No listings found.</p></div>'
+        cards = '<div class="col-span-3 text-center py-20 text-gray-500"><p class="text-xl">No active or approved listings found.</p></div>'
 
     json_list = ""
     for b in all_biz:
@@ -290,17 +292,35 @@ def category_page(cat_slug):
 
 @app.route('/business/<b_id>')
 def business_detail(b_id):
-    if b_id not in BUSINESSES or BUSINESSES[b_id].get('status') != 'approved':
+    if b_id not in BUSINESSES:
         abort(404)
     b = BUSINESSES[b_id]
     
-    doc_info = b.get('doctor_info', 'Not specified')
-    tests_serv = b.get('tests_services', 'Not specified')
+    # If not approved or subscription expired, block viewing
+    now = datetime.now()
+    if b.get('status') != 'approved' or b.get('expiry_date', now) < now:
+        html = BASE_HEAD + '''
+        <main class="max-w-xl mx-auto px-4 py-20 text-center">
+            <div class="bg-gray-900 border border-gray-800 rounded-3xl p-10 shadow-2xl space-y-4">
+                <span class="text-6xl inline-block">🔒</span>
+                <h1 class="text-2xl font-bold text-white">Listing Inactive or Expired</h1>
+                <p class="text-gray-400 text-sm">This business is either pending admin approval or its 2-month free trial/subscription has expired. Payment is required to restore access.</p>
+                <div class="pt-4">
+                    <a href="/" class="bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-xl font-bold transition inline-block">Return to Home</a>
+                </div>
+            </div>
+        </main>
+        ''' + FOOTER
+        return render_template_string(html)
+
+    cat_meta = CATEGORIES.get(b['category'], {'info_title': 'Special Info', 'extra_title': 'Tests & Dishes'})
+    special_info = b.get('special_info', 'Not specified')
+    tests_dishes = b.get('tests_dishes', 'Not specified')
 
     html = BASE_HEAD + '''
     <main class="max-w-4xl mx-auto px-4 py-12">
         <div class="bg-gray-900 border border-gray-800 rounded-3xl overflow-hidden shadow-2xl">
-            <img src="''' + b.get('image', '') + '''" class="w-full h-72 object-cover">
+            <img src="''' + b.get('image', 'https://images.unsplash.com/photo-1557804506-669a67965ba0?auto=format&fit=crop&w=800&q=80') + '''" class="w-full h-72 object-cover">
             <div class="p-8 space-y-6">
                 <div>
                     <span class="bg-blue-600/20 text-blue-400 text-xs px-3 py-1 rounded-full font-bold uppercase tracking-wider">Verified Listing</span>
@@ -314,12 +334,12 @@ def business_detail(b_id):
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2 border-t border-gray-800">
                     <div class="bg-gray-800/50 p-6 rounded-2xl border border-gray-700/50">
-                        <h3 class="text-lg font-bold text-blue-400 mb-2">👨‍⚕️ Doctor & Specialist Info</h3>
-                        <p class="text-gray-300 text-sm leading-relaxed">''' + doc_info + '''</p>
+                        <h3 class="text-lg font-bold text-blue-400 mb-2">''' + cat_meta['info_title'] + '''</h3>
+                        <p class="text-gray-300 text-sm leading-relaxed">''' + special_info + '''</p>
                     </div>
                     <div class="bg-gray-800/50 p-6 rounded-2xl border border-gray-700/50">
-                        <h3 class="text-lg font-bold text-emerald-400 mb-2">🔬 Available Tests & Services</h3>
-                        <p class="text-gray-300 text-sm leading-relaxed">''' + tests_serv + '''</p>
+                        <h3 class="text-lg font-bold text-emerald-400 mb-2">''' + cat_meta['extra_title'] + '''</h3>
+                        <p class="text-gray-300 text-sm leading-relaxed">''' + tests_dishes + '''</p>
                     </div>
                 </div>
 
@@ -342,14 +362,14 @@ def register_business():
             'name': request.form.get('name'),
             'address': request.form.get('address'),
             'phones': [request.form.get('phone', '')],
-            'doctor_info': request.form.get('doctor_info', 'N/A'),
-            'tests_services': request.form.get('tests_services', 'N/A'),
+            'special_info': request.form.get('special_info', 'N/A'),
+            'tests_dishes': request.form.get('tests_dishes', 'N/A'),
             'status': 'pending',
-            'payment_method': request.form.get('payment_method', 'Cash'),
-            'payment_ref': request.form.get('payment_ref', 'N/A'),
-            'payment_status': 'unpaid',
+            'payment_method': request.form.get('payment_method', 'Free Trial'),
+            'payment_ref': request.form.get('payment_ref', 'TRIAL-60DAYS'),
+            'payment_status': 'paid',
             'joining_date': datetime.now(),
-            'expiry_date': datetime.now() + timedelta(days=30)
+            'expiry_date': datetime.now() + timedelta(days=60)  # 2 Months Free Trial
         }
         return redirect('/')
 
@@ -359,26 +379,32 @@ def register_business():
 
     html = BASE_HEAD + '''
     <main class="max-w-2xl mx-auto px-4 py-12">
-        <h2 class="text-3xl font-extrabold text-center mb-6">Register Business</h2>
+        <h2 class="text-3xl font-extrabold text-center mb-2">Register Business</h2>
+        <p class="text-center text-sm text-gray-400 mb-8">Enjoy 2 Months Free Trial upon registration!</p>
         <form method="POST" class="space-y-4">
-            <input type="text" name="name" required placeholder="Business / Hospital Name" class="w-full p-3 rounded-xl bg-gray-900 border border-gray-800 focus:ring-2 focus:ring-blue-500 outline-none">
-            <select name="category" class="w-full p-3 rounded-xl bg-gray-900 border border-gray-800">''' + opts + '''</select>
-            <input type="text" name="address" required placeholder="Address (e.g. Mingora, Swat)" class="w-full p-3 rounded-xl bg-gray-900 border border-gray-800 focus:ring-2 focus:ring-blue-500 outline-none">
-            <input type="text" name="phone" required placeholder="Phone Number" class="w-full p-3 rounded-xl bg-gray-900 border border-gray-800 focus:ring-2 focus:ring-blue-500 outline-none">
+            <input type="text" name="name" required placeholder="Business / Hospital / Restaurant Name" class="w-full p-3.5 rounded-xl bg-gray-900 border border-gray-800 focus:ring-2 focus:ring-blue-500 outline-none transition">
+            <select name="category" class="w-full p-3.5 rounded-xl bg-gray-900 border border-gray-800 focus:ring-2 focus:ring-blue-500 outline-none transition">''' + opts + '''</select>
+            <input type="text" name="address" required placeholder="Address (e.g. Mingora, Swat)" class="w-full p-3.5 rounded-xl bg-gray-900 border border-gray-800 focus:ring-2 focus:ring-blue-500 outline-none transition">
+            <input type="text" name="phone" required placeholder="Phone Number" class="w-full p-3.5 rounded-xl bg-gray-900 border border-gray-800 focus:ring-2 focus:ring-blue-500 outline-none transition">
             
             <div class="border-t border-gray-800 pt-4 mt-4">
-                <label class="block text-xs font-bold text-gray-400 mb-1">Optional Healthcare Details</label>
-                <textarea name="doctor_info" placeholder="Doctor Information / Specialists (Optional)" class="w-full p-3 rounded-xl bg-gray-900 border border-gray-800 focus:ring-2 focus:ring-blue-500 outline-none text-sm" rows="2"></textarea>
-                <textarea name="tests_services" placeholder="Available Tests & Services (Optional, e.g., X-Ray, Lab Tests)" class="w-full p-3 rounded-xl bg-gray-900 border border-gray-800 focus:ring-2 focus:ring-blue-500 outline-none text-sm mt-3" rows="2"></textarea>
+                <label class="block text-xs font-bold text-gray-400 mb-2">Custom Business Details (Optional)</label>
+                <textarea name="special_info" placeholder="Doctor info, Chef details, or Management info..." class="w-full p-3.5 rounded-xl bg-gray-900 border border-gray-800 focus:ring-2 focus:ring-blue-500 outline-none text-sm transition" rows="2"></textarea>
+                <textarea name="tests_dishes" placeholder="Tests & Services, Special Dishes / Menu items, or Products..." class="w-full p-3.5 rounded-xl bg-gray-900 border border-gray-800 focus:ring-2 focus:ring-blue-500 outline-none text-sm mt-3 transition" rows="2"></textarea>
             </div>
 
-            <select name="payment_method" class="w-full p-3 rounded-xl bg-gray-900 border border-gray-800 mt-4">
-                <option value="EasyPaisa">EasyPaisa</option>
-                <option value="JazzCash">JazzCash</option>
-                <option value="Bank Transfer">Bank Transfer</option>
-            </select>
-            <input type="text" name="payment_ref" placeholder="TID / Ref Number" class="w-full p-3 rounded-xl bg-gray-900 border border-gray-800">
-            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 py-3 rounded-xl font-bold transition transform hover:-translate-y-0.5">Submit Business</button>
+            <div class="border-t border-gray-800 pt-4 mt-4">
+                <label class="block text-xs font-bold text-gray-400 mb-2">Payment Details (Optional - Free for first 2 Months)</label>
+                <select name="payment_method" class="w-full p-3.5 rounded-xl bg-gray-900 border border-gray-800 focus:ring-2 focus:ring-blue-500 outline-none transition">
+                    <option value="Free Trial">2 Months Free Trial (Active)</option>
+                    <option value="EasyPaisa">EasyPaisa</option>
+                    <option value="JazzCash">JazzCash</option>
+                    <option value="Bank Transfer">Bank Transfer</option>
+                </select>
+                <input type="text" name="payment_ref" placeholder="TID / Ref Number (Optional)" class="w-full p-3.5 rounded-xl bg-gray-900 border border-gray-800 focus:ring-2 focus:ring-blue-500 outline-none mt-3 transition">
+            </div>
+
+            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 py-3.5 rounded-xl font-bold transition transform hover:-translate-y-0.5 shadow-lg">Submit Business</button>
         </form>
     </main>
     ''' + FOOTER
@@ -419,7 +445,7 @@ def admin_panel():
             BUSINESSES[biz_id]['status'] = 'approved'
         elif action == 'approve_pay':
             BUSINESSES[biz_id]['payment_status'] = 'paid'
-            BUSINESSES[biz_id]['expiry_date'] = datetime.now() + timedelta(days=30)
+            BUSINESSES[biz_id]['expiry_date'] = datetime.now() + timedelta(days=60)
         elif action == 'delete':
             BUSINESSES[biz_id]['status'] = 'deleted'
         return redirect('/admin?module=' + str(module) + '&tab=' + str(tab))
@@ -559,7 +585,7 @@ def admin_panel():
                         <p class="text-xs text-gray-400 mt-1">📅 Joined: ''' + j_date + '''</p>
                         <p class="text-xs text-red-400 font-bold mt-1">⏳ Expiry Alert: Less than 5 Days Remaining!</p>
                     </div>
-                    <a href="/admin?module=payment&tab=alerts&action=approve_pay&id=''' + b_id + '''" class="bg-red-600 hover:bg-red-500 px-4 py-2 rounded-xl text-xs font-bold text-white transition">Renew (+30 Days)</a>
+                    <a href="/admin?module=payment&tab=alerts&action=approve_pay&id=''' + b_id + '''" class="bg-red-600 hover:bg-red-500 px-4 py-2 rounded-xl text-xs font-bold text-white transition">Renew (+60 Days)</a>
                 </div>
                 '''
             if not content:
@@ -575,7 +601,7 @@ def admin_panel():
                         <p class="text-xs text-gray-400">📞 ''' + b.get("phones", ["N/A"])[0] + ''' | 📍 ''' + b["address"] + ''' | 📅 Joined: ''' + j_date + '''</p>
                         <p class="text-xs text-red-400 font-bold mt-1">❌ Subscription Ended ''' + str(days_ago) + ''' day(s) ago!</p>
                     </div>
-                    <a href="/admin?module=payment&tab=expired&action=approve_pay&id=''' + b_id + '''" class="bg-red-600 hover:bg-red-500 px-4 py-2 rounded-xl text-xs font-bold text-white shadow transition">Renew (+30 Days)</a>
+                    <a href="/admin?module=payment&tab=expired&action=approve_pay&id=''' + b_id + '''" class="bg-red-600 hover:bg-red-500 px-4 py-2 rounded-xl text-xs font-bold text-white shadow transition">Renew (+60 Days)</a>
                 </div>
                 '''
             if not content:
