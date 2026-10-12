@@ -1,27 +1,45 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" id="html-root" class="dark">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ category.title }} - {{ site_name }}</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏙️</text></svg>">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>tailwind.config = { darkMode: 'class' }</script>
 </head>
-<body class="bg-slate-50 text-slate-800">
-    <div class="max-w-3xl mx-auto p-6">
-        <a href="/" class="text-indigo-600 font-medium">&larr; Back to Home</a>
-        <h1 class="text-3xl font-bold mt-4 mb-6">{{ category.icon }} {{ category.title }}</h1>
-        <div class="space-y-4">
+<body class="bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 min-h-screen">
+    <header class="bg-gradient-to-r from-slate-900 via-blue-950 to-indigo-950 text-white shadow-xl">
+        <div class="max-w-7xl mx-auto px-4 py-6 flex justify-between items-center">
+            <a href="{{ url_for('home') }}" class="font-semibold hover:underline">← Back to Home</a>
+            <button onclick="document.getElementById('html-root').classList.toggle('dark')" class="bg-white/10 hover:bg-white/25 px-3.5 py-2 rounded-xl text-sm font-medium transition">🌓 Theme</button>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 py-12">
+        <div class="mb-10 text-center">
+            <span class="text-6xl">{{ category.icon }}</span>
+            <h2 class="text-4xl font-extrabold mt-4">{{ category.title }}</h2>
+            <p class="text-gray-500 dark:text-gray-400 mt-2">Explore verified listings in Swat & Mingora</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             {% for biz in businesses %}
-            <a href="/business/{{ biz.id }}" class="block bg-white p-5 rounded-lg shadow border border-slate-100 hover:border-indigo-300 transition">
-                <h2 class="text-xl font-semibold text-slate-900">{{ biz.name }}</h2>
-                <p class="text-slate-500 text-sm mt-1">{{ biz.address }} | {{ biz.phone }}</p>
-                {% if biz.status == 'locked' %}
-                <span class="inline-block mt-2 text-xs bg-amber-100 text-amber-800 px-2 py-1 rounded">Subscription Expired</span>
-                {% endif %}
+            <a href="{{ url_for('business_detail', b_id=biz.id) }}" class="bg-white dark:bg-gray-900 rounded-2xl shadow-sm hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-100 dark:border-gray-800 overflow-hidden group">
+                <img src="{{ biz.image }}" alt="{{ biz.name }}" class="w-full h-48 object-cover group-hover:scale-105 transition duration-300">
+                <div class="p-6">
+                    <h3 class="text-xl font-bold group-hover:text-blue-500 transition-colors">{{ biz.name }}</h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">📍 {{ biz.address }}</p>
+                    <p class="text-sm font-semibold text-blue-600 dark:text-blue-400 mt-3">📞 {{ biz.phone }}</p>
+                </div>
             </a>
             {% else %}
-            <p class="text-slate-500">No businesses listed in this category yet.</p>
+            <div class="col-span-3 text-center py-20 text-gray-500">
+                <p class="text-xl">No businesses registered in this category yet.</p>
+                <a href="{{ url_for('register_business') }}" class="inline-block mt-4 bg-blue-600 text-white px-6 py-3 rounded-xl font-semibold shadow">Be the first to list!</a>
+            </div>
             {% endfor %}
         </div>
-    </div>
+    </main>
 </body>
 </html>
