@@ -1,4 +1,4 @@
-"""SwatBiz Hub - Fully Featured & Animated Application."""
+"""SwatBiz Hub - Stable & Clean Application."""
 from datetime import datetime, timedelta
 import os
 from flask import Flask, abort, redirect, render_template_string, request, url_for, session
@@ -76,7 +76,7 @@ BASE_HEAD = '''
         <div class="max-w-7xl mx-auto px-4 py-6 flex justify-between items-center">
             <a href="/" class="text-2xl font-extrabold tracking-tight hover:opacity-85 transition">🏙️ ''' + SITE_NAME + '''</a>
             <div class="flex items-center space-x-3">
-                <a href="/register" class="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-xl text-sm font-bold shadow-lg transform hover:-translate-y-0.5 transition-all duration-200">＋ Register Business</a>
+                <a href="/register" class="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-xl text-sm font-bold shadow-lg transform hover:-translate-y-0.5 transition-all">＋ Register Business</a>
             </div>
         </div>
     </header>
@@ -125,8 +125,14 @@ def category_page(cat_slug):
     cat = CATEGORIES[cat_slug]
     search_query = request.args.get('q', '').lower().strip()
     
-    all_biz = [b for b in BUSINESSES.values() if b.get('category') == cat_slug and b.get('status'] == 'approved']
-    filtered = [b for b in all_biz if not search_query or search_query in b.get('name', '').lower() or search_query in b.get('address', '').lower()]
+    all_biz = [b for b in BUSINESSES.values() if b.get('category') == cat_slug and b.get('status') == 'approved']
+    filtered = []
+    for b in all_biz:
+        if search_query:
+            if search_query in b.get('name', '').lower() or search_query in b.get('address', '').lower():
+                filtered.append(b)
+        else:
+            filtered.append(b)
 
     cards = ""
     for b in filtered:
@@ -146,12 +152,12 @@ def category_page(cat_slug):
     html = BASE_HEAD + '''
     <main class="max-w-7xl mx-auto px-4 py-12">
         <div class="mb-8 text-center">
-            <span class="text-6xl animate-bounce inline-block">''' + cat['icon'] + '''</span>
+            <span class="text-6xl inline-block animate-bounce">''' + cat['icon'] + '''</span>
             <h2 class="text-4xl font-extrabold mt-4">''' + cat['title'] + '''</h2>
             <div class="mt-6 max-w-xl mx-auto">
                 <form method="GET" action="/category/''' + cat_slug + '''" class="flex gap-3">
-                    <input type="text" name="q" value="''' + search_query + '''" placeholder="''' + cat['search_hint'] + '''" class="w-full px-5 py-3.5 rounded-2xl bg-gray-900 border border-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm transition">
-                    <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-white px-6 py-3.5 rounded-2xl font-semibold transition shadow-lg">Search</button>
+                    <input type="text" name="q" value="''' + search_query + '''" placeholder="''' + cat['search_hint'] + '''" class="w-full px-5 py-3.5 rounded-2xl bg-gray-900 border border-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-white px-6 py-3.5 rounded-2xl font-semibold transition">Search</button>
                 </form>
             </div>
         </div>
@@ -180,23 +186,25 @@ def register_business():
         }
         return redirect('/')
 
-    opts = "".join(['<option value="' + k + '">' + v["title"] + '</option>' for k, v in CATEGORIES.items()])
+    opts = ""
+    for k, v in CATEGORIES.items():
+        opts += '<option value="' + k + '">' + v["title"] + '</option>'
 
     html = BASE_HEAD + '''
     <main class="max-w-2xl mx-auto px-4 py-12">
         <h2 class="text-3xl font-bold text-center mb-6">Register Business</h2>
         <form method="POST" class="space-y-4">
-            <input type="text" name="name" required placeholder="Business Name" class="w-full p-3 rounded-xl bg-gray-900 border border-gray-800 focus:ring-2 focus:ring-blue-500 outline-none transition">
-            <select name="category" class="w-full p-3 rounded-xl bg-gray-900 border border-gray-800 focus:ring-2 focus:ring-blue-500 outline-none transition">''' + opts + '''</select>
-            <input type="text" name="address" required placeholder="Address" class="w-full p-3 rounded-xl bg-gray-900 border border-gray-800 focus:ring-2 focus:ring-blue-500 outline-none transition">
-            <input type="text" name="phone" required placeholder="Phone Number" class="w-full p-3 rounded-xl bg-gray-900 border border-gray-800 focus:ring-2 focus:ring-blue-500 outline-none transition">
-            <select name="payment_method" class="w-full p-3 rounded-xl bg-gray-900 border border-gray-800 focus:ring-2 focus:ring-blue-500 outline-none transition">
+            <input type="text" name="name" required placeholder="Business Name" class="w-full p-3 rounded-xl bg-gray-900 border border-gray-800 focus:ring-2 focus:ring-blue-500 outline-none">
+            <select name="category" class="w-full p-3 rounded-xl bg-gray-900 border border-gray-800">''' + opts + '''</select>
+            <input type="text" name="address" required placeholder="Address" class="w-full p-3 rounded-xl bg-gray-900 border border-gray-800 focus:ring-2 focus:ring-blue-500 outline-none">
+            <input type="text" name="phone" required placeholder="Phone Number" class="w-full p-3 rounded-xl bg-gray-900 border border-gray-800 focus:ring-2 focus:ring-blue-500 outline-none">
+            <select name="payment_method" class="w-full p-3 rounded-xl bg-gray-900 border border-gray-800">
                 <option value="EasyPaisa">EasyPaisa</option>
                 <option value="JazzCash">JazzCash</option>
                 <option value="Bank Transfer">Bank Transfer</option>
             </select>
-            <input type="text" name="payment_ref" placeholder="TID / Ref Number" class="w-full p-3 rounded-xl bg-gray-900 border border-gray-800 focus:ring-2 focus:ring-blue-500 outline-none transition">
-            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 py-3 rounded-xl font-bold shadow-lg transition transform hover:-translate-y-0.5">Submit Business</button>
+            <input type="text" name="payment_ref" placeholder="TID / Ref Number" class="w-full p-3 rounded-xl bg-gray-900 border border-gray-800 focus:ring-2 focus:ring-blue-500 outline-none">
+            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 py-3 rounded-xl font-bold transition">Submit Business</button>
         </form>
     </main>
     ''' + FOOTER
@@ -212,11 +220,11 @@ def admin_panel():
     if not session.get('admin_logged_in'):
         html = BASE_HEAD + '''
         <main class="max-w-md mx-auto px-4 py-20 text-center">
-            <div class="bg-gray-900 p-8 rounded-3xl border border-gray-800 shadow-2xl">
+            <div class="bg-gray-900 p-8 rounded-3xl border border-gray-800 shadow-xl">
                 <h2 class="text-2xl font-bold mb-4">🔒 Admin Portal Login</h2>
                 <form method="POST" class="space-y-4">
-                    <input type="password" name="password" required placeholder="Password" class="w-full p-3 rounded-xl bg-gray-800 border border-gray-700 text-center focus:ring-2 focus:ring-blue-500 outline-none transition">
-                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 py-3 rounded-xl font-bold shadow-lg transition">Login</button>
+                    <input type="password" name="password" required placeholder="Password" class="w-full p-3 rounded-xl bg-gray-800 border border-gray-700 text-center focus:ring-2 focus:ring-blue-500 outline-none">
+                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 py-3 rounded-xl font-bold transition">Login</button>
                 </form>
             </div>
         </main>
@@ -248,8 +256,18 @@ def admin_panel():
     pending_pay = {k: v for k, v in BUSINESSES.items() if v.get('payment_status') == 'unpaid'}
     paid_pay = {k: v for k, v in BUSINESSES.items() if v.get('payment_status') == 'paid' and v.get('expiry_date', now) >= now}
     
-    expiring_alerts = {k: v for k, v in BUSINESSES.items() if 0 <= (v.get('expiry_date') - now).days <= 5 and v.get('status'] != 'deleted'}
-    expired_subs = {k: v for k, v in BUSINESSES.items() if (v.get('expiry_date') - now).days < 0 and v.get('status'] != 'deleted'}
+    expiring_alerts = {}
+    for k, v in BUSINESSES.items():
+        if v.get('status') != 'deleted' and v.get('expiry_date'):
+            days_diff = (v.get('expiry_date') - now).days
+            if 0 <= days_diff <= 5:
+                expiring_alerts[k] = v
+
+    expired_subs = {}
+    for k, v in BUSINESSES.items():
+        if v.get('status') != 'deleted' and v.get('expiry_date'):
+            if (v.get('expiry_date') - now).days < 0:
+                expired_subs[k] = v
 
     if not module:
         html = BASE_HEAD + '''
@@ -263,7 +281,7 @@ def admin_panel():
                 <a href="/admin?module=business&tab=pending" class="bg-gray-900 p-8 rounded-3xl border border-gray-800 hover:border-blue-500 transition-all duration-300 transform hover:-translate-y-2 shadow-2xl flex flex-col justify-between group">
                     <div>
                         <div class="flex justify-between items-center mb-6">
-                            <span class="text-6xl group-hover:scale-110 transition-transform duration-300">🏢</span>
+                            <span class="text-6xl group-hover:scale-110 transition-transform">🏢</span>
                             <span class="bg-yellow-500/20 text-yellow-400 text-xs px-3 py-1.5 rounded-full font-bold">''' + str(len(pending_biz)) + ''' Pending</span>
                         </div>
                         <h3 class="text-2xl font-black group-hover:text-blue-500 transition-colors">1. Business Directory Module</h3>
@@ -278,7 +296,7 @@ def admin_panel():
                 <a href="/admin?module=payment&tab=pending" class="bg-gray-900 p-8 rounded-3xl border border-gray-800 hover:border-indigo-500 transition-all duration-300 transform hover:-translate-y-2 shadow-2xl flex flex-col justify-between group">
                     <div>
                         <div class="flex justify-between items-center mb-6">
-                            <span class="text-6xl group-hover:scale-110 transition-transform duration-300">💳</span>
+                            <span class="text-6xl group-hover:scale-110 transition-transform">💳</span>
                             <span class="bg-red-500/20 text-red-400 text-xs px-3 py-1.5 rounded-full font-bold">''' + str(len(expired_subs)) + ''' Expired</span>
                         </div>
                         <h3 class="text-2xl font-black group-hover:text-indigo-500 transition-colors">2. Payment & Subscription Module</h3>
@@ -305,7 +323,7 @@ def admin_panel():
                         <p class="text-xs text-gray-400">📍 ''' + b["address"] + '''</p>
                     </div>
                     <div class="flex gap-2">
-                        <a href="/admin?module=business&tab=pending&action=approve&id=''' + b_id + '''" class="bg-green-600 hover:bg-green-500 px-4 py-2 rounded-xl text-xs font-bold transition shadow">Approve</a>
+                        <a href="/admin?module=business&tab=pending&action=approve&id=''' + b_id + '''" class="bg-green-600 hover:bg-green-500 px-4 py-2 rounded-xl text-xs font-bold transition">Approve</a>
                         <a href="/admin?module=business&tab=pending&action=delete&id=''' + b_id + '''" class="bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white px-3 py-2 rounded-xl text-xs font-bold transition">Delete</a>
                     </div>
                 </div>
@@ -330,6 +348,10 @@ def admin_panel():
                 <a href="/admin" class="text-sm font-bold text-blue-500 hover:underline">← Back to Admin Hub</a>
                 <h2 class="text-2xl font-extrabold">🏢 Business Directory Module</h2>
             </div>
+            <div class="flex space-x-3 mb-6">
+                <a href="/admin?module=business&tab=pending" class="px-5 py-2.5 rounded-xl text-sm font-bold ''' + ('bg-blue-600 text-white' if tab=='pending' else 'bg-gray-900 text-gray-400') + '''">Pending (''' + str(len(pending_biz)) + ''' )</a>
+                <a href="/admin?module=business&tab=approved" class="px-5 py-2.5 rounded-xl text-sm font-bold ''' + ('bg-blue-600 text-white' if tab=='approved' else 'bg-gray-900 text-gray-400') + '''">Approved (''' + str(len(approved_biz)) + ''' )</a>
+            </div>
             <div class="bg-gray-900 p-6 rounded-3xl border border-gray-800 shadow-xl space-y-4">
                 ''' + content + '''
             </div>
@@ -347,11 +369,24 @@ def admin_panel():
                         <h4 class="font-bold">''' + b["name"] + '''</h4>
                         <p class="text-xs text-blue-400">Method: ''' + b.get("payment_method") + ''' | Ref: <code>''' + b.get("payment_ref") + '''</code></p>
                     </div>
-                    <a href="/admin?module=payment&tab=pending&action=approve_pay&id=''' + b_id + '''" class="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-xl text-xs font-bold transition shadow">Confirm Payment</a>
+                    <a href="/admin?module=payment&tab=pending&action=approve_pay&id=''' + b_id + '''" class="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-xl text-xs font-bold transition">Confirm Payment</a>
                 </div>
                 '''
             if not content:
                 content = '<p class="text-gray-500 text-center py-8">No pending payments.</p>'
+        elif tab == 'alerts':
+            for b_id, b in expiring_alerts.items():
+                content += '''
+                <div class="bg-red-950/40 border border-red-500/50 p-4 rounded-2xl flex justify-between items-center">
+                    <div>
+                        <h4 class="font-bold text-white">''' + b["name"] + '''</h4>
+                        <p class="text-xs text-red-400 font-bold mt-1">⏳ Expiry Alert: Less than 5 Days Remaining!</p>
+                    </div>
+                    <a href="/admin?module=payment&tab=alerts&action=approve_pay&id=''' + b_id + '''" class="bg-red-600 hover:bg-red-500 px-4 py-2 rounded-xl text-xs font-bold text-white transition">Renew (+30 Days)</a>
+                </div>
+                '''
+            if not content:
+                content = '<p class="text-gray-500 text-center py-8">No expiry alerts right now.</p>'
         elif tab == 'expired':
             for b_id, b in expired_subs.items():
                 days_ago = abs((b.get('expiry_date') - now).days)
@@ -366,14 +401,14 @@ def admin_panel():
                 </div>
                 '''
             if not content:
-                content = '<p class="text-gray-500 text-center py-8">No expired subscriptions found.</p>'
+                content = '<p class="text-gray-500 text-center py-8">No expired subscriptions found. Great!</p>'
         else:
             for b_id, b in paid_pay.items():
                 content += '''
                 <div class="bg-gray-800/40 p-4 rounded-2xl hover:bg-gray-800/70 transition">
                     <h4 class="font-bold">''' + b["name"] + '''</h4>
-                    <p class="text-xs text-gray-400 mt-1">Method: ''' + b.get("payment_method") + '''</p>
-                    <span class="text-xs font-bold text-green-400 mt-1 block">✓ Active</span>
+                    <p class="text-xs text-gray-400 mt-1">Method: ''' + b.get("payment_method") + ''' | Ref: <code>''' + b.get("payment_ref") + '''</code></p>
+                    <span class="text-xs font-bold text-green-400 mt-1 block">✓ Active Subscription</span>
                 </div>
                 '''
 
@@ -384,9 +419,10 @@ def admin_panel():
                 <h2 class="text-2xl font-extrabold">💳 Payment & Subscription Module</h2>
             </div>
             <div class="flex flex-wrap gap-3 mb-8">
-                <a href="/admin?module=payment&tab=pending" class="px-5 py-2.5 rounded-xl text-sm font-bold bg-gray-900 hover:bg-gray-800 text-gray-300 transition shadow">Unpaid</a>
-                <a href="/admin?module=payment&tab=expired" class="px-5 py-2.5 rounded-xl text-sm font-bold bg-red-700 hover:bg-red-600 text-white animate-pulse transition shadow">Expired / Ended (''' + str(len(expired_subs)) + ''' )</a>
-                <a href="/admin?module=payment&tab=history" class="px-5 py-2.5 rounded-xl text-sm font-bold bg-gray-900 hover:bg-gray-800 text-gray-300 transition shadow">History</a>
+                <a href="/admin?module=payment&tab=pending" class="px-5 py-2.5 rounded-xl text-sm font-bold ''' + ('bg-indigo-600 text-white' if tab=='pending' else 'bg-gray-900 text-gray-400') + '''">Unpaid (''' + str(len(pending_pay)) + ''' )</a>
+                <a href="/admin?module=payment&tab=alerts" class="px-5 py-2.5 rounded-xl text-sm font-bold ''' + ('bg-red-600 text-white' if tab=='alerts' else 'bg-gray-900 text-gray-400') + '''">🚨 5-Day Alerts (''' + str(len(expiring_alerts)) + ''' )</a>
+                <a href="/admin?module=payment&tab=expired" class="px-5 py-2.5 rounded-xl text-sm font-bold ''' + ('bg-red-700 text-white animate-pulse' if tab=='expired' else 'bg-gray-900 text-red-400') + '''">❌ Expired (''' + str(len(expired_subs)) + ''' )</a>
+                <a href="/admin?module=payment&tab=history" class="px-5 py-2.5 rounded-xl text-sm font-bold ''' + ('bg-indigo-600 text-white' if tab=='history' else 'bg-gray-900 text-gray-400') + '''">History (''' + str(len(paid_pay)) + ''' )</a>
             </div>
             <div class="bg-gray-900 p-6 rounded-3xl border border-gray-800 shadow-xl space-y-4">
                 ''' + content + '''
