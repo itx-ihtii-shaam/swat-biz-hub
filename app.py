@@ -78,13 +78,13 @@ BUSINESSES = {
 }
 
 CATEGORIES = {
-    'hospitals': {'title': 'Hospitals & Healthcare', 'icon': '🏥', 'search_hint': 'Search doctor name or specialty...'},
-    'pharmacies': {'title': 'Pharmacies & Medical Stores', 'icon': '💊', 'search_hint': 'Search medicine or store name...'},
-    'restaurants': {'title': 'Restaurants & Cafes', 'icon': '🍽️', 'search_hint': 'Search restaurant or dish...'},
-    'supermarts': {'title': 'Supermarts & Grocery', 'icon': '🛒', 'search_hint': 'Search grocery item or store...'},
-    'property': {'title': 'Property Dealers', 'icon': '🏠', 'search_hint': 'Search plot, house or dealer...'},
-    'hotels': {'title': 'Hotels & Guest Houses', 'icon': '🏨', 'search_hint': 'Search hotel or room type...'},
-    'education': {'title': 'Educational Institutes', 'icon': '🎓', 'search_hint': 'Search school, college, university or academy...'}
+    'hospitals': {'title': 'Hospitals & Healthcare', 'icon': '🏥', 'search_hint': 'Search name or location (e.g. Mingora, Saidu)...'},
+    'pharmacies': {'title': 'Pharmacies & Medical Stores', 'icon': '💊', 'search_hint': 'Search medicine, store or location...'},
+    'restaurants': {'title': 'Restaurants & Cafes', 'icon': '🍽️', 'search_hint': 'Search restaurant, dish or area...'},
+    'supermarts': {'title': 'Supermarts & Grocery', 'icon': '🛒', 'search_hint': 'Search store, item or location...'},
+    'property': {'title': 'Property Dealers', 'icon': '🏠', 'search_hint': 'Search plot, house or area...'},
+    'hotels': {'title': 'Hotels & Guest Houses', 'icon': '🏨', 'search_hint': 'Search hotel or location...'},
+    'education': {'title': 'Educational Institutes', 'icon': '🎓', 'search_hint': 'Search school, college, area (e.g. Mingora)...'}
 }
 
 SUB_CATEGORIES = {
@@ -243,9 +243,9 @@ CATEGORY_TEMPLATE = BASE_HEAD + '''
     </main>
 
     <script>
-        const allNames = [
+        const allListings = [
             {% for b in all_category_businesses %}
-                "{{ b.name }}",
+                { name: "{{ b.name }}", address: "{{ b.address }}" },
             {% endfor %}
         ];
 
@@ -260,11 +260,18 @@ CATEGORY_TEMPLATE = BASE_HEAD + '''
                 return;
             }
 
-            const matches = allNames.filter(name => name.toLowerCase().includes(query));
+            // Filter both name and location address
+            const matches = allListings.filter(b => 
+                b.name.toLowerCase().includes(query) || b.address.toLowerCase().includes(query)
+            );
+
             if (matches.length > 0) {
                 let html = '';
                 matches.forEach(match => {
-                    html += `<div class="px-5 py-3 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer text-sm font-medium border-b border-gray-100 dark:border-gray-800 last:border-none" onclick="selectSuggestion('${match}')">${match}</div>`;
+                    html += `<div class="px-5 py-3 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer border-b border-gray-100 dark:border-gray-800 last:border-none" onclick="selectSuggestion('${match.name}')">
+                        <div class="text-sm font-medium">${match.name}</div>
+                        <div class="text-xs text-gray-400">📍 ${match.address}</div>
+                    </div>`;
                 });
                 suggestionsBox.innerHTML = html;
                 suggestionsBox.classList.remove('hidden');
@@ -314,9 +321,11 @@ def category_page(cat_slug):
             if sub_query != 'all' and b.get('sub_category') != sub_query:
                 continue
                 
-            # Search query filter
+            # Search query filter (checks name AND location address)
             if search_query:
-                if search_query in b.get('name', '').lower():
+                b_name = b.get('name', '').lower()
+                b_addr = b.get('address', '').lower()
+                if search_query in b_name or search_query in b_addr:
                     cat_businesses.append(b)
             else:
                 cat_businesses.append(b)
@@ -407,8 +416,8 @@ def register_business():
                     <input type="text" name="phone[]" required placeholder="+92 946 XXXXXXX" class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-700 outline-none">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium mb-1">Address</label>
-                    <input type="text" name="address" required placeholder="Mingora, Swat" class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-700 outline-none">
+                    <label class="block text-sm font-medium mb-1">Address / Location</label>
+                    <input type="text" name="address" required placeholder="e.g. Circular Road, Mingora, Swat" class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-700 outline-none">
                 </div>
                 <button type="submit" class="w-full bg-blue-600 text-white font-bold py-3.5 rounded-xl shadow-lg mt-4">Submit Listing</button>
             </form>
@@ -449,7 +458,6 @@ def register_business():
             }
         }
 
-        // Run on page load
         window.onload = updateSubCategories;
     </script>
     ''' + FOOTER
