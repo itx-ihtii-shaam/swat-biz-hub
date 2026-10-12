@@ -1,4 +1,4 @@
-"""SwatBiz Hub - Clean & Stable Categorized Admin Control Center with Expired Subscriptions Tab."""
+"""SwatBiz Hub - Complete & Fully Featured Application with Admin Dashboard & Search."""
 from datetime import datetime, timedelta
 import os
 from flask import Flask, abort, redirect, render_template_string, request, url_for, session
@@ -52,13 +52,25 @@ BUSINESSES = {
 }
 
 CATEGORIES = {
-    'hospitals': {'title': 'Hospitals & Healthcare', 'icon': '🏥'},
-    'pharmacies': {'title': 'Pharmacies & Medical Stores', 'icon': '💊'},
-    'restaurants': {'title': 'Restaurants & Cafes', 'icon': '🍽️'},
-    'supermarts': {'title': 'Supermarts & Grocery', 'icon': '🛒'},
-    'property': {'title': 'Property Dealers', 'icon': '🏠'},
-    'hotels': {'title': 'Hotels & Guest Houses', 'icon': '🏨'},
-    'education': {'title': 'Educational Institutes', 'icon': '🎓'}
+    'hospitals': {'title': 'Hospitals & Healthcare', 'icon': '🏥', 'search_hint': 'Search name or location (e.g. Mingora, Saidu)...'},
+    'pharmacies': {'title': 'Pharmacies & Medical Stores', 'icon': '💊', 'search_hint': 'Search medicine, store or location...'},
+    'restaurants': {'title': 'Restaurants & Cafes', 'icon': '🍽️', 'search_hint': 'Search restaurant, dish or area...'},
+    'supermarts': {'title': 'Supermarts & Grocery', 'icon': '🛒', 'search_hint': 'Search store, item or location...'},
+    'property': {'title': 'Property Dealers', 'icon': '🏠', 'search_hint': 'Search plot, house or area...'},
+    'hotels': {'title': 'Hotels & Guest Houses', 'icon': '🏨', 'search_hint': 'Search hotel or location...'},
+    'education': {'title': 'Educational Institutes', 'icon': '🎓', 'search_hint': 'Search school, college, area...'}
+}
+
+SUB_CATEGORIES = {
+    'education': [
+        {'slug': 'all', 'title': 'All Institutes', 'icon': '🎓'},
+        {'slug': 'schools', 'title': 'Schools', 'icon': '🏫'},
+        {'slug': 'colleges', 'title': 'Colleges', 'icon': '🏛️'}
+    ],
+    'supermarts': [
+        {'slug': 'all', 'title': 'All Stores', 'icon': '🛒'},
+        {'slug': 'general', 'title': 'General Store & Mart', 'icon': '🏪'}
+    ]
 }
 
 BASE_HEAD = """
@@ -99,7 +111,7 @@ def home():
             <span class="text-5xl p-4 bg-gray-800 rounded-2xl">{cat["icon"]}</span>
             <div>
                 <h3 class="text-xl font-bold group-hover:text-blue-500 transition-colors">{cat["title"]}</h3>
-                <p class="text-sm text-gray-400 mt-1">Browse listings →</p>
+                <p class="text-sm text-gray-400 mt-1">Browse listings & items →</p>
             </div>
         </a>
         """
@@ -123,26 +135,118 @@ def category_page(cat_slug):
         abort(404)
     
     cat = CATEGORIES[cat_slug]
-    biz_list = [b for b in BUSINESSES.values() if b.get('category') == cat_slug and b.get('status') == 'approved']
+    search_query = request.args.get('q', '').lower().strip()
+    sub_query = request.args.get('sub', 'all')
     
+    all_cat_biz = [b for b in BUSINESSES.values() if b.get('category') == cat_slug and b.get('status'] == 'approved']
+    
+    filtered_biz = []
+    for b in all_cat_biz:
+        if sub_query != 'all' and b.get('sub_category') != sub_query:
+            continue
+        if search_query:
+            if search_query in b.get('name', '').lower() or search_query in b.get('address', '').lower():
+                filtered_biz.append(b)
+        else:
+            filtered_biz.append(b)
+    
+    sub_tabs_html = ""
+    if cat_slug in SUB_CATEGORIES:
+        for sub in SUB_CATEGORIES[cat_slug]:
+            active_class = "bg-blue-600 text-white shadow-lg" if sub_query == sub['slug'] else "bg-gray-900 border border-gray-800 text-gray-300 hover:bg-gray-800"
+            sub_tabs_html += f"""
+            <a href="/category/{cat_slug}?sub={sub['slug']}" class="px-5 py-2.5 rounded-xl font-semibold text-sm transition-all {active_class}">
+                {sub['icon']} {sub['title']}
+            </a>
+            """
+        sub_tabs_html = f'<div class="flex flex-wrap justify-center gap-2 mt-6">{sub_tabs_html}</div>'
+
     cards = ""
-    for b in biz_list:
+    for b in filtered_biz:
+        image_url = b.get('image', 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=800&q=80')
         cards += f"""
-        <div class="bg-gray-900 p-6 rounded-2xl border border-gray-800">
-            <h3 class="font-bold text-lg">{b["name"]}</h3>
-            <p class="text-sm text-gray-400">📍 {b["address"]}</p>
+        <div class="bg-gray-900 rounded-2xl shadow-sm hover:shadow-2xl transition-all border border-gray-800 overflow-hidden flex flex-col justify-between">
+            <img src="{image_url}" alt="{b['name']}" class="w-full h-48 object-cover">
+            <div class="p-6">
+                <h3 class="text-xl font-bold">{b['name']}</h3>
+                <p class="text-sm text-gray-400 mt-1">📍 {b['address']}</p>
+                <p class="text-xs text-blue-400 mt-2">📞 {b.get('phones', ['N/A'])[0]}</p>
+            </div>
         </div>
         """
     if not cards:
-        cards = '<p class="text-gray-500 col-span-3 text-center py-12">No approved listings in this category yet.</p>'
+        cards = '<div class="col-span-3 text-center py-20 text-gray-500"><p class="text-xl">No listings found matching your criteria.</p></div>'
+
+    listings_json = ", ".join([f'{{name: "{b["name"]}", address: "{b["address"]}"}}' for b in all_cat_biz])
 
     body = f"""
     <main class="max-w-7xl mx-auto px-4 py-12">
-        <h2 class="text-3xl font-bold mb-6">{cat["icon"]} {cat["title"]}</h2>
+        <div class="mb-8 text-center">
+            <span class="text-6xl">{cat['icon']}</span>
+            <h2 class="text-4xl font-extrabold mt-4">{cat['title']}</h2>
+            <p class="text-gray-400 mt-2">Explore verified listings in Swat & Mingora</p>
+            
+            {sub_tabs_html}
+
+            <div class="mt-6 max-w-xl mx-auto relative">
+                <form method="GET" action="/category/{cat_slug}" class="flex gap-3">
+                    {'<input type="hidden" name="sub" value="' + sub_query + '">' if sub_query != 'all' else ''}
+                    <input type="text" id="searchInput" name="q" value="{search_query}" placeholder="{cat['search_hint']}" autocomplete="off" class="w-full px-5 py-3.5 rounded-2xl bg-gray-900 border border-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-white px-6 py-3.5 rounded-2xl font-semibold transition">Search</button>
+                </form>
+                <div id="suggestionsBox" class="absolute left-0 right-0 mt-2 bg-gray-900 border border-gray-800 rounded-2xl shadow-xl hidden z-50 overflow-hidden text-left"></div>
+            </div>
+        </div>
+
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             {cards}
         </div>
     </main>
+
+    <script>
+        const allListings = [{listings_json}];
+        const searchInput = document.getElementById('searchInput');
+        const suggestionsBox = document.getElementById('suggestionsBox');
+
+        if(searchInput) {{
+            searchInput.addEventListener('input', function() {{
+                const query = this.value.toLowerCase().trim();
+                if (!query) {{
+                    suggestionsBox.classList.add('hidden');
+                    suggestionsBox.innerHTML = '';
+                    return;
+                }}
+                const matches = allListings.filter(b => 
+                    b.name.toLowerCase().includes(query) || b.address.toLowerCase().includes(query)
+                );
+                if (matches.length > 0) {{
+                    let html = '';
+                    matches.forEach(match => {{
+                        html += `<div class="px-5 py-3 hover:bg-gray-800 cursor-pointer border-b border-gray-800 last:border-none" onclick="selectSuggestion('${{match.name}}')">
+                            <div class="text-sm font-medium">${{match.name}}</div>
+                            <div class="text-xs text-gray-400">📍 ${{match.address}}</div>
+                        </div>`;
+                    }});
+                    suggestionsBox.innerHTML = html;
+                    suggestionsBox.classList.remove('hidden');
+                }} else {{
+                    suggestionsBox.classList.add('hidden');
+                }}
+            }});
+        }}
+
+        function selectSuggestion(val) {{
+            searchInput.value = val;
+            suggestionsBox.classList.add('hidden');
+            searchInput.form.submit();
+        }
+
+        document.addEventListener('click', function(e) {{
+            if (searchInput && suggestionsBox && !searchInput.contains(e.target) && !suggestionsBox.contains(e.target)) {{
+                suggestionsBox.classList.add('hidden');
+            }}
+        }});
+    </script>
     """
     return render_template_string(BASE_HEAD + body + FOOTER)
 
@@ -153,6 +257,7 @@ def register_business():
         BUSINESSES[b_id] = {
             'id': b_id,
             'category': request.form.get('category'),
+            'sub_category': request.form.get('sub_category', ''),
             'name': request.form.get('name'),
             'address': request.form.get('address'),
             'phones': [request.form.get('phone', '')],
@@ -172,6 +277,7 @@ def register_business():
         <form method="POST" class="space-y-4">
             <input type="text" name="name" required placeholder="Business Name" class="w-full p-3 rounded-xl bg-gray-900 border border-gray-800">
             <select name="category" class="w-full p-3 rounded-xl bg-gray-900 border border-gray-800">{opts}</select>
+            <input type="text" name="sub_category" placeholder="Sub-category slug (optional, e.g. schools)" class="w-full p-3 rounded-xl bg-gray-900 border border-gray-800">
             <input type="text" name="address" required placeholder="Address" class="w-full p-3 rounded-xl bg-gray-900 border border-gray-800">
             <input type="text" name="phone" required placeholder="Phone Number" class="w-full p-3 rounded-xl bg-gray-900 border border-gray-800">
             <select name="payment_method" class="w-full p-3 rounded-xl bg-gray-900 border border-gray-800">
