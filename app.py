@@ -21,7 +21,7 @@ BUSINESSES = {
         'doctors': [],
         'items': [],
         'joined_date': datetime.now() - timedelta(days=25),
-        'expiry_date': datetime.now() + timedelta(days=3), # Expiry Alert
+        'expiry_date': datetime.now() + timedelta(days=3),
         'status': 'approved',
         'payment_method': 'Bank Transfer',
         'payment_ref': 'TXN-984210',
@@ -38,10 +38,10 @@ BUSINESSES = {
         'items': [],
         'joined_date': datetime.now() - timedelta(days=1),
         'expiry_date': datetime.now() + timedelta(days=30),
-        'status': 'pending', # Pending Business
+        'status': 'pending',
         'payment_method': 'EasyPaisa',
         'payment_ref': 'TID-9920182',
-        'payment_status': 'unpaid' # Pending Payment
+        'payment_status': 'unpaid'
     },
     '3': {
         'id': '3',
@@ -68,7 +68,7 @@ BUSINESSES = {
         'phones': ['+92 946 7112233'],
         'image': 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&w=800&q=80',
         'joined_date': datetime.now() - timedelta(days=2),
-        'expiry_date': datetime.now() + timedelta(days=2), # Expiry Alert
+        'expiry_date': datetime.now() + timedelta(days=2),
         'status': 'approved',
         'payment_method': 'Bank Transfer',
         'payment_ref': 'Meezan Bank - 001283',
@@ -252,8 +252,8 @@ def admin_panel():
         </main>
         ''' + FOOTER, title="Admin Login")
 
-    module = request.args.get('module') # None (Hub), 'business', 'payment'
-    tab = request.args.get('tab', 'pending') # 'pending', 'approved', 'alerts'
+    module = request.args.get('module')
+    tab = request.args.get('tab', 'pending')
     action = request.args.get('action')
     biz_id = request.args.get('id')
 
@@ -294,7 +294,7 @@ def admin_panel():
                         <div class="flex justify-between items-center mb-6">
                             <span class="text-6xl">🏢</span>
                             {% if pending_biz %}
-                            <span class="bg-yellow-500/20 text-yellow-400 text-xs px-3 py-1.5 rounded-full font-bold">''' + str(len(pending_biz)) + ''' New Pending</span>
+                            <span class="bg-yellow-500/20 text-yellow-400 text-xs px-3 py-1.5 rounded-full font-bold">{{ pending_biz|length }} New Pending</span>
                             {% else %}
                             <span class="bg-green-500/20 text-green-400 text-xs px-3 py-1.5 rounded-full font-bold">All Approved</span>
                             {% endif %}
@@ -304,7 +304,7 @@ def admin_panel():
                     </div>
                     <div class="mt-8 text-blue-500 font-bold text-sm flex justify-between items-center">
                         <span>Open Business Portal →</span>
-                        <span class="text-xs text-gray-500">''' + str(len(approved_biz)) + ''' Live Businesses</span>
+                        <span class="text-xs text-gray-500">{{ approved_biz|length }} Live Businesses</span>
                     </div>
                 </a>
 
@@ -324,7 +324,7 @@ def admin_panel():
                     </div>
                     <div class="mt-8 text-indigo-500 font-bold text-sm flex justify-between items-center">
                         <span>Open Payment Portal →</span>
-                        <span class="text-xs text-red-400 font-bold">''' + str(len(expiring_alerts)) + ''' Expiry Alerts</span>
+                        <span class="text-xs text-red-400 font-bold">{{ expiring|length }} Expiry Alerts</span>
                     </div>
                 </a>
             </div>
@@ -340,17 +340,15 @@ def admin_panel():
                 <h2 class="text-2xl font-extrabold">🏢 Business Directory Module</h2>
             </div>
 
-            <!-- SUB CATEGORY TABS -->
             <div class="flex space-x-3 mb-8">
                 <a href="/admin?module=business&tab=pending" class="px-5 py-2.5 rounded-xl text-sm font-bold {% if tab == 'pending' %} bg-blue-600 text-white {% else %} bg-gray-900 text-gray-400 {% endif %}">
-                    ⏳ New Pending Approvals (''' + str(len(pending_biz)) + ''')
+                    ⏳ New Pending Approvals ({{ pending_biz|length }})
                 </a>
                 <a href="/admin?module=business&tab=approved" class="px-5 py-2.5 rounded-xl text-sm font-bold {% if tab == 'approved' %} bg-blue-600 text-white {% else %} bg-gray-900 text-gray-400 {% endif %}">
-                    ✅ Approved Live Directory (''' + str(len(approved_biz)) + ''')
+                    ✅ Approved Live Directory ({{ approved_biz|length }})
                 </a>
             </div>
 
-            <!-- DATA LIST -->
             <div class="bg-gray-900 p-6 rounded-3xl border border-gray-800">
                 {% if tab == 'pending' %}
                     {% if pending_biz %}
@@ -386,7 +384,7 @@ def admin_panel():
                 {% endif %}
             </div>
         </main>
-        ''' + FOOTER, title="Business Module")
+        ''' + FOOTER, pending_biz=pending_biz, approved_biz=approved_biz, tab=tab, title="Business Module")
 
     # 3. MODULE 2: PAYMENT & SUBSCRIPTIONS
     elif module == 'payment':
@@ -397,16 +395,15 @@ def admin_panel():
                 <h2 class="text-2xl font-extrabold">💳 Payment & Subscription Module</h2>
             </div>
 
-            <!-- SUB CATEGORY TABS -->
             <div class="flex flex-wrap gap-3 mb-8">
                 <a href="/admin?module=payment&tab=pending" class="px-5 py-2.5 rounded-xl text-sm font-bold {% if tab == 'pending' %} bg-indigo-600 text-white {% else %} bg-gray-900 text-gray-400 {% endif %}">
-                    ⚠️ New Payment Verification (''' + str(len(pending_pay)) + ''')
+                    ⚠️ New Payment Verification ({{ pending_pay|length }})
                 </a>
                 <a href="/admin?module=payment&tab=alerts" class="px-5 py-2.5 rounded-xl text-sm font-bold {% if tab == 'alerts' %} bg-red-600 text-white {% else %} bg-gray-900 text-gray-400 {% endif %} animate-pulse">
-                    🚨 5-Day Expiry Alerts (''' + str(len(expiring_alerts)) + ''')
+                    🚨 5-Day Expiry Alerts ({{ expiring|length }})
                 </a>
                 <a href="/admin?module=payment&tab=history" class="px-5 py-2.5 rounded-xl text-sm font-bold {% if tab == 'history' %} bg-indigo-600 text-white {% else %} bg-gray-900 text-gray-400 {% endif %}">
-                    💳 Verified Payment Record (''' + str(len(paid_pay)) + ''')
+                    💳 Verified Payment Record ({{ paid_pay|length }})
                 </a>
             </div>
 
@@ -456,7 +453,7 @@ def admin_panel():
                 {% endif %}
             </div>
         </main>
-        ''' + FOOTER, expiring=expiring_alerts, title="Payment Module")
+        ''' + FOOTER, pending_pay=pending_pay, paid_pay=paid_pay, expiring=expiring_alerts, tab=tab, title="Payment Module")
 
 handler = app
 
