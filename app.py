@@ -14,7 +14,7 @@ app = Flask(
 )
 app.secret_key = 'swat_biz_hub_secret_key'
 
-# Mock Database
+# Mock Database with Image & Doctor Support
 BUSINESSES = {
     '1': {
         'id': '1',
@@ -22,9 +22,20 @@ BUSINESSES = {
         'name': 'Saidu Group of Teaching Hospital',
         'address': 'Saidu Sharif, Mingora, Swat',
         'phone': '+92 946 9240123',
+        'image': 'https://images.unsplash.com/photo-1587351021759-3e566b6af7cc?auto=format&fit=crop&w=800&q=80',
         'doctors': [
-            {'name': 'Dr. Ahmad Khan', 'specialty': 'Cardiologist', 'timing': '9 AM - 2 PM'},
-            {'name': 'Dr. Fatima Ali', 'specialty': 'Pediatrician', 'timing': '10 AM - 4 PM'},
+            {
+                'name': 'Dr. Ahmad Khan', 
+                'specialty': 'Cardiologist', 
+                'timing': '9 AM - 2 PM', 
+                'clinic': 'Room 12, OPD Block'
+            },
+            {
+                'name': 'Dr. Fatima Ali', 
+                'specialty': 'Pediatrician', 
+                'timing': '10 AM - 4 PM', 
+                'clinic': 'Room 04, Children Ward'
+            },
         ],
         'joined_date': datetime.now() - timedelta(days=10),
         'last_paid_date': datetime.now(),
@@ -36,6 +47,7 @@ BUSINESSES = {
         'name': 'Rock City Restaurant & Hotel',
         'address': 'By-pass Road, Mingora, Swat',
         'phone': '+92 946 7112233',
+        'image': 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=800&q=80',
         'doctors': [],
         'joined_date': datetime.now() - timedelta(days=45),
         'last_paid_date': datetime.now() - timedelta(days=40),
@@ -75,7 +87,7 @@ def before_request_func():
 
 @app.route('/')
 def home():
-    return render_template('index.html', categories=CATEGORIES, site_name=SITE_NAME)
+    return render_template('index.html', categories=CATEGORIES, site_name=SITE_NAME, businesses=BUSINESSES)
 
 
 @app.route('/category/<cat_slug>')
@@ -104,25 +116,30 @@ def business_detail(b_id):
     return render_template('detail.html', business=biz, site_name=SITE_NAME)
 
 
-@app.route('/admin', methods=['GET', 'POST'])
-def admin_panel():
+@app.route('/register', methods=['GET', 'POST'])
+def register_business():
     if request.method == 'POST':
         b_id = str(len(BUSINESSES) + 1)
         name = request.form.get('name')
         category = request.form.get('category')
         address = request.form.get('address')
         phone = request.form.get('phone')
+        image = request.form.get('image', 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=800&q=80')
         
-        doc_input = request.form.get('doctors', '')
         doctors = []
-        if doc_input and category == 'hospitals':
-            for line in doc_input.split('\n'):
-                parts = line.split(':')
-                if len(parts) >= 2:
+        if category == 'hospitals':
+            doc_names = request.form.getlist('doc_name[]')
+            doc_specs = request.form.getlist('doc_spec[]')
+            doc_times = request.form.getlist('doc_time[]')
+            doc_clinics = request.form.getlist('doc_clinic[]')
+
+            for i in range(len(doc_names)):
+                if doc_names[i].strip():
                     doctors.append({
-                        'name': parts[0].strip(),
-                        'specialty': parts[1].strip(),
-                        'timing': '9 AM - 5 PM'
+                        'name': doc_names[i].strip(),
+                        'specialty': doc_specs[i].strip() if i < len(doc_specs) else 'Specialist',
+                        'timing': doc_times[i].strip() if i < len(doc_times) else '9 AM - 5 PM',
+                        'clinic': doc_clinics[i].strip() if i < len(doc_clinics) else 'Main OPD'
                     })
 
         BUSINESSES[b_id] = {
@@ -131,13 +148,19 @@ def admin_panel():
             'name': name,
             'address': address,
             'phone': phone,
+            'image': image,
             'doctors': doctors,
             'joined_date': datetime.now(),
             'last_paid_date': datetime.now(),
-            'status': 'trial'
+            'status': 'trial'  # Automatic 30 days free trial
         }
-        return redirect(url_for('admin_panel'))
+        return redirect(url_for('business_detail', b_id=b_id))
 
+    return render_template('register.html', categories=CATEGORIES, site_name=SITE_NAME)
+
+
+@app.route('/admin')
+def admin_panel():
     return render_template(
         'admin.html', businesses=BUSINESSES, categories=CATEGORIES, site_name=SITE_NAME
     )
