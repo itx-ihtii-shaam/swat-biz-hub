@@ -9,6 +9,15 @@
     <script>
         tailwind.config = { darkMode: 'class' }
     </script>
+    <style>
+        @keyframes cardPop {
+            0% { opacity: 0; transform: translateY(12px) scale(0.98); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .animate-card-pop {
+            animation: cardPop 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+    </style>
 </head>
 <body class="bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 min-h-screen">
     <!-- Header -->
@@ -31,13 +40,13 @@
                 <!-- Business Name -->
                 <div class="group">
                     <label class="block text-sm font-medium mb-2 group-hover:text-blue-500 transition-colors duration-200">Business Name</label>
-                    <input type="text" name="name" required placeholder="e.g. Swat Public School or Al-Shifa Hospital" class="w-full px-4 py-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-blue-500 outline-none transition-all duration-300 hover:border-blue-400 hover:scale-[1.01] focus:scale-[1.01]">
+                    <input type="text" name="name" required placeholder="e.g. Swat Public School or Al-Shifa Hospital" class="w-full px-4 py-3.5 rounded-xl bg-gray-50 dark:bg-gray-800/80 border border-gray-200 dark:border-gray-700/70 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 outline-none transition-all duration-200 hover:border-blue-400">
                 </div>
 
                 <!-- Category -->
                 <div class="group">
                     <label class="block text-sm font-medium mb-2 group-hover:text-blue-500 transition-colors duration-200">Category</label>
-                    <select name="category" id="categorySelect" onchange="toggleCategorySections()" class="w-full px-4 py-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-blue-500 outline-none transition-all duration-300 hover:border-blue-400 hover:scale-[1.01] focus:scale-[1.01] cursor-pointer">
+                    <select name="category" id="categorySelect" onchange="toggleCategorySections()" class="w-full px-4 py-3.5 rounded-xl bg-gray-50 dark:bg-gray-800/80 border border-gray-200 dark:border-gray-700/70 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 outline-none transition-all duration-200 hover:border-blue-400 cursor-pointer">
                         {% for slug, cat in categories.items() %}
                         <option value="{{ slug }}">{{ cat.icon }} {{ cat.title }}</option>
                         {% endfor %}
@@ -45,17 +54,17 @@
                 </div>
 
                 <!-- Multiple Phone Numbers -->
-                <div class="p-5 bg-blue-50/40 dark:bg-gray-800/40 rounded-2xl border border-blue-100 dark:border-gray-700 space-y-3">
+                <div class="p-5 bg-blue-50/40 dark:bg-gray-800/40 rounded-2xl border border-blue-100 dark:border-gray-700/70 space-y-3">
                     <label class="block text-sm font-bold text-blue-500 flex items-center space-x-2"><span>📞</span> <span>Phone Numbers (Add multiple if needed)</span></label>
                     
                     <div id="phoneList" class="space-y-3">
-                        <div class="phone-row flex items-center space-x-2">
-                            <input type="text" name="phone[]" required placeholder="+92 946 XXXXXXX" class="w-full px-4 py-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all">
-                            <button type="button" onclick="confirmDeletePhone(this)" class="bg-red-50 dark:bg-red-900/30 text-red-500 px-3 py-3 rounded-xl text-xs font-bold hover:bg-red-100 transition" title="Remove">❌</button>
+                        <div class="phone-row flex items-center space-x-2 animate-card-pop">
+                            <input type="text" name="phone[]" required placeholder="+92 946 XXXXXXX" class="w-full px-4 py-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 outline-none transition-all duration-200 hover:border-blue-400">
+                            <button type="button" onclick="confirmDeletePhone(this)" class="bg-red-50 dark:bg-red-900/30 text-red-500 px-3 py-3 rounded-xl text-xs font-bold hover:bg-red-100 dark:hover:bg-red-900/50 transition transform hover:scale-105 active:scale-95" title="Remove">❌</button>
                         </div>
                     </div>
 
-                    <button type="button" onclick="addPhoneField()" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-xl text-xs font-semibold transition flex items-center space-x-1">
+                    <button type="button" onclick="addPhoneField()" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-xl text-xs font-semibold transition transform hover:-translate-y-0.5 hover:shadow-md active:translate-y-0 flex items-center space-x-1">
                         <span>+</span> <span>Add Another Phone Number</span>
                     </button>
                 </div>
@@ -63,11 +72,11 @@
                 <!-- Address -->
                 <div class="group">
                     <label class="block text-sm font-medium mb-2 group-hover:text-blue-500 transition-colors duration-200">Address / Location</label>
-                    <input type="text" name="address" required placeholder="e.g. Saidu Sharif, Mingora, Swat" class="w-full px-4 py-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 focus:ring-2 focus:ring-blue-500 outline-none transition-all duration-300 hover:border-blue-400 hover:scale-[1.01] focus:scale-[1.01]">
+                    <input type="text" name="address" required placeholder="e.g. Saidu Sharif, Mingora, Swat" class="w-full px-4 py-3.5 rounded-xl bg-gray-50 dark:bg-gray-800/80 border border-gray-200 dark:border-gray-700/70 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 outline-none transition-all duration-200 hover:border-blue-400">
                 </div>
 
                 <!-- Image Upload Section -->
-                <div class="p-5 bg-gray-50 dark:bg-gray-800/40 rounded-2xl border border-gray-200 dark:border-gray-700 space-y-4 transition-all duration-300 hover:shadow-md">
+                <div class="p-5 bg-gray-50 dark:bg-gray-800/40 rounded-2xl border border-gray-200 dark:border-gray-700/70 space-y-4 transition-all duration-200 hover:shadow-md">
                     <label class="block text-sm font-bold text-blue-500">Business Main Photo (Choose File OR Link)</label>
                     <div>
                         <span class="block text-xs text-gray-500 mb-1">Upload Photo directly:</span>
@@ -75,53 +84,53 @@
                     </div>
                     <div class="text-center text-xs text-gray-400 font-bold">-- OR --</div>
                     <div>
-                        <input type="url" name="image_url" placeholder="Paste Image URL (https://images.unsplash.com/...)" class="w-full px-4 py-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all duration-300 hover:border-blue-400">
+                        <input type="url" name="image_url" placeholder="Paste Image URL (https://images.unsplash.com/...)" class="w-full px-4 py-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 outline-none transition-all duration-200 hover:border-blue-400">
                     </div>
                 </div>
 
                 <!-- Doctor Section (Only for Hospitals) -->
-                <div id="doctorSection" class="p-6 bg-blue-50/50 dark:bg-gray-800/50 rounded-2xl border border-blue-100 dark:border-gray-700 space-y-4 transition-all duration-300">
+                <div id="doctorSection" class="p-6 bg-blue-50/50 dark:bg-gray-800/50 rounded-2xl border border-blue-100 dark:border-gray-700/70 space-y-4 transition-all duration-300">
                     <h3 class="text-lg font-bold text-blue-600 dark:text-blue-400 flex items-center space-x-2"><span>🩺</span> <span>Doctors, Clinic & Timings</span></h3>
                     
                     <div id="doctorList" class="space-y-4">
-                        <div class="doctor-card relative bg-white dark:bg-gray-900 p-5 rounded-2xl border border-gray-200 dark:border-gray-700 space-y-3 transition-all duration-300 hover:shadow-lg">
+                        <div class="doctor-card relative bg-white dark:bg-gray-900/90 p-5 rounded-2xl border border-gray-200 dark:border-gray-700/80 space-y-3 shadow-sm hover:shadow-xl hover:border-blue-500/50 transition-all duration-300 transform hover:-translate-y-0.5 animate-card-pop">
                             <div class="flex justify-between items-center border-b border-gray-100 dark:border-gray-800 pb-2">
                                 <span class="text-xs font-bold text-blue-500 uppercase tracking-wider">Doctor Details</span>
-                                <button type="button" onclick="confirmDelete(this)" class="text-red-500 hover:text-red-700 text-xs font-bold flex items-center space-x-1 bg-red-50 dark:bg-red-900/30 px-2.5 py-1 rounded-lg transition transform hover:scale-105">
+                                <button type="button" onclick="confirmDelete(this)" class="text-red-500 hover:text-red-700 text-xs font-bold flex items-center space-x-1 bg-red-50 dark:bg-red-900/30 px-2.5 py-1.5 rounded-lg transition transform hover:scale-105 active:scale-95">
                                     <span>❌</span> <span>Remove</span>
                                 </button>
                             </div>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                <input type="text" name="doc_name[]" placeholder="Doctor Name (Dr. Ahmad)" class="px-3.5 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all hover:border-blue-400 hover:scale-[1.01]">
-                                <input type="text" name="doc_spec[]" placeholder="Specialty (Cardiologist)" class="px-3.5 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all hover:border-blue-400 hover:scale-[1.01]">
-                                <input type="text" name="doc_app_time[]" placeholder="Appointment Timing (9 AM - 2 PM)" class="px-3.5 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all hover:border-blue-400 hover:scale-[1.01]">
-                                <input type="text" name="doc_clinic_time[]" placeholder="Clinic Timing (Mon-Sat, 9 AM - 5 PM)" class="px-3.5 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all hover:border-blue-400 hover:scale-[1.01]">
-                                <input type="text" name="doc_clinic[]" placeholder="Clinic / Room (Room 12, OPD Block)" class="px-3.5 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all hover:border-blue-400 hover:scale-[1.01] md:col-span-2">
+                                <input type="text" name="doc_name[]" placeholder="Doctor Name (Dr. Ahmad)" class="px-3.5 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800/90 border border-gray-200 dark:border-gray-700/70 text-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 outline-none transition-all duration-200 hover:border-blue-400">
+                                <input type="text" name="doc_spec[]" placeholder="Specialty (Cardiologist)" class="px-3.5 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800/90 border border-gray-200 dark:border-gray-700/70 text-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 outline-none transition-all duration-200 hover:border-blue-400">
+                                <input type="text" name="doc_app_time[]" placeholder="Appointment Timing (9 AM - 2 PM)" class="px-3.5 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800/90 border border-gray-200 dark:border-gray-700/70 text-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 outline-none transition-all duration-200 hover:border-blue-400">
+                                <input type="text" name="doc_clinic_time[]" placeholder="Clinic Timing (Mon-Sat, 9 AM - 5 PM)" class="px-3.5 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800/90 border border-gray-200 dark:border-gray-700/70 text-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 outline-none transition-all duration-200 hover:border-blue-400">
+                                <input type="text" name="doc_clinic[]" placeholder="Clinic / Room (Room 12, OPD Block)" class="px-3.5 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800/90 border border-gray-200 dark:border-gray-700/70 text-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 outline-none transition-all duration-200 hover:border-blue-400 md:col-span-2">
                             </div>
                         </div>
                     </div>
 
-                    <button type="button" onclick="addDoctorField()" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition transform hover:-translate-y-0.5 hover:shadow-md flex items-center space-x-2">
+                    <button type="button" onclick="addDoctorField()" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition transform hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 flex items-center space-x-2">
                         <span>+</span> <span>Add Another Doctor</span>
                     </button>
                 </div>
 
                 <!-- Dynamic Items Section (Education, Restaurants, Pharmacies, etc.) -->
-                <div id="itemSection" class="p-6 bg-emerald-50/50 dark:bg-gray-800/50 rounded-2xl border border-emerald-100 dark:border-gray-700 space-y-4 transition-all duration-300">
+                <div id="itemSection" class="p-6 bg-emerald-50/50 dark:bg-gray-800/50 rounded-2xl border border-emerald-100 dark:border-gray-700/70 space-y-4 transition-all duration-300">
                     <h3 id="itemSectionTitle" class="text-lg font-bold text-emerald-600 dark:text-emerald-400 flex items-center space-x-2"><span>📋</span> <span>Details & Pricing</span></h3>
                     
                     <div id="itemList" class="space-y-4">
-                        <div class="item-card relative bg-white dark:bg-gray-900 p-5 rounded-2xl border border-gray-200 dark:border-gray-700 space-y-3 transition-all duration-300 hover:shadow-lg">
+                        <div class="item-card relative bg-white dark:bg-gray-900/90 p-5 rounded-2xl border border-gray-200 dark:border-gray-700/80 space-y-3 shadow-sm hover:shadow-xl hover:border-emerald-500/50 transition-all duration-300 transform hover:-translate-y-0.5 animate-card-pop">
                             <div class="flex justify-between items-center border-b border-gray-100 dark:border-gray-800 pb-2">
                                 <span id="itemCardLabel" class="text-xs font-bold text-emerald-500 uppercase tracking-wider">Entry Details</span>
-                                <button type="button" onclick="confirmDelete(this)" class="text-red-500 hover:text-red-700 text-xs font-bold flex items-center space-x-1 bg-red-50 dark:bg-red-900/30 px-2.5 py-1 rounded-lg transition transform hover:scale-105">
+                                <button type="button" onclick="confirmDelete(this)" class="text-red-500 hover:text-red-700 text-xs font-bold flex items-center space-x-1 bg-red-50 dark:bg-red-900/30 px-2.5 py-1.5 rounded-lg transition transform hover:scale-105 active:scale-95">
                                     <span>❌</span> <span>Remove</span>
                                 </button>
                             </div>
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                                <input type="text" name="item_name[]" id="inputItemName" placeholder="Title" class="px-3.5 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition-all hover:border-emerald-400 hover:scale-[1.01]">
-                                <input type="text" name="item_price[]" id="inputItemPrice" placeholder="Rate / Fee" class="px-3.5 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition-all hover:border-emerald-400 hover:scale-[1.01]">
-                                <input type="text" name="item_offer[]" id="inputItemOffer" placeholder="Additional Info" class="px-3.5 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition-all hover:border-emerald-400 hover:scale-[1.01]">
+                                <input type="text" name="item_name[]" id="inputItemName" placeholder="Title" class="px-3.5 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800/90 border border-gray-200 dark:border-gray-700/70 text-sm focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 outline-none transition-all duration-200 hover:border-emerald-400">
+                                <input type="text" name="item_price[]" id="inputItemPrice" placeholder="Rate / Fee" class="px-3.5 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800/90 border border-gray-200 dark:border-gray-700/70 text-sm focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 outline-none transition-all duration-200 hover:border-emerald-400">
+                                <input type="text" name="item_offer[]" id="inputItemOffer" placeholder="Additional Info" class="px-3.5 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800/90 border border-gray-200 dark:border-gray-700/70 text-sm focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 outline-none transition-all duration-200 hover:border-emerald-400">
                             </div>
                             <div>
                                 <span class="block text-xs text-gray-400 mb-1">Photo (Optional):</span>
@@ -130,7 +139,7 @@
                         </div>
                     </div>
 
-                    <button type="button" onclick="addItemField()" id="addItemBtn" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition transform hover:-translate-y-0.5 hover:shadow-md flex items-center space-x-2">
+                    <button type="button" onclick="addItemField()" id="addItemBtn" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition transform hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 flex items-center space-x-2">
                         <span>+</span> <span>Add Another Entry</span>
                     </button>
                 </div>
@@ -226,10 +235,10 @@
         function addPhoneField() {
             const list = document.getElementById('phoneList');
             const div = document.createElement('div');
-            div.className = "phone-row flex items-center space-x-2";
+            div.className = "phone-row flex items-center space-x-2 animate-card-pop";
             div.innerHTML = `
-                <input type="text" name="phone[]" required placeholder="+92 946 XXXXXXX" class="w-full px-4 py-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all">
-                <button type="button" onclick="confirmDeletePhone(this)" class="bg-red-50 dark:bg-red-900/30 text-red-500 px-3 py-3 rounded-xl text-xs font-bold hover:bg-red-100 transition" title="Remove">❌</button>
+                <input type="text" name="phone[]" required placeholder="+92 946 XXXXXXX" class="w-full px-4 py-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 outline-none transition-all duration-200 hover:border-blue-400">
+                <button type="button" onclick="confirmDeletePhone(this)" class="bg-red-50 dark:bg-red-900/30 text-red-500 px-3 py-3 rounded-xl text-xs font-bold hover:bg-red-100 dark:hover:bg-red-900/50 transition transform hover:scale-105 active:scale-95" title="Remove">❌</button>
             `;
             list.appendChild(div);
         }
@@ -247,20 +256,20 @@
         function addDoctorField() {
             const list = document.getElementById('doctorList');
             const div = document.createElement('div');
-            div.className = "doctor-card relative bg-white dark:bg-gray-900 p-5 rounded-2xl border border-gray-200 dark:border-gray-700 space-y-3 transition-all duration-300 hover:shadow-lg";
+            div.className = "doctor-card relative bg-white dark:bg-gray-900/90 p-5 rounded-2xl border border-gray-200 dark:border-gray-700/80 space-y-3 shadow-sm hover:shadow-xl hover:border-blue-500/50 transition-all duration-300 transform hover:-translate-y-0.5 animate-card-pop";
             div.innerHTML = `
                 <div class="flex justify-between items-center border-b border-gray-100 dark:border-gray-800 pb-2">
                     <span class="text-xs font-bold text-blue-500 uppercase tracking-wider">Doctor Details</span>
-                    <button type="button" onclick="confirmDelete(this)" class="text-red-500 hover:text-red-700 text-xs font-bold flex items-center space-x-1 bg-red-50 dark:bg-red-900/30 px-2.5 py-1 rounded-lg transition transform hover:scale-105">
+                    <button type="button" onclick="confirmDelete(this)" class="text-red-500 hover:text-red-700 text-xs font-bold flex items-center space-x-1 bg-red-50 dark:bg-red-900/30 px-2.5 py-1.5 rounded-lg transition transform hover:scale-105 active:scale-95">
                         <span>❌</span> <span>Remove</span>
                     </button>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <input type="text" name="doc_name[]" placeholder="Doctor Name" class="px-3.5 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all hover:border-blue-400 hover:scale-[1.01]">
-                    <input type="text" name="doc_spec[]" placeholder="Specialty" class="px-3.5 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all hover:border-blue-400 hover:scale-[1.01]">
-                    <input type="text" name="doc_app_time[]" placeholder="Appointment Timing" class="px-3.5 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all hover:border-blue-400 hover:scale-[1.01]">
-                    <input type="text" name="doc_clinic_time[]" placeholder="Clinic Timing (Days & Hours)" class="px-3.5 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all hover:border-blue-400 hover:scale-[1.01]">
-                    <input type="text" name="doc_clinic[]" placeholder="Clinic / Room" class="px-3.5 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm focus:ring-2 focus:ring-blue-500 outline-none transition-all hover:border-blue-400 hover:scale-[1.01] md:col-span-2">
+                    <input type="text" name="doc_name[]" placeholder="Doctor Name" class="px-3.5 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800/90 border border-gray-200 dark:border-gray-700/70 text-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 outline-none transition-all duration-200 hover:border-blue-400">
+                    <input type="text" name="doc_spec[]" placeholder="Specialty" class="px-3.5 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800/90 border border-gray-200 dark:border-gray-700/70 text-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 outline-none transition-all duration-200 hover:border-blue-400">
+                    <input type="text" name="doc_app_time[]" placeholder="Appointment Timing" class="px-3.5 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800/90 border border-gray-200 dark:border-gray-700/70 text-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 outline-none transition-all duration-200 hover:border-blue-400">
+                    <input type="text" name="doc_clinic_time[]" placeholder="Clinic Timing (Days & Hours)" class="px-3.5 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800/90 border border-gray-200 dark:border-gray-700/70 text-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 outline-none transition-all duration-200 hover:border-blue-400">
+                    <input type="text" name="doc_clinic[]" placeholder="Clinic / Room" class="px-3.5 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800/90 border border-gray-200 dark:border-gray-700/70 text-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 outline-none transition-all duration-200 hover:border-blue-400 md:col-span-2">
                 </div>
             `;
             list.appendChild(div);
@@ -295,18 +304,18 @@
             }
 
             const div = document.createElement('div');
-            div.className = "item-card relative bg-white dark:bg-gray-900 p-5 rounded-2xl border border-gray-200 dark:border-gray-700 space-y-3 transition-all duration-300 hover:shadow-lg";
+            div.className = "item-card relative bg-white dark:bg-gray-900/90 p-5 rounded-2xl border border-gray-200 dark:border-gray-700/80 space-y-3 shadow-sm hover:shadow-xl hover:border-emerald-500/50 transition-all duration-300 transform hover:-translate-y-0.5 animate-card-pop";
             div.innerHTML = `
                 <div class="flex justify-between items-center border-b border-gray-100 dark:border-gray-800 pb-2">
                     <span class="text-xs font-bold text-emerald-500 uppercase tracking-wider">Entry Details</span>
-                    <button type="button" onclick="confirmDelete(this)" class="text-red-500 hover:text-red-700 text-xs font-bold flex items-center space-x-1 bg-red-50 dark:bg-red-900/30 px-2.5 py-1 rounded-lg transition transform hover:scale-105">
+                    <button type="button" onclick="confirmDelete(this)" class="text-red-500 hover:text-red-700 text-xs font-bold flex items-center space-x-1 bg-red-50 dark:bg-red-900/30 px-2.5 py-1.5 rounded-lg transition transform hover:scale-105 active:scale-95">
                         <span>❌</span> <span>Remove</span>
                     </button>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    <input type="text" name="item_name[]" placeholder="${namePlaceholder}" class="px-3.5 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition-all hover:border-emerald-400 hover:scale-[1.01]">
-                    <input type="text" name="item_price[]" placeholder="${pricePlaceholder}" class="px-3.5 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition-all hover:border-emerald-400 hover:scale-[1.01]">
-                    <input type="text" name="item_offer[]" placeholder="${offerPlaceholder}" class="px-3.5 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-sm focus:ring-2 focus:ring-emerald-500 outline-none transition-all hover:border-emerald-400 hover:scale-[1.01]">
+                    <input type="text" name="item_name[]" placeholder="${namePlaceholder}" class="px-3.5 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800/90 border border-gray-200 dark:border-gray-700/70 text-sm focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 outline-none transition-all duration-200 hover:border-emerald-400">
+                    <input type="text" name="item_price[]" placeholder="${pricePlaceholder}" class="px-3.5 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800/90 border border-gray-200 dark:border-gray-700/70 text-sm focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 outline-none transition-all duration-200 hover:border-emerald-400">
+                    <input type="text" name="item_offer[]" placeholder="${offerPlaceholder}" class="px-3.5 py-2.5 rounded-xl bg-gray-50 dark:bg-gray-800/90 border border-gray-200 dark:border-gray-700/70 text-sm focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/20 outline-none transition-all duration-200 hover:border-emerald-400">
                 </div>
                 <div>
                     <span class="block text-xs text-gray-400 mb-1">Photo (Optional):</span>
