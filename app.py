@@ -21,7 +21,7 @@ BUSINESSES = {
         'payment_method': 'Bank Transfer',
         'payment_ref': 'TXN-984210',
         'payment_status': 'paid',
-        'expiry_date': datetime.now() - timedelta(days=2)  # Expired 2 days ago (Test)
+        'expiry_date': datetime.now() - timedelta(days=2)
     },
     '2': {
         'id': '2',
@@ -47,7 +47,7 @@ BUSINESSES = {
         'payment_method': 'EasyPaisa',
         'payment_ref': 'TID-7782194',
         'payment_status': 'paid',
-        'expiry_date': datetime.now() + timedelta(days=3)  # Expiring in 3 days (5-Day Alert)
+        'expiry_date': datetime.now() + timedelta(days=3)
     }
 }
 
@@ -61,40 +61,40 @@ CATEGORIES = {
     'education': {'title': 'Educational Institutes', 'icon': '🎓'}
 }
 
-BASE_HEAD = '''
+BASE_HEAD = """
 <!DOCTYPE html>
 <html lang="en" id="html-root" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>''' + SITE_NAME + '''</title>
+    <title>""" + SITE_NAME + """</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>tailwind.config = { darkMode: 'class' }</script>
 </head>
 <body class="bg-gray-950 text-gray-100 min-h-screen">
     <header class="bg-gradient-to-r from-slate-900 via-blue-950 to-indigo-950 text-white shadow-xl">
         <div class="max-w-7xl mx-auto px-4 py-6 flex justify-between items-center">
-            <a href="/" class="text-2xl font-extrabold tracking-tight">🏙️ ''' + SITE_NAME + '''</a>
+            <a href="/" class="text-2xl font-extrabold tracking-tight">🏙️ """ + SITE_NAME + """</a>
             <div class="flex items-center space-x-3">
                 <a href="/register" class="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-xl text-sm font-bold shadow-lg transition">＋ Register Business</a>
             </div>
         </div>
     </header>
-'''
+"""
 
-FOOTER = '''
+FOOTER = """
     <footer class="text-center py-8 text-sm text-gray-500 border-t border-gray-800 mt-20">
-        <p>&copy; 2026 ''' + SITE_NAME + '''. All rights reserved.</p>
+        <p>&copy; 2026 """ + SITE_NAME + """. All rights reserved.</p>
     </footer>
 </body>
 </html>
-'''
+"""
 
 @app.route('/')
 def home():
     items_html = ""
     for slug, cat in CATEGORIES.items():
-        items_html += f'''
+        items_html += f"""
         <a href="/category/{slug}" class="bg-gray-900 p-8 rounded-3xl border border-gray-800 shadow-sm hover:shadow-2xl transition-all flex items-center space-x-5 group">
             <span class="text-5xl p-4 bg-gray-800 rounded-2xl">{cat["icon"]}</span>
             <div>
@@ -102,9 +102,9 @@ def home():
                 <p class="text-sm text-gray-400 mt-1">Browse listings →</p>
             </div>
         </a>
-        '''
+        """
     
-    body = f'''
+    body = f"""
     <section class="py-16 px-4 text-center">
         <h2 class="text-4xl md:text-5xl font-black tracking-tight">Discover Swat & Mingora Businesses</h2>
         <p class="text-gray-400 text-lg mt-2">Find verified local services instantly.</p>
@@ -114,7 +114,7 @@ def home():
             {items_html}
         </div>
     </main>
-    '''
+    """
     return render_template_string(BASE_HEAD + body + FOOTER)
 
 @app.route('/category/<cat_slug>')
@@ -123,27 +123,27 @@ def category_page(cat_slug):
         abort(404)
     
     cat = CATEGORIES[cat_slug]
-    biz_list = [b for b in BUSINESSES.values() if b.get('category') == cat_slug and b.get('status'] == 'approved']
+    biz_list = [b for b in BUSINESSES.values() if b.get('category') == cat_slug and b.get('status') == 'approved']
     
     cards = ""
     for b in biz_list:
-        cards += f'''
+        cards += f"""
         <div class="bg-gray-900 p-6 rounded-2xl border border-gray-800">
             <h3 class="font-bold text-lg">{b["name"]}</h3>
             <p class="text-sm text-gray-400">📍 {b["address"]}</p>
         </div>
-        '''
+        """
     if not cards:
         cards = '<p class="text-gray-500 col-span-3 text-center py-12">No approved listings in this category yet.</p>'
 
-    body = f'''
+    body = f"""
     <main class="max-w-7xl mx-auto px-4 py-12">
         <h2 class="text-3xl font-bold mb-6">{cat["icon"]} {cat["title"]}</h2>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             {cards}
         </div>
     </main>
-    '''
+    """
     return render_template_string(BASE_HEAD + body + FOOTER)
 
 @app.route('/register', methods=['GET', 'POST'])
@@ -166,7 +166,7 @@ def register_business():
 
     opts = "".join([f'<option value="{k}">{v["title"]}</option>' for k, v in CATEGORIES.items()])
     
-    body = f'''
+    body = f"""
     <main class="max-w-2xl mx-auto px-4 py-12">
         <h2 class="text-3xl font-bold text-center mb-6">Register Business</h2>
         <form method="POST" class="space-y-4">
@@ -183,7 +183,7 @@ def register_business():
             <button type="submit" class="w-full bg-blue-600 py-3 rounded-xl font-bold">Submit Business</button>
         </form>
     </main>
-    '''
+    """
     return render_template_string(BASE_HEAD + body + FOOTER)
 
 @app.route('/admin', methods=['GET', 'POST'])
@@ -194,7 +194,7 @@ def admin_panel():
             return redirect('/admin')
 
     if not session.get('admin_logged_in'):
-        body = '''
+        body = """
         <main class="max-w-md mx-auto px-4 py-20 text-center">
             <div class="bg-gray-900 p-8 rounded-3xl border border-gray-800">
                 <h2 class="text-2xl font-bold mb-4">🔒 Admin Portal Login</h2>
@@ -204,7 +204,7 @@ def admin_panel():
                 </form>
             </div>
         </main>
-        '''
+        """
         return render_template_string(BASE_HEAD + body + FOOTER)
 
     module = request.args.get('module')
@@ -227,20 +227,16 @@ def admin_panel():
         return redirect(f'/admin?module={module}&tab={tab}')
 
     now = datetime.now()
-    pending_biz = {k: v for k, v in BUSINESSES.items() if v.get('status'] == 'pending'}
-    approved_biz = {k: v for k, v in BUSINESSES.items() if v.get('status'] == 'approved'}
-    pending_pay = {k: v for k, v in BUSINESSES.items() if v.get('payment_status'] == 'unpaid'}
-    paid_pay = {k: v for k, v in BUSINESSES.items() if v.get('payment_status'] == 'paid' and v.get('expiry_date', now) >= now}
+    pending_biz = {k: v for k, v in BUSINESSES.items() if v.get('status') == 'pending'}
+    approved_biz = {k: v for k, v in BUSINESSES.items() if v.get('status') == 'approved'}
+    pending_pay = {k: v for k, v in BUSINESSES.items() if v.get('payment_status') == 'unpaid'}
+    paid_pay = {k: v for k, v in BUSINESSES.items() if v.get('payment_status') == 'paid' and v.get('expiry_date', now) >= now}
     
-    # Subscriptions expiring in <= 5 days (but not fully expired yet)
-    expiring_alerts = {k: v for k, v in BUSINESSES.items() if 0 <= (v.get('expiry_date') - now).days <= 5 and v.get('status'] != 'deleted'}
-    
-    # Fully expired subscriptions (remaining days < 0)
-    expired_subs = {k: v for k, v in BUSINESSES.items() if (v.get('expiry_date') - now).days < 0 and v.get('status'] != 'deleted'}
+    expiring_alerts = {k: v for k, v in BUSINESSES.items() if 0 <= (v.get('expiry_date') - now).days <= 5 and v.get('status') != 'deleted'}
+    expired_subs = {k: v for k, v in BUSINESSES.items() if (v.get('expiry_date') - now).days < 0 and v.get('status') != 'deleted'}
 
-    # 1. MAIN CLEAN HUB
     if not module:
-        body = f'''
+        body = f"""
         <main class="max-w-5xl mx-auto px-4 py-12">
             <div class="flex justify-between items-center mb-10">
                 <h2 class="text-3xl font-extrabold">🛠️ Admin Control Center</h2>
@@ -279,15 +275,14 @@ def admin_panel():
                 </a>
             </div>
         </main>
-        '''
+        """
         return render_template_string(BASE_HEAD + body + FOOTER)
 
-    # 2. MODULE 1: BUSINESS MANAGEMENT
     elif module == 'business':
         content = ""
         if tab == 'pending':
             for b_id, b in pending_biz.items():
-                content += f'''
+                content += f"""
                 <div class="bg-gray-800/60 p-4 rounded-2xl flex justify-between items-center">
                     <div>
                         <h4 class="font-bold">{b["name"]}</h4>
@@ -298,12 +293,12 @@ def admin_panel():
                         <a href="/admin?module=business&tab=pending&action=delete&id={b_id}" class="bg-red-600/20 text-red-400 px-3 py-2 rounded-xl text-xs font-bold">Delete</a>
                     </div>
                 </div>
-                '''
+                """
             if not content:
                 content = '<p class="text-gray-500 text-center py-8">No pending business approvals.</p>'
         else:
             for b_id, b in approved_biz.items():
-                content += f'''
+                content += f"""
                 <div class="bg-gray-800/40 p-4 rounded-2xl flex justify-between items-center">
                     <div>
                         <h4 class="font-bold">{b["name"]}</h4>
@@ -311,9 +306,9 @@ def admin_panel():
                     </div>
                     <a href="/admin?module=business&tab=approved&action=delete&id={b_id}" class="bg-red-600/20 text-red-400 px-3 py-1.5 rounded-xl text-xs font-bold">Delete</a>
                 </div>
-                '''
+                """
 
-        body = f'''
+        body = f"""
         <main class="max-w-5xl mx-auto px-4 py-12">
             <div class="flex justify-between items-center mb-8">
                 <a href="/admin" class="text-sm font-bold text-blue-500 hover:underline">← Back to Admin Hub</a>
@@ -331,15 +326,14 @@ def admin_panel():
                 {content}
             </div>
         </main>
-        '''
+        """
         return render_template_string(BASE_HEAD + body + FOOTER)
 
-    # 3. MODULE 2: PAYMENT & SUBSCRIPTIONS (With Expired Tab)
     elif module == 'payment':
         content = ""
         if tab == 'pending':
             for b_id, b in pending_pay.items():
-                content += f'''
+                content += f"""
                 <div class="bg-gray-800/60 p-4 rounded-2xl flex justify-between items-center">
                     <div>
                         <h4 class="font-bold">{b["name"]}</h4>
@@ -347,12 +341,12 @@ def admin_panel():
                     </div>
                     <a href="/admin?module=payment&tab=pending&action=approve_pay&id={b_id}" class="bg-blue-600 px-4 py-2 rounded-xl text-xs font-bold">Confirm Payment</a>
                 </div>
-                '''
+                """
             if not content:
                 content = '<p class="text-gray-500 text-center py-8">No pending payments to verify.</p>'
         elif tab == 'alerts':
             for b_id, b in expiring_alerts.items():
-                content += f'''
+                content += f"""
                 <div class="bg-red-950/40 border border-red-500/50 p-4 rounded-2xl flex justify-between items-center">
                     <div>
                         <h4 class="font-bold text-white">{b["name"]}</h4>
@@ -360,13 +354,13 @@ def admin_panel():
                     </div>
                     <a href="/admin?module=payment&tab=alerts&action=approve_pay&id={b_id}" class="bg-red-600 px-4 py-2 rounded-xl text-xs font-bold">Renew (+30 Days)</a>
                 </div>
-                '''
+                """
             if not content:
                 content = '<p class="text-gray-500 text-center py-8">No 5-day expiry alerts right now.</p>'
         elif tab == 'expired':
             for b_id, b in expired_subs.items():
                 days_ago = abs((b.get('expiry_date') - now).days)
-                content += f'''
+                content += f"""
                 <div class="bg-red-900/30 border-2 border-red-600 p-4 rounded-2xl flex justify-between items-center">
                     <div>
                         <h4 class="font-bold text-white">{b["name"]}</h4>
@@ -375,20 +369,20 @@ def admin_panel():
                     </div>
                     <a href="/admin?module=payment&tab=expired&action=approve_pay&id={b_id}" class="bg-red-600 hover:bg-red-500 px-4 py-2 rounded-xl text-xs font-bold text-white shadow">Remind / Renew (+30 Days)</a>
                 </div>
-                '''
+                """
             if not content:
                 content = '<p class="text-gray-500 text-center py-8">No expired subscriptions found. Great!</p>'
         else:
             for b_id, b in paid_pay.items():
-                content += f'''
+                content += f"""
                 <div class="bg-gray-800/40 p-4 rounded-2xl">
                     <h4 class="font-bold">{b["name"]}</h4>
                     <p class="text-xs text-gray-400 mt-1">Method: {b.get("payment_method")} | Ref: <code>{b.get("payment_ref")}</code></p>
                     <span class="text-xs font-bold text-green-400 mt-1 block">✓ Active Subscription</span>
                 </div>
-                '''
+                """
 
-        body = f'''
+        body = f"""
         <main class="max-w-5xl mx-auto px-4 py-12">
             <div class="flex justify-between items-center mb-8">
                 <a href="/admin" class="text-sm font-bold text-indigo-500 hover:underline">← Back to Admin Hub</a>
@@ -412,7 +406,7 @@ def admin_panel():
                 {content}
             </div>
         </main>
-        '''
+        """
         return render_template_string(BASE_HEAD + body + FOOTER)
 
 handler = app
