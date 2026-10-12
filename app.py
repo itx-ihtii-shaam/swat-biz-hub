@@ -24,7 +24,8 @@ BUSINESSES = {
         'joining_date': datetime.now() - timedelta(days=10),
         'expiry_date': datetime.now() + timedelta(days=50),
         'special_info': 'Dr. Muhammad Ali (Cardiologist), Dr. Ayesha Khan (Pediatrician)',
-        'tests_dishes': 'MRI, CT Scan, X-Ray, Ultrasound, Emergency Care'
+        'tests_dishes': 'MRI, CT Scan, X-Ray, Ultrasound, Emergency Care',
+        'client_password': 'client123'
     },
     '2': {
         'id': '2',
@@ -40,7 +41,8 @@ BUSINESSES = {
         'joining_date': datetime.now(),
         'expiry_date': datetime.now() + timedelta(days=60),
         'special_info': 'Special Family Cabin Available',
-        'tests_dishes': 'Dumba Karahi, Shinwari Tikka, Mutton Kabab, Green Tea'
+        'tests_dishes': 'Dumba Karahi, Shinwari Tikka, Mutton Kabab, Green Tea',
+        'client_password': 'client123'
     },
     '3': {
         'id': '3',
@@ -56,7 +58,8 @@ BUSINESSES = {
         'joining_date': datetime.now() - timedelta(days=45),
         'expiry_date': datetime.now() + timedelta(days=15),
         'special_info': 'Available Pharmacist: Dr. Bilal Ahmed',
-        'tests_dishes': 'Blood Pressure Check, Blood Glucose Testing, First Aid'
+        'tests_dishes': 'Blood Pressure Check, Blood Glucose Testing, First Aid',
+        'client_password': 'client123'
     }
 }
 
@@ -201,7 +204,6 @@ def category_page(cat_slug):
     cat = CATEGORIES[cat_slug]
     search_query = request.args.get('q', '').lower().strip()
     
-    # Only approved and non-expired businesses are shown publicly
     now = datetime.now()
     all_biz = [b for b in BUSINESSES.values() if b.get('category') == cat_slug and b.get('status') == 'approved' and b.get('expiry_date', now) >= now]
     filtered = []
@@ -290,23 +292,42 @@ def category_page(cat_slug):
     ''' + FOOTER
     return render_template_string(html)
 
-@app.route('/business/<b_id>')
+@app.route('/business/<b_id>', methods=['GET', 'POST'])
 def business_detail(b_id):
     if b_id not in BUSINESSES:
         abort(404)
     b = BUSINESSES[b_id]
     
-    # If not approved or subscription expired, block viewing
+    is_admin = session.get('admin_logged_in')
+    client_auth_key = f'client_auth_{b_id}'
+    is_client = session.get(client_auth_key)
+
+    error_msg = ""
+    if request.method == 'POST':
+        entered_pass = request.form.get('client_password', '')
+        if entered_pass == b.get('client_password', 'client123'):
+            session[client_auth_key] = True
+            is_client = True
+        else:
+            error_msg = "Incorrect Client Password! Please try again."
+
     now = datetime.now()
-    if b.get('status') != 'approved' or b.get('expiry_date', now) < now:
+    if (b.get('status') != 'approved' or b.get('expiry_date', now) < now) and not is_admin and not is_client:
         html = BASE_HEAD + '''
         <main class="max-w-xl mx-auto px-4 py-20 text-center">
             <div class="bg-gray-900 border border-gray-800 rounded-3xl p-10 shadow-2xl space-y-4">
                 <span class="text-6xl inline-block">🔒</span>
-                <h1 class="text-2xl font-bold text-white">Listing Inactive or Expired</h1>
-                <p class="text-gray-400 text-sm">This business is either pending admin approval or its 2-month free trial/subscription has expired. Payment is required to restore access.</p>
+                <h1 class="text-2xl font-bold text-white">Listing Inactive, Expired or Password Protected</h1>
+                <p class="text-gray-400 text-sm">Please enter the Client Password to unlock and view this listing.</p>
+                
+                <form method="POST" class="space-y-3 pt-2">
+                    <input type="password" name="client_password" required placeholder="Enter Client Password" class="w-full p-3.5 rounded-xl bg-gray-800 border border-gray-700 text-center focus:ring-2 focus:ring-blue-500 outline-none text-sm">
+                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 py-3 rounded-xl font-bold transition text-sm">Unlock Listing</button>
+                </form>
+                ''' + (f'<p class="text-red-400 text-xs font-semibold">{error_msg}</p>' if error_msg else '') + '''
+
                 <div class="pt-4">
-                    <a href="/" class="bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-xl font-bold transition inline-block">Return to Home</a>
+                    <a href="/" class="text-gray-400 hover:text-white text-xs underline">Return to Home</a>
                 </div>
             </div>
         </main>
@@ -369,7 +390,8 @@ def register_business():
             'payment_ref': request.form.get('payment_ref', 'TRIAL-60DAYS'),
             'payment_status': 'paid',
             'joining_date': datetime.now(),
-            'expiry_date': datetime.now() + timedelta(days=60)  # 2 Months Free Trial
+            'expiry_date': datetime.now() + timedelta(days=60),  # 2 Months Free Trial
+            'client_password': request.form.get('client_password', 'client123')
         }
         return redirect('/')
 
@@ -387,6 +409,11 @@ def register_business():
             <input type="text" name="address" required placeholder="Address (e.g. Mingora, Swat)" class="w-full p-3.5 rounded-xl bg-gray-900 border border-gray-800 focus:ring-2 focus:ring-blue-500 outline-none transition">
             <input type="text" name="phone" required placeholder="Phone Number" class="w-full p-3.5 rounded-xl bg-gray-900 border border-gray-800 focus:ring-2 focus:ring-blue-500 outline-none transition">
             
+            <div class="border-t border-gray-800 pt-4 mt-4">
+                <label class="block text-xs font-bold text-gray-400 mb-2">🔒 Secure Client Password (Required for secure access)</label>
+                <input type="password" name="client_password" required placeholder="Enter secret client password" class="w-full p-3.5 rounded-xl bg-gray-900 border border-gray-800 focus:ring-2 focus:ring-blue-500 outline-none text-sm transition">
+            </div>
+
             <div class="border-t border-gray-800 pt-4 mt-4">
                 <label class="block text-xs font-bold text-gray-400 mb-2">Custom Business Details (Optional)</label>
                 <textarea name="special_info" placeholder="Doctor info, Chef details, or Management info..." class="w-full p-3.5 rounded-xl bg-gray-900 border border-gray-800 focus:ring-2 focus:ring-blue-500 outline-none text-sm transition" rows="2"></textarea>
@@ -522,7 +549,8 @@ def admin_panel():
                         <h4 class="font-bold">''' + b["name"] + '''</h4>
                         <p class="text-xs text-gray-400">📍 ''' + b["address"] + ''' | 📅 Joined: <span class="text-blue-400 font-semibold">''' + j_date + '''</span></p>
                     </div>
-                    <div class="flex gap-2">
+                    <div class="flex gap-2 items-center">
+                        <a href="/business/''' + b_id + '''" target="_blank" class="bg-blue-600/20 text-blue-400 hover:bg-blue-600 hover:text-white px-3 py-2 rounded-xl text-xs font-bold transition">Preview</a>
                         <a href="/admin?module=business&tab=pending&action=approve&id=''' + b_id + '''" class="bg-green-600 hover:bg-green-500 px-4 py-2 rounded-xl text-xs font-bold transition">Approve</a>
                         <a href="/admin?module=business&tab=pending&action=delete&id=''' + b_id + '''" class="bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white px-3 py-2 rounded-xl text-xs font-bold transition">Delete</a>
                     </div>
@@ -539,20 +567,23 @@ def admin_panel():
                         <h4 class="font-bold">''' + b["name"] + '''</h4>
                         <p class="text-xs text-gray-400">📍 ''' + b["address"] + ''' | 📅 Joined: <span class="text-blue-400 font-semibold">''' + j_date + '''</span></p>
                     </div>
-                    <a href="/admin?module=business&tab=approved&action=delete&id=''' + b_id + '''" class="bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white px-3 py-1.5 rounded-xl text-xs font-bold transition">Delete</a>
+                    <div class="flex gap-2 items-center">
+                        <a href="/business/''' + b_id + '''" target="_blank" class="bg-blue-600/20 text-blue-400 hover:bg-blue-600 hover:text-white px-3 py-1.5 rounded-xl text-xs font-bold transition">View</a>
+                        <a href="/admin?module=business&tab=approved&action=delete&id=''' + b_id + '''" class="bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white px-3 py-1.5 rounded-xl text-xs font-bold transition">Delete</a>
+                    </div>
                 </div>
                 '''
+            if not content:
+                content = '<p class="text-gray-500 text-center py-8">No approved listings.</p>'
 
         html = ADMIN_SUB_HEAD + '''
-        <main class="max-w-5xl mx-auto px-4 py-12">
-            <div class="mb-8">
-                <h2 class="text-2xl font-extrabold">🏢 Business Directory Module</h2>
-            </div>
+        <main class="max-w-4xl mx-auto px-4 py-12">
+            <h2 class="text-2xl font-bold mb-6">🏢 Business Directory Management</h2>
             <div class="flex space-x-3 mb-6">
-                <a href="/admin?module=business&tab=pending" class="px-5 py-2.5 rounded-xl text-sm font-bold ''' + ('bg-blue-600 text-white' if tab=='pending' else 'bg-gray-900 text-gray-400') + '''">Pending (''' + str(len(pending_biz)) + ''' )</a>
-                <a href="/admin?module=business&tab=approved" class="px-5 py-2.5 rounded-xl text-sm font-bold ''' + ('bg-blue-600 text-white' if tab=='approved' else 'bg-gray-900 text-gray-400') + '''">Approved (''' + str(len(approved_biz)) + ''' )</a>
+                <a href="/admin?module=business&tab=pending" class="px-5 py-2.5 rounded-xl font-bold text-sm transition ''' + ('bg-blue-600 text-white shadow-lg' if tab=='pending' else 'bg-gray-900 text-gray-400 hover:bg-gray-800') + '''">Pending (''' + str(len(pending_biz)) + ''')</a>
+                <a href="/admin?module=business&tab=approved" class="px-5 py-2.5 rounded-xl font-bold text-sm transition ''' + ('bg-blue-600 text-white shadow-lg' if tab=='approved' else 'bg-gray-900 text-gray-400 hover:bg-gray-800') + '''">Approved (''' + str(len(approved_biz)) + ''')</a>
             </div>
-            <div class="bg-gray-900 p-6 rounded-3xl border border-gray-800 shadow-xl space-y-4">
+            <div class="bg-gray-900 p-6 rounded-3xl border border-gray-800 space-y-4">
                 ''' + content + '''
             </div>
         </main>
@@ -563,79 +594,60 @@ def admin_panel():
         content = ""
         if tab == 'pending':
             for b_id, b in pending_pay.items():
-                j_date = b.get('joining_date', datetime.now()).strftime('%Y-%m-%d')
                 content += '''
-                <div class="bg-gray-800/60 p-4 rounded-2xl flex justify-between items-center hover:bg-gray-800 transition">
+                <div class="bg-gray-800/60 p-4 rounded-2xl flex justify-between items-center">
                     <div>
                         <h4 class="font-bold">''' + b["name"] + '''</h4>
-                        <p class="text-xs text-blue-400">Method: ''' + b.get("payment_method") + ''' | Ref: <code>''' + b.get("payment_ref") + '''</code> | 📅 Joined: ''' + j_date + '''</p>
+                        <p class="text-xs text-gray-400">Method: <span class="text-blue-400 font-bold">''' + b.get('payment_method', 'N/A') + '''</span> | Ref: <span class="text-indigo-400 font-mono font-bold">''' + b.get('payment_ref', 'N/A') + '''</span></p>
                     </div>
-                    <a href="/admin?module=payment&tab=pending&action=approve_pay&id=''' + b_id + '''" class="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-xl text-xs font-bold transition">Confirm Payment</a>
+                    <a href="/admin?module=payment&tab=pending&action=approve_pay&id=''' + b_id + '''" class="bg-green-600 hover:bg-green-500 px-4 py-2 rounded-xl text-xs font-bold transition">Verify & Activate (60 Days)</a>
                 </div>
                 '''
             if not content:
-                content = '<p class="text-gray-500 text-center py-8">No pending payments.</p>'
+                content = '<p class="text-gray-500 text-center py-8">No pending payment verifications.</p>'
         elif tab == 'alerts':
             for b_id, b in expiring_alerts.items():
-                j_date = b.get('joining_date', datetime.now()).strftime('%Y-%m-%d')
+                ed = b.get('expiry_date').strftime('%Y-%m-%d')
                 content += '''
-                <div class="bg-red-950/40 border border-red-500/50 p-4 rounded-2xl flex justify-between items-center">
+                <div class="bg-yellow-500/10 border border-yellow-500/30 p-4 rounded-2xl flex justify-between items-center">
                     <div>
-                        <h4 class="font-bold text-white">''' + b["name"] + '''</h4>
-                        <p class="text-xs text-gray-400 mt-1">📅 Joined: ''' + j_date + '''</p>
-                        <p class="text-xs text-red-400 font-bold mt-1">⏳ Expiry Alert: Less than 5 Days Remaining!</p>
+                        <h4 class="font-bold">''' + b["name"] + '''</h4>
+                        <p class="text-xs text-yellow-400 font-semibold">⚠️ Expires on: ''' + ed + '''</p>
                     </div>
-                    <a href="/admin?module=payment&tab=alerts&action=approve_pay&id=''' + b_id + '''" class="bg-red-600 hover:bg-red-500 px-4 py-2 rounded-xl text-xs font-bold text-white transition">Renew (+60 Days)</a>
+                    <a href="/admin?module=payment&tab=alerts&action=approve_pay&id=''' + b_id + '''" class="bg-yellow-600 hover:bg-yellow-500 text-gray-950 px-4 py-2 rounded-xl text-xs font-bold transition">Renew 60 Days</a>
                 </div>
                 '''
             if not content:
-                content = '<p class="text-gray-500 text-center py-8">No expiry alerts right now.</p>'
-        elif tab == 'expired':
-            for b_id, b in expired_subs.items():
-                days_ago = abs((b.get('expiry_date') - now).days)
-                j_date = b.get('joining_date', datetime.now()).strftime('%Y-%m-%d')
-                content += '''
-                <div class="bg-red-900/30 border-2 border-red-600 p-4 rounded-2xl flex justify-between items-center hover:bg-red-900/50 transition">
-                    <div>
-                        <h4 class="font-bold text-white">''' + b["name"] + '''</h4>
-                        <p class="text-xs text-gray-400">📞 ''' + b.get("phones", ["N/A"])[0] + ''' | 📍 ''' + b["address"] + ''' | 📅 Joined: ''' + j_date + '''</p>
-                        <p class="text-xs text-red-400 font-bold mt-1">❌ Subscription Ended ''' + str(days_ago) + ''' day(s) ago!</p>
-                    </div>
-                    <a href="/admin?module=payment&tab=expired&action=approve_pay&id=''' + b_id + '''" class="bg-red-600 hover:bg-red-500 px-4 py-2 rounded-xl text-xs font-bold text-white shadow transition">Renew (+60 Days)</a>
-                </div>
-                '''
-            if not content:
-                content = '<p class="text-gray-500 text-center py-8">No expired subscriptions found. Great!</p>'
+                content = '<p class="text-gray-500 text-center py-8">No subscriptions expiring in the next 5 days.</p>'
         else:
-            for b_id, b in paid_pay.items():
-                j_date = b.get('joining_date', datetime.now()).strftime('%Y-%m-%d')
+            for b_id, b in expired_subs.items():
+                ed = b.get('expiry_date').strftime('%Y-%m-%d')
                 content += '''
-                <div class="bg-gray-800/40 p-4 rounded-2xl hover:bg-gray-800/70 transition">
-                    <h4 class="font-bold">''' + b["name"] + '''</h4>
-                    <p class="text-xs text-gray-400 mt-1">Method: ''' + b.get("payment_method") + ''' | Ref: <code>''' + b.get("payment_ref") + '''</code> | 📅 Joined: ''' + j_date + '''</p>
-                    <span class="text-xs font-bold text-green-400 mt-1 block">✓ Active Subscription</span>
+                <div class="bg-red-500/10 border border-red-500/30 p-4 rounded-2xl flex justify-between items-center">
+                    <div>
+                        <h4 class="font-bold">''' + b["name"] + '''</h4>
+                        <p class="text-xs text-red-400 font-semibold">❌ Expired on: ''' + ed + '''</p>
+                    </div>
+                    <a href="/admin?module=payment&tab=expired&action=approve_pay&id=''' + b_id + '''" class="bg-red-600 hover:bg-red-500 text-white px-4 py-2 rounded-xl text-xs font-bold transition">Restore & Renew</a>
                 </div>
                 '''
+            if not content:
+                content = '<p class="text-gray-500 text-center py-8">No expired subscriptions found.</p>'
 
         html = ADMIN_SUB_HEAD + '''
-        <main class="max-w-5xl mx-auto px-4 py-12">
-            <div class="mb-8">
-                <h2 class="text-2xl font-extrabold">💳 Payment & Subscription Module</h2>
+        <main class="max-w-4xl mx-auto px-4 py-12">
+            <h2 class="text-2xl font-bold mb-6">💳 Payment & Subscription Hub</h2>
+            <div class="flex space-x-3 mb-6">
+                <a href="/admin?module=payment&tab=pending" class="px-5 py-2.5 rounded-xl font-bold text-sm transition ''' + ('bg-indigo-600 text-white shadow-lg' if tab=='pending' else 'bg-gray-900 text-gray-400 hover:bg-gray-800') + '''">Unpaid (''' + str(len(pending_pay)) + ''')</a>
+                <a href="/admin?module=payment&tab=alerts" class="px-5 py-2.5 rounded-xl font-bold text-sm transition ''' + ('bg-yellow-600 text-gray-950 shadow-lg' if tab=='alerts' else 'bg-gray-900 text-gray-400 hover:bg-gray-800') + '''">Expiry Alerts (''' + str(len(expiring_alerts)) + ''')</a>
+                <a href="/admin?module=payment&tab=expired" class="px-5 py-2.5 rounded-xl font-bold text-sm transition ''' + ('bg-red-600 text-white shadow-lg' if tab=='expired' else 'bg-gray-900 text-gray-400 hover:bg-gray-800') + '''">Expired (''' + str(len(expired_subs)) + ''')</a>
             </div>
-            <div class="flex flex-wrap gap-3 mb-8">
-                <a href="/admin?module=payment&tab=pending" class="px-5 py-2.5 rounded-xl text-sm font-bold ''' + ('bg-indigo-600 text-white' if tab=='pending' else 'bg-gray-900 text-gray-400') + '''">Unpaid (''' + str(len(pending_pay)) + ''' )</a>
-                <a href="/admin?module=payment&tab=alerts" class="px-5 py-2.5 rounded-xl text-sm font-bold ''' + ('bg-red-600 text-white' if tab=='alerts' else 'bg-gray-900 text-gray-400') + '''">🚨 5-Day Alerts (''' + str(len(expiring_alerts)) + ''' )</a>
-                <a href="/admin?module=payment&tab=expired" class="px-5 py-2.5 rounded-xl text-sm font-bold ''' + ('bg-red-700 text-white animate-pulse' if tab=='expired' else 'bg-gray-900 text-red-400') + '''">❌ Expired (''' + str(len(expired_subs)) + ''' )</a>
-                <a href="/admin?module=payment&tab=history" class="px-5 py-2.5 rounded-xl text-sm font-bold ''' + ('bg-indigo-600 text-white' if tab=='history' else 'bg-gray-900 text-gray-400') + '''">History (''' + str(len(paid_pay)) + ''' )</a>
-            </div>
-            <div class="bg-gray-900 p-6 rounded-3xl border border-gray-800 shadow-xl space-y-4">
+            <div class="bg-gray-900 p-6 rounded-3xl border border-gray-800 space-y-4">
                 ''' + content + '''
             </div>
         </main>
         ''' + FOOTER
         return render_template_string(html)
-
-handler = app
 
 if __name__ == '__main__':
     app.run(debug=True)
