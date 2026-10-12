@@ -74,18 +74,6 @@ BUSINESSES = {
         'joined_date': datetime.now() - timedelta(days=4),
         'last_paid_date': datetime.now(),
         'status': 'trial',
-    },
-    '6': {
-        'id': '6',
-        'category': 'supermarts',
-        'sub_category': 'bakery',
-        'name': 'Swat Bakers & Sweets',
-        'address': 'Green Chowk, Mingora, Swat',
-        'phones': ['+92 946 7188990'],
-        'image': 'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=800&q=80',
-        'joined_date': datetime.now() - timedelta(days=1),
-        'last_paid_date': datetime.now(),
-        'status': 'trial',
     }
 }
 
@@ -111,7 +99,7 @@ SUB_CATEGORIES = {
         {'slug': 'all', 'title': 'All Stores', 'icon': '🛒'},
         {'slug': 'general', 'title': 'General Store & Mart', 'icon': '🏪'},
         {'slug': 'bakery', 'title': 'Bakery & Sweets', 'icon': '🍞'},
-        {'slug': 'meat', 'title': 'Meat & Vegetables', 'icon': ' vegetables'},
+        {'slug': 'meat', 'title': 'Meat & Vegetables', 'icon': '🥩'},
         {'slug': 'wholesale', 'title': 'Wholesale Dealers', 'icon': '📦'}
     ]
 }
@@ -397,28 +385,20 @@ def register_business():
             <form method="POST" class="space-y-4">
                 <div>
                     <label class="block text-sm font-medium mb-1">Name</label>
-                    <input type="text" name="name" required placeholder="e.g. Swat Superstore" class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-700 outline-none">
+                    <input type="text" name="name" required placeholder="e.g. City Model School" class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-700 outline-none">
                 </div>
                 <div>
                     <label class="block text-sm font-medium mb-1">Category</label>
-                    <select name="category" class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-700 outline-none cursor-pointer">
+                    <select id="categorySelect" name="category" onchange="updateSubCategories()" class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-700 outline-none cursor-pointer">
                         {% for slug, cat in categories.items() %}
                         <option value="{{ slug }}">{{ cat.icon }} {{ cat.title }}</option>
                         {% endfor %}
                     </select>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium mb-1">Sub-Category (Optional for Education / Supermarts)</label>
-                    <select name="sub_category" class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-700 outline-none cursor-pointer">
+                    <label class="block text-sm font-medium mb-1">Sub-Category</label>
+                    <select id="subCategorySelect" name="sub_category" class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-700 outline-none cursor-pointer">
                         <option value="">None / Not Applicable</option>
-                        <option value="schools">🏫 School (Education)</option>
-                        <option value="colleges">🏛️ College (Education)</option>
-                        <option value="universities">🎓 University (Education)</option>
-                        <option value="academies">📚 Academy (Education)</option>
-                        <option value="general">🏪 General Store (Supermarts)</option>
-                        <option value="bakery">🍞 Bakery & Sweets (Supermarts)</option>
-                        <option value="meat">🥩 Meat & Vegetables (Supermarts)</option>
-                        <option value="wholesale">📦 Wholesale Dealer (Supermarts)</option>
                     </select>
                 </div>
                 <div>
@@ -433,6 +413,43 @@ def register_business():
             </form>
         </div>
     </main>
+
+    <script>
+        const subCatData = {
+            'education': [
+                {value: 'schools', text: '🏫 School'},
+                {value: 'colleges', text: '🏛️ College'},
+                {value: 'universities', text: '🎓 University'},
+                {value: 'academies', text: '📚 Academy'}
+            ],
+            'supermarts': [
+                {value: 'general', text: '🏪 General Store & Mart'},
+                {value: 'bakery', text: '🍞 Bakery & Sweets'},
+                {value: 'meat', text: '🥩 Meat & Vegetables'},
+                {value: 'wholesale', text: '📦 Wholesale Dealer'}
+            ]
+        };
+
+        function updateSubCategories() {
+            const catSelect = document.getElementById('categorySelect');
+            const subSelect = document.getElementById('subCategorySelect');
+            const selectedCat = catSelect.value;
+
+            subSelect.innerHTML = '<option value="">None / Not Applicable</option>';
+
+            if (subCatData[selectedCat]) {
+                subCatData[selectedCat].forEach(sub => {
+                    const opt = document.createElement('option');
+                    opt.value = sub.value;
+                    opt.text = sub.text;
+                    subSelect.appendChild(opt);
+                });
+            }
+        }
+
+        // Run on page load
+        window.onload = updateSubCategories;
+    </script>
     ''' + FOOTER
     return render_template_string(reg_html, categories=CATEGORIES, title="Register")
 
