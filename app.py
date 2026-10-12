@@ -55,26 +55,6 @@ BUSINESSES = {
         'joined_date': datetime.now() - timedelta(days=5),
         'last_paid_date': datetime.now(),
         'status': 'trial',
-    },
-    '5': {
-        'id': '5',
-        'category': 'property',
-        'name': 'Swat Valley Real Estate',
-        'address': 'Main Makanbagh, Mingora, Swat',
-        'phones': ['+92 300 9876543'],
-        'image': 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=800&q=80',
-        'doctors': [],
-        'items': [
-            {
-                'name': '5 Marla Brand New House',
-                'price': '12500000',
-                'offer': 'Ready to Move',
-                'image': 'https://images.unsplash.com/photo-1580587771525-78b9dba3b914?auto=format&fit=crop&w=500&q=80'
-            }
-        ],
-        'joined_date': datetime.now() - timedelta(days=2),
-        'last_paid_date': datetime.now(),
-        'status': 'trial',
     }
 }
 
