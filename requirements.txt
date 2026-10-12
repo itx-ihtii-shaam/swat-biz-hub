@@ -1,10 +1,2 @@
-your-repo-name/
-├── app.py
-├── vercel.json
-├── static/
-└── templates/
-    ├── index.html
-    ├── category.html
-    ├── detail.html
-    ├── register.html
-    └── admin.html
+Flask==3.0.3
+Werkzeug==3.0.3
