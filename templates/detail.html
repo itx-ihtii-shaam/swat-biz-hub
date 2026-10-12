@@ -1,32 +1,53 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" id="html-root">
 <head>
     <meta charset="UTF-8">
-    <title>{{ business.name }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ business.name }} - {{ site_name }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>tailwind.config = { darkMode: 'class' }</script>
 </head>
-<body class="bg-slate-50 text-slate-800">
-    <div class="max-w-3xl mx-auto p-6">
-        <a href="javascript:history.back()" class="text-indigo-600 font-medium">&larr; Back</a>
-        <div class="bg-white p-6 rounded-xl shadow mt-4 border border-slate-100">
-            <h1 class="text-3xl font-bold">{{ business.name }}</h1>
-            <p class="text-slate-600 mt-2">📍 <strong>Address:</strong> {{ business.address }}</p>
-            <p class="text-slate-600 mt-1">📞 <strong>Phone:</strong> {{ business.phone }}</p>
+<body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen transition-colors duration-300">
+    <header class="bg-blue-600 dark:bg-blue-800 text-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 py-6 flex justify-between items-center">
+            <a href="{{ url_for('home') }}" class="text-xl font-bold hover:underline">← Back to Home</a>
+            <button onclick="document.getElementById('html-root').classList.toggle('dark')" class="bg-blue-700 dark:bg-blue-900 px-3 py-2 rounded-lg text-sm font-medium shadow hover:bg-blue-800 transition transform hover:scale-105">🌓 Theme</button>
+        </div>
+    </header>
+
+    <main class="max-w-4xl mx-auto px-4 py-10">
+        <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 border border-gray-100 dark:border-gray-700 transition-all">
+            <div class="flex justify-between items-start mb-6">
+                <div>
+                    <span class="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-xs font-semibold px-3 py-1 rounded-full uppercase tracking-wider">{{ business.category }}</span>
+                    <h1 class="text-3xl font-extrabold mt-3">{{ business.name }}</h1>
+                </div>
+                <span class="bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 text-xs font-bold px-3 py-1.5 rounded-full">Verified Active</span>
+            </div>
+
+            <div class="space-y-4 border-t border-b border-gray-100 dark:border-gray-700 py-6 my-6">
+                <p class="flex items-center text-gray-700 dark:text-gray-300"><strong class="w-24">Address:</strong> 📍 {{ business.address }}</p>
+                <p class="flex items-center text-gray-700 dark:text-gray-300"><strong class="w-24">Phone:</strong> 📞 <a href="tel:{{ business.phone }}" class="text-blue-600 dark:text-blue-400 hover:underline">{{ business.phone }}</a></p>
+            </div>
 
             {% if business.doctors %}
-            <hr class="my-6">
-            <h2 class="text-2xl font-bold mb-4">Available Doctors & Specialists</h2>
-            <div class="space-y-3">
-                {% for doc in business.doctors %}
-                <div class="bg-slate-50 p-4 rounded border border-slate-200">
-                    <h3 class="font-bold text-lg text-indigo-700">{{ doc.name }}</h3>
-                    <p class="text-sm text-slate-600">Specialty: {{ doc.specialty }}</p>
-                    <p class="text-sm text-slate-500">Timing: {{ doc.timing }}</p>
+            <div class="mt-8">
+                <h3 class="text-2xl font-bold mb-4">🩺 Doctors & Specialist Timings</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {% for doc in business.doctors %}
+                    <div class="bg-gray-50 dark:bg-gray-700/50 p-5 rounded-xl border border-gray-200 dark:border-gray-600 shadow-sm hover:shadow-md transition transform hover:-translate-y-1">
+                        <h4 class="font-bold text-lg text-blue-600 dark:text-blue-400">{{ doc.name }}</h4>
+                        <p class="text-sm font-medium text-gray-600 dark:text-gray-300 mt-1">Specialty: {{ doc.specialty }}</p>
+                        <div class="mt-3 pt-3 border-t border-gray-200 dark:border-gray-600 text-sm space-y-1">
+                            <p class="flex justify-between"><span class="text-gray-500 dark:text-gray-400">Appointment Timing:</span> <span class="font-semibold text-gray-800 dark:text-gray-200">{{ doc.timing }}</span></p>
+                            <p class="flex justify-between"><span class="text-gray-500 dark:text-gray-400">Clinic Schedule:</span> <span class="font-semibold text-gray-800 dark:text-gray-200">Mon - Sat (9 AM - 5 PM)</span></p>
+                        </div>
+                    </div>
+                    {% endfor %}
                 </div>
-                {% endfor %}
             </div>
             {% endif %}
         </div>
-    </div>
+    </main>
 </body>
 </html>
