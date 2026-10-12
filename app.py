@@ -358,3 +358,107 @@ def admin_panel():
                             {% for b_id, biz in pending_biz.items() %}
                             <div class="bg-gray-800/60 p-4 rounded-2xl flex justify-between items-center">
                                 <div>
+                                    <h4 class="font-bold">{{ biz.name }}</h4>
+                                    <p class="text-xs text-gray-400">📍 {{ biz.address }} | 📞 {{ biz.phones[0] }}</p>
+                                </div>
+                                <div class="flex gap-2">
+                                    <a href="/admin?module=business&tab=pending&action=approve&id={{ b_id }}" class="bg-green-600 px-4 py-2 rounded-xl text-xs font-bold">Approve</a>
+                                    <a href="/admin?module=business&tab=pending&action=delete&id={{ b_id }}" class="bg-red-600/20 text-red-400 px-3 py-2 rounded-xl text-xs font-bold">Delete</a>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-gray-500 text-center py-8">No pending business approvals.</p>
+                    {% endif %}
+                {% elif tab == 'approved' %}
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {% for b_id, biz in approved_biz.items() %}
+                        <div class="bg-gray-800/40 p-4 rounded-2xl flex justify-between items-center">
+                            <div>
+                                <h4 class="font-bold">{{ biz.name }}</h4>
+                                <p class="text-xs text-gray-400">📍 {{ biz.address }}</p>
+                            </div>
+                            <a href="/admin?module=business&tab=approved&action=delete&id={{ b_id }}" class="bg-red-600/20 text-red-400 px-3 py-1.5 rounded-xl text-xs font-bold">Delete</a>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+        </main>
+        ''' + FOOTER, title="Business Module")
+
+    # 3. MODULE 2: PAYMENT & SUBSCRIPTIONS
+    elif module == 'payment':
+        return render_template_string(BASE_HEAD + '''
+        <main class="max-w-5xl mx-auto px-4 py-12">
+            <div class="flex justify-between items-center mb-8">
+                <a href="/admin" class="text-sm font-bold text-indigo-500 hover:underline">← Back to Admin Hub</a>
+                <h2 class="text-2xl font-extrabold">💳 Payment & Subscription Module</h2>
+            </div>
+
+            <!-- SUB CATEGORY TABS -->
+            <div class="flex flex-wrap gap-3 mb-8">
+                <a href="/admin?module=payment&tab=pending" class="px-5 py-2.5 rounded-xl text-sm font-bold {% if tab == 'pending' %} bg-indigo-600 text-white {% else %} bg-gray-900 text-gray-400 {% endif %}">
+                    ⚠️ New Payment Verification (''' + str(len(pending_pay)) + ''')
+                </a>
+                <a href="/admin?module=payment&tab=alerts" class="px-5 py-2.5 rounded-xl text-sm font-bold {% if tab == 'alerts' %} bg-red-600 text-white {% else %} bg-gray-900 text-gray-400 {% endif %} animate-pulse">
+                    🚨 5-Day Expiry Alerts (''' + str(len(expiring_alerts)) + ''')
+                </a>
+                <a href="/admin?module=payment&tab=history" class="px-5 py-2.5 rounded-xl text-sm font-bold {% if tab == 'history' %} bg-indigo-600 text-white {% else %} bg-gray-900 text-gray-400 {% endif %}">
+                    💳 Verified Payment Record (''' + str(len(paid_pay)) + ''')
+                </a>
+            </div>
+
+            <div class="bg-gray-900 p-6 rounded-3xl border border-gray-800">
+                {% if tab == 'pending' %}
+                    {% if pending_pay %}
+                        <div class="space-y-4">
+                            {% for b_id, biz in pending_pay.items() %}
+                            <div class="bg-gray-800/60 p-4 rounded-2xl flex justify-between items-center">
+                                <div>
+                                    <h4 class="font-bold">{{ biz.name }}</h4>
+                                    <p class="text-xs text-blue-400">Method: {{ biz.get('payment_method') }} | Ref/TID: <code>{{ biz.get('payment_ref') }}</code></p>
+                                </div>
+                                <a href="/admin?module=payment&tab=pending&action=approve_pay&id={{ b_id }}" class="bg-blue-600 px-4 py-2 rounded-xl text-xs font-bold">Confirm Payment</a>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-gray-500 text-center py-8">No pending payment verifications.</p>
+                    {% endif %}
+                {% elif tab == 'alerts' %}
+                    {% if expiring %}
+                        <div class="space-y-4">
+                            {% for b_id, biz in expiring.items() %}
+                            <div class="bg-red-950/40 border border-red-500/50 p-4 rounded-2xl flex justify-between items-center">
+                                <div>
+                                    <h4 class="font-bold text-white">{{ biz.name }}</h4>
+                                    <p class="text-xs text-red-400 font-bold mt-1">⏳ Expiry Alert: Less than 5 Days Remaining!</p>
+                                </div>
+                                <a href="/admin?module=payment&tab=alerts&action=approve_pay&id={{ b_id }}" class="bg-red-600 px-4 py-2 rounded-xl text-xs font-bold">Renew (+30 Days)</a>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-gray-500 text-center py-8">No short-time expiry alerts right now.</p>
+                    {% endif %}
+                {% elif tab == 'history' %}
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {% for b_id, biz in paid_pay.items() %}
+                        <div class="bg-gray-800/40 p-4 rounded-2xl">
+                            <h4 class="font-bold">{{ biz.name }}</h4>
+                            <p class="text-xs text-gray-400 mt-1">Method: {{ biz.get('payment_method') }} | TID: <code>{{ biz.get('payment_ref') }}</code></p>
+                            <span class="text-xs font-bold text-green-400 mt-2 block">✓ Active Subscription</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+        </main>
+        ''' + FOOTER, expiring=expiring_alerts, title="Payment Module")
+
+handler = app
+
+if __name__ == '__main__':
+    app.run(debug=True)
