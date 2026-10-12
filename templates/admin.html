@@ -1,89 +1,54 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" id="html-root" class="dark">
 <head>
     <meta charset="UTF-8">
-    <title>Admin Dashboard - {{ site_name }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - {{ site_name }}</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏙️</text></svg>">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>tailwind.config = { darkMode: 'class' }</script>
 </head>
-<body class="bg-slate-50 text-slate-800">
-    <div class="max-w-5xl mx-auto p-6">
-        <div class="flex justify-between items-center mb-8">
-            <h1 class="text-3xl font-bold text-indigo-600">Admin Panel - Add & Manage Businesses</h1>
-            <a href="/" class="text-indigo-600 font-medium hover:underline">&larr; View Website</a>
+<body class="bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 min-h-screen">
+    <header class="bg-gradient-to-r from-slate-900 via-blue-950 to-indigo-950 text-white shadow-xl">
+        <div class="max-w-7xl mx-auto px-4 py-6 flex justify-between items-center">
+            <h1 class="text-2xl font-extrabold"><a href="{{ url_for('home') }}">🛡️ Admin Panel</a></h1>
+            <a href="{{ url_for('home') }}" class="bg-white/10 hover:bg-white/20 px-4 py-2 rounded-xl text-sm font-semibold transition">← View Website</a>
         </div>
+    </header>
 
-        <!-- Add Business Form -->
-        <div class="bg-white p-6 rounded-xl shadow mb-10 border border-slate-100">
-            <h2 class="text-xl font-bold mb-4">Register New Business</h2>
-            <form method="POST" class="space-y-4">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700">Business Name</label>
-                        <input type="text" name="name" required class="mt-1 w-full p-2 border border-slate-300 rounded-lg focus:ring-indigo-500 focus:border-indigo-500">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700">Category</label>
-                        <select name="category" class="mt-1 w-full p-2 border border-slate-300 rounded-lg">
-                            {% for slug, cat in categories.items() %}
-                            <option value="{{ slug }}">{{ cat.title }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700">Address / Location</label>
-                        <input type="text" name="address" required placeholder="e.g. Mingora Swat" class="mt-1 w-full p-2 border border-slate-300 rounded-lg">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700">Phone Number</label>
-                        <input type="text" name="phone" required placeholder="0946-XXXXXX" class="mt-1 w-full p-2 border border-slate-300 rounded-lg">
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-slate-700">Doctors (Only for Hospitals - Format: Dr Name : Specialty per line)</label>
-                    <textarea name="doctors" rows="2" placeholder="Dr. Ali : Cardiologist&#10;Dr. Sara : Dentist" class="mt-1 w-full p-2 border border-slate-300 rounded-lg"></textarea>
-                </div>
-                <button type="submit" class="bg-indigo-600 text-white px-5 py-2 rounded-lg font-medium hover:bg-indigo-700 transition">Add Business (Free Trial)</button>
-            </form>
-        </div>
-
-        <!-- Existing Businesses List & Status -->
-        <div class="bg-white p-6 rounded-xl shadow border border-slate-100">
-            <h2 class="text-xl font-bold mb-4">All Registered Businesses & Subscriptions</h2>
+    <main class="max-w-6xl mx-auto px-4 py-10 space-y-10">
+        <div class="bg-white dark:bg-gray-900 p-8 rounded-3xl shadow-xl border border-gray-100 dark:border-gray-800">
+            <h2 class="text-2xl font-bold mb-6">All Registered Businesses & Subscriptions</h2>
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse">
                     <thead>
-                        <tr class="border-b border-slate-200 text-slate-500 text-sm">
-                            <th class="p-3">Name</th>
-                            <th class="p-3">Category</th>
-                            <th class="p-3">Status</th>
-                            <th class="p-3">Phone</th>
+                        <tr class="border-b border-gray-200 dark:border-gray-800 text-gray-400 text-sm">
+                            <th class="py-3 px-4">Business Name</th>
+                            <th class="py-3 px-4">Category</th>
+                            <th class="py-3 px-4">Status</th>
+                            <th class="py-3 px-4">Phone</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
                         {% for b_id, biz in businesses.items() %}
-                        <tr class="border-b border-slate-100 hover:bg-slate-50">
-                            <td class="p-3 font-semibold">{{ biz.name }}</td>
-                            <td class="p-3 capitalize">{{ biz.category }}</td>
-                            <td class="p-3">
-                                {% if biz.status == 'active' %}
-                                <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded font-medium">Active (Paid)</span>
-                                {% elif biz.status == 'trial' %}
-                                <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded font-medium">Free Trial</span>
-                                {% elif biz.status == 'locked' %}
-                                <span class="bg-amber-100 text-amber-800 text-xs px-2 py-1 rounded font-medium">Locked (Unpaid)</span>
-                                {% else %}
-                                <span class="bg-red-100 text-red-800 text-xs px-2 py-1 rounded font-medium">Deleted</span>
-                                {% endif %}
+                        <tr>
+                            <td class="py-4 px-4 font-semibold flex items-center space-x-3">
+                                <img src="{{ biz.image }}" class="w-10 h-10 rounded-lg object-cover">
+                                <a href="{{ url_for('business_detail', b_id=biz.id) }}" class="hover:text-blue-500">{{ biz.name }}</a>
                             </td>
-                            <td class="p-3 text-slate-600">{{ biz.phone }}</td>
+                            <td class="py-4 px-4 uppercase text-xs font-bold text-gray-500">{{ biz.category }}</td>
+                            <td class="py-4 px-4">
+                                <span class="px-3 py-1 rounded-full text-xs font-bold {% if biz.status == 'active' %}bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300{% elif biz.status == 'trial' %}bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300{% else %}bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300{% endif %}">
+                                    {{ biz.status | capitalize }}
+                                </span>
+                            </td>
+                            <td class="py-4 px-4 text-gray-600 dark:text-gray-400">{{ biz.phone }}</td>
                         </tr>
                         {% endfor %}
                     </tbody>
                 </table>
             </div>
         </div>
-    </div>
+    </main>
 </body>
 </html>
