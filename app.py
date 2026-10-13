@@ -1,4 +1,4 @@
-"""SwatBiz Hub - Deployment Ready Application with Repeater Fields & Client Passwords."""
+"""SwatBiz Hub - Fixed Dynamic Repeater & Subcategory Select Application."""
 from datetime import datetime, timedelta
 import os
 from flask import Flask, abort, redirect, render_template_string, request, url_for, session
@@ -256,10 +256,6 @@ def category_page(cat_slug):
     if not cards:
         cards = '<div class="col-span-3 text-center py-20 text-gray-500"><p class="text-xl">No active or approved listings found.</p></div>'
 
-    json_list = ""
-    for b in all_biz:
-        json_list += '{"id": "' + b['id'] + '", "name": "' + b['name'].replace('"', '\\"') + '", "address": "' + b['address'].replace('"', '\\"') + '", "sub": "' + b.get('subcategory', '').replace('"', '\\"') + '", "info": "' + b.get('special_info', '').replace('"', '\\"') + '", "items": "' + b.get('tests_dishes', '').replace('"', '\\"') + '"},'
-
     html = BASE_HEAD + '''
     <main class="max-w-7xl mx-auto px-4 py-12">
         <div class="mb-8 text-center">
@@ -270,51 +266,12 @@ def category_page(cat_slug):
                     <input type="text" id="searchInput" name="q" value="''' + search_query + '''" placeholder="''' + cat['search_hint'] + '''" autocomplete="off" class="w-full px-5 py-3.5 rounded-2xl bg-gray-900 border border-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
                     <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-white px-6 py-3.5 rounded-2xl font-semibold transition transform hover:scale-105">Search</button>
                 </form>
-                <div id="suggestionsBox" class="absolute left-0 right-0 mt-2 bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl hidden z-50 overflow-hidden text-left"></div>
             </div>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             ''' + cards + '''
         </div>
     </main>
-    <script>
-        const allListings = [''' + json_list + '''];
-        const searchInput = document.getElementById('searchInput');
-        const suggestionsBox = document.getElementById('suggestionsBox');
-
-        if(searchInput) {
-            searchInput.addEventListener('input', function() {
-                const query = this.value.toLowerCase().trim();
-                if (!query) {
-                    suggestionsBox.classList.add('hidden');
-                    suggestionsBox.innerHTML = '';
-                    return;
-                }
-                const matches = allListings.filter(b => 
-                    b.name.toLowerCase().includes(query) || b.address.toLowerCase().includes(query) || b.sub.toLowerCase().includes(query) || b.info.toLowerCase().includes(query) || b.items.toLowerCase().includes(query)
-                );
-                if (matches.length > 0) {
-                    let html = '';
-                    matches.forEach(match => {
-                        html += '<div class="px-5 py-3 hover:bg-gray-800 cursor-pointer border-b border-gray-800 last:border-none transition" onclick="window.location.href=\'/business/' + match.id + '\'">' +
-                            '<div class="text-sm font-bold text-white">''' + cat['icon'] + ''' ' + match.name + ' <span class="text-xs text-indigo-400 font-normal">(' + match.sub + ')</span></div>' +
-                            '<div class="text-xs text-gray-400">📍 ' + match.address + '</div>' +
-                        '</div>';
-                    });
-                    suggestionsBox.innerHTML = html;
-                    suggestionsBox.classList.remove('hidden');
-                } else {
-                    suggestionsBox.classList.add('hidden');
-                }
-            });
-        }
-
-        document.addEventListener('click', function(e) {
-            if (searchInput && suggestionsBox && !searchInput.contains(e.target) && !suggestionsBox.contains(e.target)) {
-                suggestionsBox.classList.add('hidden');
-            }
-        });
-    </script>
     ''' + FOOTER
     return render_template_string(html)
 
@@ -482,8 +439,8 @@ def register_business():
                 
                 <div id="repeaterContainer" class="space-y-4"></div>
                 
-                <button type="button" id="addRowBtn" onclick="addNewRow()" class="mt-4 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs px-5 py-3 rounded-xl transition transform hover:scale-105 inline-flex items-center gap-1.5 shadow-lg">
-                    + Add Another Entry
+                <button type="button" id="addRowBtn" class="mt-4 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs px-5 py-3 rounded-xl transition transform hover:scale-105 inline-flex items-center gap-1.5 shadow-lg">
+                    + Add New Entry
                 </button>
             </div>
 
@@ -508,7 +465,7 @@ def register_business():
     </main>
 
     <script>
-        const subcategoriesData = {
+        var subcategoriesData = {
             'hospitals': ['General Hospital', 'Dental Clinic', 'Eye Specialist', 'Cardiology Clinic', 'Laboratory & Diagnostics'],
             'pharmacies': ['Medical Store', 'Homeopathic Store', 'Herbal & Organic', 'Surgical Equipment'],
             'restaurants': ['Traditional / Shinwari', 'Fast Food & Burgers', 'BBQ & Grill', 'Coffee Shop & Cafe', 'Desi Restaurant'],
@@ -518,66 +475,66 @@ def register_business():
             'education': ['School & College', 'University', 'Academy & Tuition', 'Language & Computer Center']
         };
 
-        const categoryRowConfigs = {
+        var categoryRowConfigs = {
             'hospitals': {
                 title: '🩺 Doctors, Clinic & Timings',
-                addBtnText: '+ Add Another Doctor',
+                addBtnText: '+ Add New Doctor',
                 c1: 'Doctor Name (Dr. Ahmad)', c2: 'Specialty (Cardiologist)',
                 c3: 'Appointment Timing (9 AM - 2 PM)', c4: 'Clinic Timing (Mon-Sat, 9 AM - 5 PM)',
                 c5: 'Clinic / Room (Room 12, OPD Block)'
             },
             'restaurants': {
                 title: '👨‍🍳 Chefs, Special Dishes & Menu Items',
-                addBtnText: '+ Add Menu Item / Dish',
+                addBtnText: '+ Add New Dish / Menu Item',
                 c1: 'Item / Dish Name (Dumba Karahi)', c2: 'Category (BBQ / Main Course)',
                 c3: 'Price (Rs. 2400)', c4: 'Availability (Daily)',
                 c5: 'Description / Special Serving Notes'
             },
             'education': {
                 title: '🎓 Faculty, Teachers & Courses',
-                addBtnText: '+ Add Teacher / Course',
+                addBtnText: '+ Add New Teacher / Course',
                 c1: 'Teacher / Course Name (Prof. Ali)', c2: 'Department / Course (Computer Science)',
                 c3: 'Timing (Morning / Evening)', c4: 'Days (Mon-Fri)',
                 c5: 'Fee / Room No (Lab 2)'
             },
             'pharmacies': {
                 title: '💊 Pharmacists & Staff Info',
-                addBtnText: '+ Add Staff / Pharmacist',
+                addBtnText: '+ Add New Pharmacist / Staff',
                 c1: 'Staff Name (Dr. Bilal)', c2: 'Qualification (Pharm-D)',
                 c3: 'Shift Timing (8 AM - 4 PM)', c4: 'Available Days (Mon-Sat)',
                 c5: 'Counter / Section'
             },
             'supermarts': {
                 title: '🏬 Store Sections & Managers',
-                addBtnText: '+ Add Section / Manager',
+                addBtnText: '+ Add New Section / Manager',
                 c1: 'Manager / Section (Tariq - Grocery)', c2: 'Department',
                 c3: 'Timing', c4: 'Days', c5: 'Floor / Location'
             },
             'property': {
                 title: '🏡 Real Estate Agents & Deals',
-                addBtnText: '+ Add Agent / Featured Property',
+                addBtnText: '+ Add New Agent / Property',
                 c1: 'Agent / Property Title (Malik Zubair)', c2: 'Type (5 Marla Plot)',
                 c3: 'Price / Contact', c4: 'Area / Location', c5: 'Details'
             },
             'hotels': {
                 title: '🛏️ Rooms, Suites & Rates',
-                addBtnText: '+ Add Room Type',
+                addBtnText: '+ Add New Room Type',
                 c1: 'Room Type (Deluxe Family Suite)', c2: 'Capacity (4 Persons)',
                 c3: 'Rate per Night (Rs. 8000)', c4: 'Facilities (AC, WiFi, River View)', c5: 'Floor / Block'
             }
         };
 
-        const catSelect = document.getElementById('categorySelect');
-        const subcatSelect = document.getElementById('subcategorySelect');
-        const repeaterTitle = document.getElementById('repeaterTitle');
-        const addRowBtn = document.getElementById('addRowBtn');
-        const repeaterContainer = document.getElementById('repeaterContainer');
+        var catSelect = document.getElementById('categorySelect');
+        var subcatSelect = document.getElementById('subcategorySelect');
+        var repeaterTitle = document.getElementById('repeaterTitle');
+        var addRowBtn = document.getElementById('addRowBtn');
+        var repeaterContainer = document.getElementById('repeaterContainer');
 
         function addNewRow() {
-            const cat = catSelect.value;
-            const cfg = categoryRowConfigs[cat] || categoryRowConfigs['hospitals'];
+            var cat = catSelect.value;
+            var cfg = categoryRowConfigs[cat] || categoryRowConfigs['hospitals'];
 
-            const rowCard = document.createElement('div');
+            var rowCard = document.createElement('div');
             rowCard.className = 'bg-gray-900/90 border border-gray-800 p-4 rounded-2xl space-y-3 relative group';
 
             rowCard.innerHTML = '<div class="grid grid-cols-1 md:grid-cols-2 gap-3">' +
@@ -590,24 +547,25 @@ def register_business():
                 '</div>' +
                 '<div class="flex gap-2">' +
                 '<input type="text" name="repeater_col5[]" placeholder="' + cfg.c5 + '" class="w-full p-3 bg-gray-950 border border-gray-800 rounded-xl text-xs text-white focus:ring-2 focus:ring-blue-500 outline-none">' +
-                '<button type="button" onclick="this.closest(\'.group\').remove()" class="bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white px-3 rounded-xl text-xs font-bold transition">✕</button>' +
+                '<button type="button" onclick="this.parentElement.parentElement.remove()" class="bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white px-3 rounded-xl text-xs font-bold transition">✕</button>' +
                 '</div>';
             repeaterContainer.appendChild(rowCard);
         }
 
         function updateFormFields() {
-            const val = catSelect.value;
+            var val = catSelect.value;
             subcatSelect.innerHTML = '';
+            
             if(subcategoriesData[val]) {
-                subcategoriesData[val].forEach(sub => {
-                    const opt = document.createElement('option');
-                    opt.value = sub;
-                    opt.textContent = sub;
+                for(var i=0; i<subcategoriesData[val].length; i++) {
+                    var opt = document.createElement('option');
+                    opt.value = subcategoriesData[val][i];
+                    opt.textContent = subcategoriesData[val][i];
                     subcatSelect.appendChild(opt);
-                });
+                }
             }
 
-            const cfg = categoryRowConfigs[val] || categoryRowConfigs['hospitals'];
+            var cfg = categoryRowConfigs[val] || categoryRowConfigs['hospitals'];
             repeaterTitle.innerText = cfg.title;
             addRowBtn.innerText = cfg.addBtnText;
 
@@ -616,7 +574,10 @@ def register_business():
         }
 
         catSelect.addEventListener('change', updateFormFields);
-        window.addEventListener('DOMContentLoaded', updateFormFields);
+        addRowBtn.addEventListener('click', addNewRow);
+        
+        // Initial Trigger
+        updateFormFields();
     </script>
     ''' + FOOTER
     return render_template_string(html)
