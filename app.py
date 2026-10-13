@@ -1,4 +1,4 @@
-"""SwatBiz Hub - Final Application with Dynamic Repeater Fields & Category Dynamic Inputs."""
+"""SwatBiz Hub - Deployment Ready Application with Repeater Fields & Client Passwords."""
 from datetime import datetime, timedelta
 import os
 from flask import Flask, abort, redirect, render_template_string, request, url_for, session
@@ -296,10 +296,10 @@ def category_page(cat_slug):
                 if (matches.length > 0) {
                     let html = '';
                     matches.forEach(match => {
-                        html += `<div class="px-5 py-3 hover:bg-gray-800 cursor-pointer border-b border-gray-800 last:border-none transition" onclick="window.location.href='/business/${match.id}'">
-                            <div class="text-sm font-bold text-white">''' + cat['icon'] + ` ${match.name} <span class="text-xs text-indigo-400 font-normal">(${match.sub})</span></div>
-                            <div class="text-xs text-gray-400">📍 ${match.address}</div>
-                        </div>`;
+                        html += '<div class="px-5 py-3 hover:bg-gray-800 cursor-pointer border-b border-gray-800 last:border-none transition" onclick="window.location.href=\'/business/' + match.id + '\'">' +
+                            '<div class="text-sm font-bold text-white">''' + cat['icon'] + ''' ' + match.name + ' <span class="text-xs text-indigo-400 font-normal">(' + match.sub + ')</span></div>' +
+                            '<div class="text-xs text-gray-400">📍 ' + match.address + '</div>' +
+                        '</div>';
                     });
                     suggestionsBox.innerHTML = html;
                     suggestionsBox.classList.remove('hidden');
@@ -325,7 +325,7 @@ def business_detail(b_id):
     b = BUSINESSES[b_id]
     
     is_admin = session.get('admin_logged_in')
-    client_auth_key = f'client_auth_{b_id}'
+    client_auth_key = 'client_auth_' + str(b_id)
     is_client = session.get(client_auth_key)
 
     error_msg = ""
@@ -408,7 +408,6 @@ def register_business():
     if request.method == 'POST':
         b_id = str(len(BUSINESSES) + 1)
         
-        # Combine repeated field entries into structured string
         names = request.form.getlist('repeater_col1[]')
         col2_vals = request.form.getlist('repeater_col2[]')
         col3_vals = request.form.getlist('repeater_col3[]')
@@ -418,11 +417,11 @@ def register_business():
         formatted_repeater_list = []
         for i in range(len(names)):
             if names[i].strip():
-                entry_str = f"• {names[i].strip()}"
-                if i < len(col2_vals) and col2_vals[i].strip(): entry_str += f" ({col2_vals[i].strip()})"
-                if i < len(col3_vals) and col3_vals[i].strip(): entry_str += f" | Timing: {col3_vals[i].strip()}"
-                if i < len(col4_vals) and col4_vals[i].strip(): entry_str += f" | Hours: {col4_vals[i].strip()}"
-                if i < len(col5_vals) and col5_vals[i].strip(): entry_str += f" | Location/Room: {col5_vals[i].strip()}"
+                entry_str = "• " + names[i].strip()
+                if i < len(col2_vals) and col2_vals[i].strip(): entry_str += " (" + col2_vals[i].strip() + ")"
+                if i < len(col3_vals) and col3_vals[i].strip(): entry_str += " | Timing: " + col3_vals[i].strip()
+                if i < len(col4_vals) and col4_vals[i].strip(): entry_str += " | Hours: " + col4_vals[i].strip()
+                if i < len(col5_vals) and col5_vals[i].strip(): entry_str += " | Location/Room: " + col5_vals[i].strip()
                 formatted_repeater_list.append(entry_str)
 
         combined_repeater_text = "\n".join(formatted_repeater_list) if formatted_repeater_list else request.form.get('special_info', 'N/A')
@@ -476,7 +475,6 @@ def register_business():
                 <input type="password" name="client_password" required placeholder="Enter secret client password" class="w-full p-3.5 rounded-xl bg-gray-900 border border-gray-800 focus:ring-2 focus:ring-blue-500 outline-none text-sm transition">
             </div>
 
-            <!-- Dynamic Repeating Rows Section (e.g. Doctors, Menu, Courses) -->
             <div class="border-t border-gray-800 pt-4 mt-4">
                 <div class="flex justify-between items-center mb-3">
                     <label class="block text-sm font-bold text-blue-400" id="repeaterTitle">🩺 Doctors, Clinic & Timings</label>
@@ -582,27 +580,23 @@ def register_business():
             const rowCard = document.createElement('div');
             rowCard.className = 'bg-gray-900/90 border border-gray-800 p-4 rounded-2xl space-y-3 relative group';
 
-            rowCard.innerHTML = `
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <input type="text" name="repeater_col1[]" placeholder="${cfg.c1}" class="p-3 bg-gray-950 border border-gray-800 rounded-xl text-xs text-white focus:ring-2 focus:ring-blue-500 outline-none">
-                    <input type="text" name="repeater_col2[]" placeholder="${cfg.c2}" class="p-3 bg-gray-950 border border-gray-800 rounded-xl text-xs text-white focus:ring-2 focus:ring-blue-500 outline-none">
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <input type="text" name="repeater_col3[]" placeholder="${cfg.c3}" class="p-3 bg-gray-950 border border-gray-800 rounded-xl text-xs text-white focus:ring-2 focus:ring-blue-500 outline-none">
-                    <input type="text" name="repeater_col4[]" placeholder="${cfg.c4}" class="p-3 bg-gray-950 border border-gray-800 rounded-xl text-xs text-white focus:ring-2 focus:ring-blue-500 outline-none">
-                </div>
-                <div class="flex gap-2">
-                    <input type="text" name="repeater_col5[]" placeholder="${cfg.c5}" class="w-full p-3 bg-gray-950 border border-gray-800 rounded-xl text-xs text-white focus:ring-2 focus:ring-blue-500 outline-none">
-                    <button type="button" onclick="this.closest('.group').remove()" class="bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white px-3 rounded-xl text-xs font-bold transition">✕</button>
-                </div>
-            `;
+            rowCard.innerHTML = '<div class="grid grid-cols-1 md:grid-cols-2 gap-3">' +
+                '<input type="text" name="repeater_col1[]" placeholder="' + cfg.c1 + '" class="p-3 bg-gray-950 border border-gray-800 rounded-xl text-xs text-white focus:ring-2 focus:ring-blue-500 outline-none">' +
+                '<input type="text" name="repeater_col2[]" placeholder="' + cfg.c2 + '" class="p-3 bg-gray-950 border border-gray-800 rounded-xl text-xs text-white focus:ring-2 focus:ring-blue-500 outline-none">' +
+                '</div>' +
+                '<div class="grid grid-cols-1 md:grid-cols-2 gap-3">' +
+                '<input type="text" name="repeater_col3[]" placeholder="' + cfg.c3 + '" class="p-3 bg-gray-950 border border-gray-800 rounded-xl text-xs text-white focus:ring-2 focus:ring-blue-500 outline-none">' +
+                '<input type="text" name="repeater_col4[]" placeholder="' + cfg.c4 + '" class="p-3 bg-gray-950 border border-gray-800 rounded-xl text-xs text-white focus:ring-2 focus:ring-blue-500 outline-none">' +
+                '</div>' +
+                '<div class="flex gap-2">' +
+                '<input type="text" name="repeater_col5[]" placeholder="' + cfg.c5 + '" class="w-full p-3 bg-gray-950 border border-gray-800 rounded-xl text-xs text-white focus:ring-2 focus:ring-blue-500 outline-none">' +
+                '<button type="button" onclick="this.closest(\'.group\').remove()" class="bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white px-3 rounded-xl text-xs font-bold transition">✕</button>' +
+                '</div>';
             repeaterContainer.appendChild(rowCard);
         }
 
         function updateFormFields() {
             const val = catSelect.value;
-            
-            // 1. Subcategories Dropdown
             subcatSelect.innerHTML = '';
             if(subcategoriesData[val]) {
                 subcategoriesData[val].forEach(sub => {
@@ -613,12 +607,10 @@ def register_business():
                 });
             }
 
-            // 2. Repeater Row Setup
             const cfg = categoryRowConfigs[val] || categoryRowConfigs['hospitals'];
             repeaterTitle.innerText = cfg.title;
             addRowBtn.innerText = cfg.addBtnText;
 
-            // Clear & Add initial row
             repeaterContainer.innerHTML = '';
             addNewRow();
         }
