@@ -1,4 +1,4 @@
-"""SwatBiz Hub - Fixed DOM Load & Dynamic Repeater Application."""
+"""SwatBiz Hub - Fully Fixed Event Handlers & Subcategory Selector Application."""
 from datetime import datetime, timedelta
 import os
 from flask import Flask, abort, redirect, render_template_string, request, url_for, session
@@ -87,14 +87,9 @@ ANIMATION_STYLES = '''
         from { opacity: 0; transform: translateY(20px); }
         to { opacity: 1; transform: translateY(0); }
     }
-    @keyframes pulseGlow {
-        0%, 100% { box-shadow: 0 0 15px rgba(59, 130, 246, 0.3); }
-        50% { box-shadow: 0 0 25px rgba(59, 130, 246, 0.6); }
-    }
-    .animate-fade-in { animation: fadeInUp 0.5s ease-out forwards; }
-    .animate-glow { animation: pulseGlow 3s infinite; }
+    .animate-fade-in { animation: fadeInUp 0.4s ease-out forwards; }
     .card-hover { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-    .card-hover:hover { transform: translateY(-6px) scale(1.01); }
+    .card-hover:hover { transform: translateY(-4px); }
 </style>
 '''
 
@@ -422,7 +417,7 @@ def register_business():
                         <input type="text" name="phones[]" required placeholder="e.g. +92 946 9240123" class="w-full p-3 bg-gray-950 border border-gray-800 rounded-xl text-xs focus:ring-2 focus:ring-blue-500 outline-none">
                     </div>
                 </div>
-                <button type="button" onclick="addPhoneField()" class="mt-2 text-xs font-bold text-blue-400 hover:text-blue-300 transition">+ Add Another Phone Number</button>
+                <button type="button" id="addPhoneBtn" class="mt-2 text-xs font-bold text-blue-400 hover:text-blue-300 transition">+ Add Another Phone Number</button>
             </div>
             
             <div class="border-t border-gray-800 pt-4">
@@ -434,7 +429,7 @@ def register_business():
                 <label class="block text-sm font-bold text-blue-400 mb-3" id="repeaterTitle">🩺 Doctors, Clinic & Timings</label>
                 <div id="repeaterContainer" class="space-y-3"></div>
                 <button type="button" id="addRowBtn" class="mt-3 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs px-5 py-3 rounded-xl transition transform hover:scale-105 inline-flex items-center shadow-lg">
-                    + Add New Doctor
+                    + Add New Entry
                 </button>
             </div>
 
@@ -448,7 +443,7 @@ def register_business():
                 <div id="imagesContainer" class="space-y-2">
                     <input type="url" name="image_urls[]" placeholder="Image URL (e.g. https://images.unsplash.com/...)" class="w-full p-3 bg-gray-950 border border-gray-800 rounded-xl text-xs focus:ring-2 focus:ring-blue-500 outline-none">
                 </div>
-                <button type="button" onclick="addImageUrlField()" class="mt-2 text-xs font-bold text-blue-400 hover:text-blue-300 transition">+ Add Another Image URL</button>
+                <button type="button" id="addImageBtn" class="mt-2 text-xs font-bold text-blue-400 hover:text-blue-300 transition">+ Add Another Image URL</button>
             </div>
 
             <div class="border-t border-gray-800 pt-4">
@@ -539,97 +534,119 @@ def register_business():
             }
         };
 
-        window.addEventListener('DOMContentLoaded', function() {
-            var catSelect = document.getElementById('categorySelect');
-            var subcatSelect = document.getElementById('subcategorySelect');
-            var repeaterTitle = document.getElementById('repeaterTitle');
-            var addRowBtn = document.getElementById('addRowBtn');
-            var repeaterContainer = document.getElementById('repeaterContainer');
-            var extraTitle = document.getElementById('extraTitle');
-            var dishesField = document.getElementById('dishesField');
+        // Execution immediately upon DOM load
+        (function() {
+            function initForm() {
+                var catSelect = document.getElementById('categorySelect');
+                var subcatSelect = document.getElementById('subcategorySelect');
+                var repeaterTitle = document.getElementById('repeaterTitle');
+                var addRowBtn = document.getElementById('addRowBtn');
+                var repeaterContainer = document.getElementById('repeaterContainer');
+                var extraTitle = document.getElementById('extraTitle');
+                var dishesField = document.getElementById('dishesField');
 
-            if(!catSelect) return;
+                var addPhoneBtn = document.getElementById('addPhoneBtn');
+                var addImageBtn = document.getElementById('addImageBtn');
 
-            window.addPhoneField = function() {
-                var container = document.getElementById('phonesContainer');
-                var div = document.createElement('div');
-                div.className = 'flex gap-2';
-                div.innerHTML = '<input type="text" name="phones[]" placeholder="e.g. +92 300 1234567" class="w-full p-3 bg-gray-950 border border-gray-800 rounded-xl text-xs focus:ring-2 focus:ring-blue-500 outline-none">' +
-                                '<button type="button" onclick="if(confirm(\'Delete phone number?\')) this.parentElement.remove()" class="bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white px-3 rounded-xl text-xs font-bold transition">✕</button>';
-                container.appendChild(div);
-            };
+                if(!catSelect) return;
 
-            window.addImageUrlField = function() {
-                var container = document.getElementById('imagesContainer');
-                var div = document.createElement('div');
-                div.className = 'flex gap-2';
-                div.innerHTML = '<input type="url" name="image_urls[]" placeholder="Another Image URL..." class="w-full p-3 bg-gray-950 border border-gray-800 rounded-xl text-xs focus:ring-2 focus:ring-blue-500 outline-none">' +
-                                '<button type="button" onclick="if(confirm(\'Delete image URL?\')) this.parentElement.remove()" class="bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white px-3 rounded-xl text-xs font-bold transition">✕</button>';
-                container.appendChild(div);
-            };
-
-            window.deleteRowWithConfirm = function(btn) {
-                if (confirm("Are you sure you want to delete this row?")) {
-                    var row = btn.parentElement.parentElement;
-                    row.remove();
+                if(addPhoneBtn) {
+                    addPhoneBtn.addEventListener('click', function() {
+                        var container = document.getElementById('phonesContainer');
+                        var div = document.createElement('div');
+                        div.className = 'flex gap-2';
+                        div.innerHTML = '<input type="text" name="phones[]" placeholder="e.g. +92 300 1234567" class="w-full p-3 bg-gray-950 border border-gray-800 rounded-xl text-xs focus:ring-2 focus:ring-blue-500 outline-none">' +
+                                        '<button type="button" class="del-phone-btn bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white px-3 rounded-xl text-xs font-bold transition">✕</button>';
+                        container.appendChild(div);
+                        div.querySelector('.del-phone-btn').addEventListener('click', function() {
+                            if(confirm('Delete phone number?')) div.remove();
+                        });
+                    });
                 }
-            };
 
-            function addNewRow() {
-                var cat = catSelect.value;
-                var cfg = categoryRowConfigs[cat] || categoryRowConfigs['hospitals'];
+                if(addImageBtn) {
+                    addImageBtn.addEventListener('click', function() {
+                        var container = document.getElementById('imagesContainer');
+                        var div = document.createElement('div');
+                        div.className = 'flex gap-2';
+                        div.innerHTML = '<input type="url" name="image_urls[]" placeholder="Another Image URL..." class="w-full p-3 bg-gray-950 border border-gray-800 rounded-xl text-xs focus:ring-2 focus:ring-blue-500 outline-none">' +
+                                        '<button type="button" class="del-img-btn bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white px-3 rounded-xl text-xs font-bold transition">✕</button>';
+                        container.appendChild(div);
+                        div.querySelector('.del-img-btn').addEventListener('click', function() {
+                            if(confirm('Delete image URL?')) div.remove();
+                        });
+                    });
+                }
 
-                var rowCard = document.createElement('div');
-                rowCard.className = 'bg-gray-950 border border-gray-800/80 p-4 rounded-2xl space-y-3 relative group shadow-sm';
+                function addNewRow() {
+                    var cat = catSelect.value;
+                    var cfg = categoryRowConfigs[cat] || categoryRowConfigs['hospitals'];
 
-                rowCard.innerHTML = '<div class="grid grid-cols-1 md:grid-cols-2 gap-3">' +
-                    '<input type="text" name="repeater_col1[]" placeholder="' + cfg.c1 + '" class="p-3 bg-gray-900 border border-gray-800 rounded-xl text-xs text-white focus:ring-2 focus:ring-blue-500 outline-none">' +
-                    '<input type="text" name="repeater_col2[]" placeholder="' + cfg.c2 + '" class="p-3 bg-gray-900 border border-gray-800 rounded-xl text-xs text-white focus:ring-2 focus:ring-blue-500 outline-none">' +
-                    '</div>' +
-                    '<div class="grid grid-cols-1 md:grid-cols-2 gap-3">' +
-                    '<input type="text" name="repeater_col3[]" placeholder="' + cfg.c3 + '" class="p-3 bg-gray-900 border border-gray-800 rounded-xl text-xs text-white focus:ring-2 focus:ring-blue-500 outline-none">' +
-                    '<input type="text" name="repeater_col4[]" placeholder="' + cfg.c4 + '" class="p-3 bg-gray-900 border border-gray-800 rounded-xl text-xs text-white focus:ring-2 focus:ring-blue-500 outline-none">' +
-                    '</div>' +
-                    '<div class="flex gap-2">' +
-                    '<input type="text" name="repeater_col5[]" placeholder="' + cfg.c5 + '" class="w-full p-3 bg-gray-900 border border-gray-800 rounded-xl text-xs text-white focus:ring-2 focus:ring-blue-500 outline-none">' +
-                    '<button type="button" onclick="deleteRowWithConfirm(this)" class="bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white px-3 rounded-xl text-xs font-bold transition">✕</button>' +
-                    '</div>';
-                repeaterContainer.appendChild(rowCard);
-            }
+                    var rowCard = document.createElement('div');
+                    rowCard.className = 'bg-gray-950 border border-gray-800/80 p-4 rounded-2xl space-y-3 relative group shadow-sm';
 
-            function updateFormFields() {
-                var val = catSelect.value;
-                subcatSelect.innerHTML = '';
-                
-                var defaultOpt = document.createElement('option');
-                defaultOpt.value = '';
-                defaultOpt.textContent = '-- Select Subcategory (Optional) --';
-                subcatSelect.appendChild(defaultOpt);
+                    rowCard.innerHTML = '<div class="grid grid-cols-1 md:grid-cols-2 gap-3">' +
+                        '<input type="text" name="repeater_col1[]" placeholder="' + cfg.c1 + '" class="p-3 bg-gray-900 border border-gray-800 rounded-xl text-xs text-white focus:ring-2 focus:ring-blue-500 outline-none">' +
+                        '<input type="text" name="repeater_col2[]" placeholder="' + cfg.c2 + '" class="p-3 bg-gray-900 border border-gray-800 rounded-xl text-xs text-white focus:ring-2 focus:ring-blue-500 outline-none">' +
+                        '</div>' +
+                        '<div class="grid grid-cols-1 md:grid-cols-2 gap-3">' +
+                        '<input type="text" name="repeater_col3[]" placeholder="' + cfg.c3 + '" class="p-3 bg-gray-900 border border-gray-800 rounded-xl text-xs text-white focus:ring-2 focus:ring-blue-500 outline-none">' +
+                        '<input type="text" name="repeater_col4[]" placeholder="' + cfg.c4 + '" class="p-3 bg-gray-900 border border-gray-800 rounded-xl text-xs text-white focus:ring-2 focus:ring-blue-500 outline-none">' +
+                        '</div>' +
+                        '<div class="flex gap-2">' +
+                        '<input type="text" name="repeater_col5[]" placeholder="' + cfg.c5 + '" class="w-full p-3 bg-gray-900 border border-gray-800 rounded-xl text-xs text-white focus:ring-2 focus:ring-blue-500 outline-none">' +
+                        '<button type="button" class="del-row-btn bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white px-3 rounded-xl text-xs font-bold transition">✕</button>' +
+                        '</div>';
+                    
+                    repeaterContainer.appendChild(rowCard);
 
-                if(subcategoriesData[val]) {
-                    for(var i=0; i<subcategoriesData[val].length; i++) {
-                        var opt = document.createElement('option');
-                        opt.value = subcategoriesData[val][i];
-                        opt.textContent = subcategoriesData[val][i];
-                        subcatSelect.appendChild(opt);
+                    rowCard.querySelector('.del-row-btn').addEventListener('click', function() {
+                        if (confirm("Are you sure you want to delete this row?")) {
+                            rowCard.remove();
+                        }
+                    });
+                }
+
+                function updateFormFields() {
+                    var val = catSelect.value;
+                    subcatSelect.innerHTML = '';
+                    
+                    var defaultOpt = document.createElement('option');
+                    defaultOpt.value = '';
+                    defaultOpt.textContent = '-- Select Subcategory (Optional) --';
+                    subcatSelect.appendChild(defaultOpt);
+
+                    if(subcategoriesData[val]) {
+                        for(var i=0; i<subcategoriesData[val].length; i++) {
+                            var opt = document.createElement('option');
+                            opt.value = subcategoriesData[val][i];
+                            opt.textContent = subcategoriesData[val][i];
+                            subcatSelect.appendChild(opt);
+                        }
                     }
+
+                    var cfg = categoryRowConfigs[val] || categoryRowConfigs['hospitals'];
+                    repeaterTitle.innerText = cfg.title;
+                    addRowBtn.innerText = cfg.addBtnText;
+                    extraTitle.innerText = cfg.extraTitle;
+                    dishesField.placeholder = cfg.extraPlaceholder;
+
+                    repeaterContainer.innerHTML = '';
+                    addNewRow();
                 }
 
-                var cfg = categoryRowConfigs[val] || categoryRowConfigs['hospitals'];
-                repeaterTitle.innerText = cfg.title;
-                addRowBtn.innerText = cfg.addBtnText;
-                extraTitle.innerText = cfg.extraTitle;
-                dishesField.placeholder = cfg.extraPlaceholder;
-
-                repeaterContainer.innerHTML = '';
-                addNewRow();
+                catSelect.addEventListener('change', updateFormFields);
+                addRowBtn.addEventListener('click', addNewRow);
+                
+                updateFormFields();
             }
 
-            catSelect.addEventListener('change', updateFormFields);
-            addRowBtn.addEventListener('click', addNewRow);
-            
-            updateFormFields();
-        });
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initForm);
+            } else {
+                initForm();
+            }
+        })();
     </script>
     ''' + FOOTER
     return render_template_string(html)
@@ -773,7 +790,7 @@ def admin_panel():
             if not content:
                 content = '<p class="text-gray-500 text-center py-8">No approved listings.</p>'
 
-        html = ADMIN_SUB_HEAD + '''
+        html = BASE_HEAD + '''
         <main class="max-w-4xl mx-auto px-4 py-12">
             <h2 class="text-2xl font-bold mb-6">🏢 Business Directory Management</h2>
             <div class="flex space-x-3 mb-6">
@@ -831,7 +848,7 @@ def admin_panel():
             if not content:
                 content = '<p class="text-gray-500 text-center py-8">No expired subscriptions found.</p>'
 
-        html = ADMIN_SUB_HEAD + '''
+        html = BASE_HEAD + '''
         <main class="max-w-4xl mx-auto px-4 py-12">
             <h2 class="text-2xl font-bold mb-6">💳 Payment & Subscription Hub</h2>
             <div class="flex space-x-3 mb-6">
