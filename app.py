@@ -1,4 +1,4 @@
-"""SwatBiz Hub - Fully Fixed Event Handlers & Subcategory Selector Application."""
+"""SwatBiz Hub - Custom Modal Confirmation & Fully Animated Application."""
 from datetime import datetime, timedelta
 import os
 from flask import Flask, abort, redirect, render_template_string, request, url_for, session
@@ -84,12 +84,22 @@ CATEGORIES = {
 ANIMATION_STYLES = '''
 <style>
     @keyframes fadeInUp {
-        from { opacity: 0; transform: translateY(20px); }
-        to { opacity: 1; transform: translateY(0); }
+        0% { opacity: 0; transform: translateY(25px); }
+        100% { opacity: 1; transform: translateY(0); }
     }
-    .animate-fade-in { animation: fadeInUp 0.4s ease-out forwards; }
+    @keyframes modalPop {
+        0% { opacity: 0; transform: scale(0.85) translateY(-20px); }
+        100% { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    @keyframes pulseGlow {
+        0%, 100% { box-shadow: 0 0 12px rgba(59, 130, 246, 0.25); }
+        50% { box-shadow: 0 0 22px rgba(59, 130, 246, 0.55); }
+    }
+    .animate-fade-in { animation: fadeInUp 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+    .animate-modal { animation: modalPop 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+    .animate-glow { animation: pulseGlow 3s infinite; }
     .card-hover { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-    .card-hover:hover { transform: translateY(-4px); }
+    .card-hover:hover { transform: translateY(-5px); }
 </style>
 '''
 
@@ -106,7 +116,7 @@ HOME_HEAD = '''
     ''' + ANIMATION_STYLES + '''
 </head>
 <body class="bg-gray-950 text-gray-100 min-h-screen transition-colors duration-300">
-    <header class="bg-gradient-to-r from-slate-900 via-blue-950 to-indigo-950 text-white shadow-xl sticky top-0 z-50 backdrop-blur-md bg-opacity-90">
+    <header class="bg-gradient-to-r from-slate-900 via-blue-950 to-indigo-950 text-white shadow-xl sticky top-0 z-40 backdrop-blur-md bg-opacity-90">
         <div class="max-w-7xl mx-auto px-4 py-5 flex justify-between items-center">
             <a href="/" class="text-2xl font-extrabold tracking-tight hover:text-blue-400 transition transform hover:scale-105">🏙️ ''' + SITE_NAME + '''</a>
             <div class="flex items-center space-x-3">
@@ -129,7 +139,7 @@ BASE_HEAD = '''
     ''' + ANIMATION_STYLES + '''
 </head>
 <body class="bg-gray-950 text-gray-100 min-h-screen transition-colors duration-300">
-    <header class="bg-gradient-to-r from-slate-900 via-blue-950 to-indigo-950 text-white shadow-xl sticky top-0 z-50 backdrop-blur-md bg-opacity-90">
+    <header class="bg-gradient-to-r from-slate-900 via-blue-950 to-indigo-950 text-white shadow-xl sticky top-0 z-40 backdrop-blur-md bg-opacity-90">
         <div class="max-w-7xl mx-auto px-4 py-5 flex justify-between items-center">
             <a href="/" class="text-xl font-bold hover:text-blue-400 transition-all transform hover:-translate-x-1 flex items-center gap-2">← Back to Home</a>
             <div class="flex items-center space-x-3">
@@ -382,6 +392,21 @@ def register_business():
         opts += '<option value="' + k + '">' + v["title"] + '</option>'
 
     html = BASE_HEAD + '''
+    <!-- Custom Modern Animated Confirmation Modal Overlay -->
+    <div id="confirmModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center hidden">
+        <div class="bg-gray-900 border border-gray-800 rounded-3xl p-6 md:p-8 max-w-sm w-full mx-4 shadow-2xl animate-modal text-center space-y-4">
+            <div class="w-14 h-14 bg-red-500/10 text-red-500 rounded-2xl flex items-center justify-center mx-auto text-2xl font-bold">⚠️</div>
+            <div>
+                <h3 class="text-xl font-bold text-white">Delete Entry?</h3>
+                <p class="text-xs text-gray-400 mt-1">Are you sure you want to remove this row? This action cannot be undone.</p>
+            </div>
+            <div class="flex gap-3 pt-2">
+                <button type="button" id="cancelDeleteBtn" class="w-1/2 bg-gray-800 hover:bg-gray-700 py-3 rounded-xl font-bold text-xs transition">Cancel</button>
+                <button type="button" id="confirmDeleteBtn" class="w-1/2 bg-red-600 hover:bg-red-500 text-white py-3 rounded-xl font-bold text-xs transition shadow-lg">Yes, Delete</button>
+            </div>
+        </div>
+    </div>
+
     <main class="max-w-3xl mx-auto px-4 py-12 animate-fade-in">
         <div class="text-center mb-8">
             <h2 class="text-3xl font-black tracking-tight">Register Business</h2>
@@ -534,8 +559,21 @@ def register_business():
             }
         };
 
-        // Execution immediately upon DOM load
         (function() {
+            var targetRowToDelete = null;
+
+            function showConfirmModal(elementToRemove) {
+                targetRowToDelete = elementToRemove;
+                var modal = document.getElementById('confirmModal');
+                if(modal) modal.classList.remove('hidden');
+            }
+
+            function hideConfirmModal() {
+                var modal = document.getElementById('confirmModal');
+                if(modal) modal.classList.add('hidden');
+                targetRowToDelete = null;
+            }
+
             function initForm() {
                 var catSelect = document.getElementById('categorySelect');
                 var subcatSelect = document.getElementById('subcategorySelect');
@@ -548,18 +586,31 @@ def register_business():
                 var addPhoneBtn = document.getElementById('addPhoneBtn');
                 var addImageBtn = document.getElementById('addImageBtn');
 
+                var cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
+                var confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+
+                if(cancelDeleteBtn) cancelDeleteBtn.addEventListener('click', hideConfirmModal);
+                if(confirmDeleteBtn) {
+                    confirmDeleteBtn.addEventListener('click', function() {
+                        if(targetRowToDelete) {
+                            targetRowToDelete.remove();
+                        }
+                        hideConfirmModal();
+                    });
+                }
+
                 if(!catSelect) return;
 
                 if(addPhoneBtn) {
                     addPhoneBtn.addEventListener('click', function() {
                         var container = document.getElementById('phonesContainer');
                         var div = document.createElement('div');
-                        div.className = 'flex gap-2';
+                        div.className = 'flex gap-2 animate-fade-in';
                         div.innerHTML = '<input type="text" name="phones[]" placeholder="e.g. +92 300 1234567" class="w-full p-3 bg-gray-950 border border-gray-800 rounded-xl text-xs focus:ring-2 focus:ring-blue-500 outline-none">' +
                                         '<button type="button" class="del-phone-btn bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white px-3 rounded-xl text-xs font-bold transition">✕</button>';
                         container.appendChild(div);
                         div.querySelector('.del-phone-btn').addEventListener('click', function() {
-                            if(confirm('Delete phone number?')) div.remove();
+                            showConfirmModal(div);
                         });
                     });
                 }
@@ -568,12 +619,12 @@ def register_business():
                     addImageBtn.addEventListener('click', function() {
                         var container = document.getElementById('imagesContainer');
                         var div = document.createElement('div');
-                        div.className = 'flex gap-2';
+                        div.className = 'flex gap-2 animate-fade-in';
                         div.innerHTML = '<input type="url" name="image_urls[]" placeholder="Another Image URL..." class="w-full p-3 bg-gray-950 border border-gray-800 rounded-xl text-xs focus:ring-2 focus:ring-blue-500 outline-none">' +
                                         '<button type="button" class="del-img-btn bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white px-3 rounded-xl text-xs font-bold transition">✕</button>';
                         container.appendChild(div);
                         div.querySelector('.del-img-btn').addEventListener('click', function() {
-                            if(confirm('Delete image URL?')) div.remove();
+                            showConfirmModal(div);
                         });
                     });
                 }
@@ -583,7 +634,7 @@ def register_business():
                     var cfg = categoryRowConfigs[cat] || categoryRowConfigs['hospitals'];
 
                     var rowCard = document.createElement('div');
-                    rowCard.className = 'bg-gray-950 border border-gray-800/80 p-4 rounded-2xl space-y-3 relative group shadow-sm';
+                    rowCard.className = 'bg-gray-950 border border-gray-800/80 p-4 rounded-2xl space-y-3 relative group shadow-sm animate-fade-in';
 
                     rowCard.innerHTML = '<div class="grid grid-cols-1 md:grid-cols-2 gap-3">' +
                         '<input type="text" name="repeater_col1[]" placeholder="' + cfg.c1 + '" class="p-3 bg-gray-900 border border-gray-800 rounded-xl text-xs text-white focus:ring-2 focus:ring-blue-500 outline-none">' +
@@ -601,9 +652,7 @@ def register_business():
                     repeaterContainer.appendChild(rowCard);
 
                     rowCard.querySelector('.del-row-btn').addEventListener('click', function() {
-                        if (confirm("Are you sure you want to delete this row?")) {
-                            rowCard.remove();
-                        }
+                        showConfirmModal(rowCard);
                     });
                 }
 
@@ -660,7 +709,7 @@ def admin_panel():
 
     if not session.get('admin_logged_in'):
         html = BASE_HEAD + '''
-        <main class="max-w-md mx-auto px-4 py-20 text-center">
+        <main class="max-w-md mx-auto px-4 py-20 text-center animate-fade-in">
             <div class="bg-gray-900 p-8 rounded-3xl border border-gray-800 shadow-xl">
                 <h2 class="text-2xl font-bold mb-4">🔒 Admin Portal Login</h2>
                 <form method="POST" class="space-y-4">
@@ -711,8 +760,8 @@ def admin_panel():
                 expired_subs[k] = v
 
     if not module:
-        html = ADMIN_HEAD + '''
-        <main class="max-w-5xl mx-auto px-4 py-12">
+        html = BASE_HEAD + '''
+        <main class="max-w-5xl mx-auto px-4 py-12 animate-fade-in">
             <div class="flex justify-between items-center mb-10">
                 <h2 class="text-3xl font-extrabold">🛠️ Admin Control Center</h2>
             </div>
@@ -791,7 +840,7 @@ def admin_panel():
                 content = '<p class="text-gray-500 text-center py-8">No approved listings.</p>'
 
         html = BASE_HEAD + '''
-        <main class="max-w-4xl mx-auto px-4 py-12">
+        <main class="max-w-4xl mx-auto px-4 py-12 animate-fade-in">
             <h2 class="text-2xl font-bold mb-6">🏢 Business Directory Management</h2>
             <div class="flex space-x-3 mb-6">
                 <a href="/admin?module=business&tab=pending" class="px-5 py-2.5 rounded-xl font-bold text-sm transition ''' + ('bg-blue-600 text-white shadow-lg' if tab=='pending' else 'bg-gray-900 text-gray-400 hover:bg-gray-800') + '''">Pending (''' + str(len(pending_biz)) + ''')</a>
@@ -849,7 +898,7 @@ def admin_panel():
                 content = '<p class="text-gray-500 text-center py-8">No expired subscriptions found.</p>'
 
         html = BASE_HEAD + '''
-        <main class="max-w-4xl mx-auto px-4 py-12">
+        <main class="max-w-4xl mx-auto px-4 py-12 animate-fade-in">
             <h2 class="text-2xl font-bold mb-6">💳 Payment & Subscription Hub</h2>
             <div class="flex space-x-3 mb-6">
                 <a href="/admin?module=payment&tab=pending" class="px-5 py-2.5 rounded-xl font-bold text-sm transition ''' + ('bg-indigo-600 text-white shadow-lg' if tab=='pending' else 'bg-gray-900 text-gray-400 hover:bg-gray-800') + '''">Unpaid (''' + str(len(pending_pay)) + ''')</a>
