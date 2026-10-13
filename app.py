@@ -1,4 +1,4 @@
-"""SwatBiz Hub - Custom Modal Confirmation & Fully Animated Application."""
+"""SwatBiz Hub - Interactive Mouse Hover Animations & Custom Modal Application."""
 from datetime import datetime, timedelta
 import os
 from flask import Flask, abort, redirect, render_template_string, request, url_for, session
@@ -84,22 +84,51 @@ CATEGORIES = {
 ANIMATION_STYLES = '''
 <style>
     @keyframes fadeInUp {
-        0% { opacity: 0; transform: translateY(25px); }
+        0% { opacity: 0; transform: translateY(20px); }
         100% { opacity: 1; transform: translateY(0); }
     }
     @keyframes modalPop {
         0% { opacity: 0; transform: scale(0.85) translateY(-20px); }
         100% { opacity: 1; transform: scale(1) translateY(0); }
     }
-    @keyframes pulseGlow {
-        0%, 100% { box-shadow: 0 0 12px rgba(59, 130, 246, 0.25); }
-        50% { box-shadow: 0 0 22px rgba(59, 130, 246, 0.55); }
-    }
-    .animate-fade-in { animation: fadeInUp 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+    .animate-fade-in { animation: fadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
     .animate-modal { animation: modalPop 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
-    .animate-glow { animation: pulseGlow 3s infinite; }
-    .card-hover { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-    .card-hover:hover { transform: translateY(-5px); }
+    
+    /* Interactive Mouse Hover & Focus Styles */
+    .input-hover-effect {
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .input-hover-effect:hover {
+        border-color: #3b82f6;
+        box-shadow: 0 0 12px rgba(59, 130, 246, 0.25);
+        transform: translateY(-1px);
+        background-color: #0f172a;
+    }
+    .input-hover-effect:focus {
+        border-color: #60a5fa;
+        box-shadow: 0 0 18px rgba(59, 130, 246, 0.45);
+        transform: translateY(-1px);
+    }
+
+    .btn-hover-effect {
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .btn-hover-effect:hover {
+        transform: translateY(-2px) scale(1.02);
+        box-shadow: 0 8px 20px -4px rgba(59, 130, 246, 0.4);
+    }
+    .btn-hover-effect:active {
+        transform: translateY(0) scale(0.98);
+    }
+
+    .card-hover-effect {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .card-hover-effect:hover {
+        transform: translateY(-4px);
+        border-color: #3b82f6;
+        box-shadow: 0 12px 28px -6px rgba(0, 0, 0, 0.6), 0 0 15px rgba(59, 130, 246, 0.2);
+    }
 </style>
 '''
 
@@ -120,7 +149,7 @@ HOME_HEAD = '''
         <div class="max-w-7xl mx-auto px-4 py-5 flex justify-between items-center">
             <a href="/" class="text-2xl font-extrabold tracking-tight hover:text-blue-400 transition transform hover:scale-105">🏙️ ''' + SITE_NAME + '''</a>
             <div class="flex items-center space-x-3">
-                <a href="/register" class="bg-blue-600 hover:bg-blue-500 px-4 py-2.5 rounded-xl text-sm font-bold shadow-lg transform hover:-translate-y-0.5 transition-all">＋ Register Business</a>
+                <a href="/register" class="bg-blue-600 hover:bg-blue-500 px-4 py-2.5 rounded-xl text-sm font-bold shadow-lg btn-hover-effect">＋ Register Business</a>
             </div>
         </div>
     </header>
@@ -143,7 +172,7 @@ BASE_HEAD = '''
         <div class="max-w-7xl mx-auto px-4 py-5 flex justify-between items-center">
             <a href="/" class="text-xl font-bold hover:text-blue-400 transition-all transform hover:-translate-x-1 flex items-center gap-2">← Back to Home</a>
             <div class="flex items-center space-x-3">
-                <a href="/register" class="bg-blue-600 hover:bg-blue-500 px-4 py-2.5 rounded-xl text-sm font-bold shadow-lg transform hover:-translate-y-0.5 transition-all">＋ Register Business</a>
+                <a href="/register" class="bg-blue-600 hover:bg-blue-500 px-4 py-2.5 rounded-xl text-sm font-bold shadow-lg btn-hover-effect">＋ Register Business</a>
             </div>
         </div>
     </header>
@@ -162,7 +191,7 @@ def home():
     cards = ""
     for slug, cat in CATEGORIES.items():
         cards += '''
-        <a href="/category/''' + slug + '''" class="bg-gray-900/90 p-8 rounded-3xl border border-gray-800/80 card-hover flex items-center space-x-5 group shadow-xl">
+        <a href="/category/''' + slug + '''" class="bg-gray-900/90 p-8 rounded-3xl border border-gray-800/80 card-hover-effect flex items-center space-x-5 group shadow-xl">
             <span class="text-5xl p-4 bg-gray-800/80 rounded-2xl group-hover:scale-110 transition-transform duration-300">''' + cat["icon"] + '''</span>
             <div>
                 <h3 class="text-xl font-bold group-hover:text-blue-400 transition-colors duration-200">''' + cat["title"] + '''</h3>
@@ -206,7 +235,7 @@ def category_page(cat_slug):
     for b in filtered:
         subcat_badge = '<span class="bg-indigo-600/20 text-indigo-400 text-xs px-2.5 py-1 rounded-md font-semibold">' + b.get('subcategory', 'General') + '</span>' if b.get('subcategory') else ''
         cards += '''
-        <a href="/business/''' + b['id'] + '''" class="bg-gray-900 rounded-2xl border border-gray-800/80 overflow-hidden card-hover flex flex-col justify-between group shadow-lg">
+        <a href="/business/''' + b['id'] + '''" class="bg-gray-900 rounded-2xl border border-gray-800/80 overflow-hidden card-hover-effect flex flex-col justify-between group shadow-lg">
             <img src="''' + b.get('image', 'https://images.unsplash.com/photo-1557804506-669a67965ba0?auto=format&fit=crop&w=800&q=80') + '''" class="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-500">
             <div class="p-6">
                 <div class="mb-2">''' + subcat_badge + '''</div>
@@ -227,8 +256,8 @@ def category_page(cat_slug):
             <h2 class="text-4xl font-extrabold mt-4">''' + cat['title'] + '''</h2>
             <div class="mt-6 max-w-xl mx-auto">
                 <form method="GET" action="/category/''' + cat_slug + '''" class="flex gap-3">
-                    <input type="text" id="searchInput" name="q" value="''' + search_query + '''" placeholder="''' + cat['search_hint'] + '''" autocomplete="off" class="w-full px-5 py-3.5 rounded-2xl bg-gray-900 border border-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm transition">
-                    <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-white px-6 py-3.5 rounded-2xl font-semibold transition transform hover:scale-105 shadow-md">Search</button>
+                    <input type="text" id="searchInput" name="q" value="''' + search_query + '''" placeholder="''' + cat['search_hint'] + '''" autocomplete="off" class="w-full px-5 py-3.5 rounded-2xl bg-gray-900 border border-gray-800 input-hover-effect outline-none text-sm">
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-white px-6 py-3.5 rounded-2xl font-semibold btn-hover-effect shadow-md">Search</button>
                 </form>
             </div>
         </div>
@@ -268,8 +297,8 @@ def business_detail(b_id):
                 <p class="text-gray-400 text-sm">Please enter the Client Password to unlock and view this listing.</p>
                 
                 <form method="POST" class="space-y-3 pt-2">
-                    <input type="password" name="client_password" required placeholder="Enter Client Password" class="w-full p-3.5 rounded-xl bg-gray-800 border border-gray-700 text-center focus:ring-2 focus:ring-blue-500 outline-none text-sm">
-                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 py-3 rounded-xl font-bold transition text-sm">Unlock Listing</button>
+                    <input type="password" name="client_password" required placeholder="Enter Client Password" class="w-full p-3.5 rounded-xl bg-gray-800 border border-gray-700 text-center input-hover-effect outline-none text-sm">
+                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 py-3 rounded-xl font-bold btn-hover-effect text-sm">Unlock Listing</button>
                 </form>
                 ''' + (f'<p class="text-red-400 text-xs font-semibold">{error_msg}</p>' if error_msg else '') + '''
 
@@ -314,11 +343,11 @@ def business_detail(b_id):
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-gray-800">
-                <div class="bg-gray-800/50 p-6 rounded-2xl border border-gray-700/50">
+                <div class="bg-gray-800/50 p-6 rounded-2xl border border-gray-700/50 card-hover-effect">
                     <h3 class="text-lg font-bold text-blue-400 mb-2">''' + cat_meta['info_title'] + '''</h3>
                     <p class="text-gray-300 text-sm leading-relaxed whitespace-pre-line">''' + special_info + '''</p>
                 </div>
-                <div class="bg-gray-800/50 p-6 rounded-2xl border border-gray-700/50">
+                <div class="bg-gray-800/50 p-6 rounded-2xl border border-gray-700/50 card-hover-effect">
                     <h3 class="text-lg font-bold text-emerald-400 mb-2">''' + cat_meta['extra_title'] + '''</h3>
                     <p class="text-gray-300 text-sm leading-relaxed whitespace-pre-line">''' + tests_dishes + '''</p>
                 </div>
@@ -392,17 +421,17 @@ def register_business():
         opts += '<option value="' + k + '">' + v["title"] + '</option>'
 
     html = BASE_HEAD + '''
-    <!-- Custom Modern Animated Confirmation Modal Overlay -->
-    <div id="confirmModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center hidden">
+    <!-- Custom Animated Confirmation Modal -->
+    <div id="confirmModal" class="fixed inset-0 bg-black/75 backdrop-blur-md z-50 flex items-center justify-center hidden">
         <div class="bg-gray-900 border border-gray-800 rounded-3xl p-6 md:p-8 max-w-sm w-full mx-4 shadow-2xl animate-modal text-center space-y-4">
             <div class="w-14 h-14 bg-red-500/10 text-red-500 rounded-2xl flex items-center justify-center mx-auto text-2xl font-bold">⚠️</div>
             <div>
                 <h3 class="text-xl font-bold text-white">Delete Entry?</h3>
-                <p class="text-xs text-gray-400 mt-1">Are you sure you want to remove this row? This action cannot be undone.</p>
+                <p class="text-xs text-gray-400 mt-1">Are you sure you want to remove this entry? This action cannot be undone.</p>
             </div>
             <div class="flex gap-3 pt-2">
-                <button type="button" id="cancelDeleteBtn" class="w-1/2 bg-gray-800 hover:bg-gray-700 py-3 rounded-xl font-bold text-xs transition">Cancel</button>
-                <button type="button" id="confirmDeleteBtn" class="w-1/2 bg-red-600 hover:bg-red-500 text-white py-3 rounded-xl font-bold text-xs transition shadow-lg">Yes, Delete</button>
+                <button type="button" id="cancelDeleteBtn" class="w-1/2 bg-gray-800 hover:bg-gray-700 py-3 rounded-xl font-bold text-xs transition btn-hover-effect">Cancel</button>
+                <button type="button" id="confirmDeleteBtn" class="w-1/2 bg-red-600 hover:bg-red-500 text-white py-3 rounded-xl font-bold text-xs transition btn-hover-effect shadow-lg">Yes, Delete</button>
             </div>
         </div>
     </div>
@@ -416,64 +445,64 @@ def register_business():
         <form method="POST" class="space-y-5 bg-gray-900/90 p-8 rounded-3xl border border-gray-800 shadow-2xl">
             <div>
                 <label class="block text-xs font-bold text-gray-400 mb-1">Business / Entity Name *</label>
-                <input type="text" name="name" required placeholder="Name (e.g. Saidu Hospital / Khyber Restaurant)" class="w-full p-3.5 rounded-xl bg-gray-950 border border-gray-800 focus:ring-2 focus:ring-blue-500 outline-none transition text-sm">
+                <input type="text" name="name" required placeholder="Name (e.g. Saidu Hospital / Khyber Restaurant)" class="w-full p-3.5 rounded-xl bg-gray-950 border border-gray-800 input-hover-effect outline-none text-sm">
             </div>
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <label class="block text-xs font-bold text-gray-400 mb-1">Category *</label>
-                    <select name="category" id="categorySelect" class="w-full p-3.5 rounded-xl bg-gray-950 border border-gray-800 focus:ring-2 focus:ring-blue-500 outline-none transition text-sm">''' + opts + '''</select>
+                    <select name="category" id="categorySelect" class="w-full p-3.5 rounded-xl bg-gray-950 border border-gray-800 input-hover-effect outline-none text-sm">''' + opts + '''</select>
                 </div>
                 <div>
                     <label class="block text-xs font-bold text-gray-400 mb-1">Subcategory (Optional)</label>
-                    <select name="subcategory" id="subcategorySelect" class="w-full p-3.5 rounded-xl bg-gray-950 border border-gray-800 focus:ring-2 focus:ring-blue-500 outline-none transition text-sm"></select>
+                    <select name="subcategory" id="subcategorySelect" class="w-full p-3.5 rounded-xl bg-gray-950 border border-gray-800 input-hover-effect outline-none text-sm"></select>
                 </div>
             </div>
 
             <div>
                 <label class="block text-xs font-bold text-gray-400 mb-1">Address *</label>
-                <input type="text" name="address" required placeholder="Address (e.g. Saidu Sharif, Mingora Swat)" class="w-full p-3.5 rounded-xl bg-gray-950 border border-gray-800 focus:ring-2 focus:ring-blue-500 outline-none transition text-sm">
+                <input type="text" name="address" required placeholder="Address (e.g. Saidu Sharif, Mingora Swat)" class="w-full p-3.5 rounded-xl bg-gray-950 border border-gray-800 input-hover-effect outline-none text-sm">
             </div>
 
             <div>
                 <label class="block text-xs font-bold text-gray-400 mb-1">Phone Number(s) *</label>
                 <div id="phonesContainer" class="space-y-2">
                     <div class="flex gap-2">
-                        <input type="text" name="phones[]" required placeholder="e.g. +92 946 9240123" class="w-full p-3 bg-gray-950 border border-gray-800 rounded-xl text-xs focus:ring-2 focus:ring-blue-500 outline-none">
+                        <input type="text" name="phones[]" required placeholder="e.g. +92 946 9240123" class="w-full p-3 bg-gray-950 border border-gray-800 rounded-xl text-xs input-hover-effect outline-none">
                     </div>
                 </div>
-                <button type="button" id="addPhoneBtn" class="mt-2 text-xs font-bold text-blue-400 hover:text-blue-300 transition">+ Add Another Phone Number</button>
+                <button type="button" id="addPhoneBtn" class="mt-2 text-xs font-bold text-blue-400 hover:text-blue-300 transition hover:underline">+ Add Another Phone Number</button>
             </div>
             
             <div class="border-t border-gray-800 pt-4">
                 <label class="block text-xs font-bold text-gray-400 mb-1">🔒 Client Password * (For editing and secure access)</label>
-                <input type="password" name="client_password" required placeholder="Enter secret password" class="w-full p-3.5 rounded-xl bg-gray-950 border border-gray-800 focus:ring-2 focus:ring-blue-500 outline-none text-sm transition">
+                <input type="password" name="client_password" required placeholder="Enter secret password" class="w-full p-3.5 rounded-xl bg-gray-950 border border-gray-800 input-hover-effect outline-none text-sm">
             </div>
 
             <div class="border-t border-gray-800 pt-4">
                 <label class="block text-sm font-bold text-blue-400 mb-3" id="repeaterTitle">🩺 Doctors, Clinic & Timings</label>
                 <div id="repeaterContainer" class="space-y-3"></div>
-                <button type="button" id="addRowBtn" class="mt-3 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs px-5 py-3 rounded-xl transition transform hover:scale-105 inline-flex items-center shadow-lg">
+                <button type="button" id="addRowBtn" class="mt-3 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs px-5 py-3 rounded-xl btn-hover-effect inline-flex items-center shadow-lg">
                     + Add New Entry
                 </button>
             </div>
 
             <div class="border-t border-gray-800 pt-4">
                 <label class="block text-xs font-bold text-gray-400 mb-1" id="extraTitle">Tests & Medical Services (Optional)</label>
-                <textarea name="tests_dishes" id="dishesField" placeholder="Enter details..." class="w-full p-3.5 rounded-xl bg-gray-950 border border-gray-800 focus:ring-2 focus:ring-blue-500 outline-none text-sm transition" rows="2"></textarea>
+                <textarea name="tests_dishes" id="dishesField" placeholder="Enter details..." class="w-full p-3.5 rounded-xl bg-gray-950 border border-gray-800 input-hover-effect outline-none text-sm" rows="2"></textarea>
             </div>
 
             <div class="border-t border-gray-800 pt-4">
                 <label class="block text-xs font-bold text-gray-400 mb-1">Business Images (Optional - Enter URLs)</label>
                 <div id="imagesContainer" class="space-y-2">
-                    <input type="url" name="image_urls[]" placeholder="Image URL (e.g. https://images.unsplash.com/...)" class="w-full p-3 bg-gray-950 border border-gray-800 rounded-xl text-xs focus:ring-2 focus:ring-blue-500 outline-none">
+                    <input type="url" name="image_urls[]" placeholder="Image URL (e.g. https://images.unsplash.com/...)" class="w-full p-3 bg-gray-950 border border-gray-800 rounded-xl text-xs input-hover-effect outline-none">
                 </div>
-                <button type="button" id="addImageBtn" class="mt-2 text-xs font-bold text-blue-400 hover:text-blue-300 transition">+ Add Another Image URL</button>
+                <button type="button" id="addImageBtn" class="mt-2 text-xs font-bold text-blue-400 hover:text-blue-300 transition hover:underline">+ Add Another Image URL</button>
             </div>
 
             <div class="border-t border-gray-800 pt-4">
                 <label class="block text-xs font-bold text-gray-400 mb-1">Payment Plan (Free 2 Months Active)</label>
-                <select name="payment_method" class="w-full p-3.5 rounded-xl bg-gray-950 border border-gray-800 focus:ring-2 focus:ring-blue-500 outline-none text-sm transition">
+                <select name="payment_method" class="w-full p-3.5 rounded-xl bg-gray-950 border border-gray-800 input-hover-effect outline-none text-sm">
                     <option value="Free Trial">2 Months Free Trial (Active)</option>
                     <option value="EasyPaisa">EasyPaisa</option>
                     <option value="JazzCash">JazzCash</option>
@@ -481,7 +510,7 @@ def register_business():
                 </select>
             </div>
 
-            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 py-3.5 rounded-xl font-bold transition transform hover:-translate-y-0.5 shadow-xl text-sm">Submit Business Listing</button>
+            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 py-3.5 rounded-xl font-bold btn-hover-effect shadow-xl text-sm">Submit Business Listing</button>
         </form>
     </main>
 
@@ -606,8 +635,8 @@ def register_business():
                         var container = document.getElementById('phonesContainer');
                         var div = document.createElement('div');
                         div.className = 'flex gap-2 animate-fade-in';
-                        div.innerHTML = '<input type="text" name="phones[]" placeholder="e.g. +92 300 1234567" class="w-full p-3 bg-gray-950 border border-gray-800 rounded-xl text-xs focus:ring-2 focus:ring-blue-500 outline-none">' +
-                                        '<button type="button" class="del-phone-btn bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white px-3 rounded-xl text-xs font-bold transition">✕</button>';
+                        div.innerHTML = '<input type="text" name="phones[]" placeholder="e.g. +92 300 1234567" class="w-full p-3 bg-gray-950 border border-gray-800 rounded-xl text-xs input-hover-effect outline-none">' +
+                                        '<button type="button" class="del-phone-btn bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white px-3 rounded-xl text-xs font-bold btn-hover-effect">✕</button>';
                         container.appendChild(div);
                         div.querySelector('.del-phone-btn').addEventListener('click', function() {
                             showConfirmModal(div);
@@ -620,8 +649,8 @@ def register_business():
                         var container = document.getElementById('imagesContainer');
                         var div = document.createElement('div');
                         div.className = 'flex gap-2 animate-fade-in';
-                        div.innerHTML = '<input type="url" name="image_urls[]" placeholder="Another Image URL..." class="w-full p-3 bg-gray-950 border border-gray-800 rounded-xl text-xs focus:ring-2 focus:ring-blue-500 outline-none">' +
-                                        '<button type="button" class="del-img-btn bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white px-3 rounded-xl text-xs font-bold transition">✕</button>';
+                        div.innerHTML = '<input type="url" name="image_urls[]" placeholder="Another Image URL..." class="w-full p-3 bg-gray-950 border border-gray-800 rounded-xl text-xs input-hover-effect outline-none">' +
+                                        '<button type="button" class="del-img-btn bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white px-3 rounded-xl text-xs font-bold btn-hover-effect">✕</button>';
                         container.appendChild(div);
                         div.querySelector('.del-img-btn').addEventListener('click', function() {
                             showConfirmModal(div);
@@ -634,19 +663,19 @@ def register_business():
                     var cfg = categoryRowConfigs[cat] || categoryRowConfigs['hospitals'];
 
                     var rowCard = document.createElement('div');
-                    rowCard.className = 'bg-gray-950 border border-gray-800/80 p-4 rounded-2xl space-y-3 relative group shadow-sm animate-fade-in';
+                    rowCard.className = 'bg-gray-950 border border-gray-800/80 p-4 rounded-2xl space-y-3 relative group shadow-sm animate-fade-in card-hover-effect';
 
                     rowCard.innerHTML = '<div class="grid grid-cols-1 md:grid-cols-2 gap-3">' +
-                        '<input type="text" name="repeater_col1[]" placeholder="' + cfg.c1 + '" class="p-3 bg-gray-900 border border-gray-800 rounded-xl text-xs text-white focus:ring-2 focus:ring-blue-500 outline-none">' +
-                        '<input type="text" name="repeater_col2[]" placeholder="' + cfg.c2 + '" class="p-3 bg-gray-900 border border-gray-800 rounded-xl text-xs text-white focus:ring-2 focus:ring-blue-500 outline-none">' +
+                        '<input type="text" name="repeater_col1[]" placeholder="' + cfg.c1 + '" class="p-3 bg-gray-900 border border-gray-800 rounded-xl text-xs text-white input-hover-effect outline-none">' +
+                        '<input type="text" name="repeater_col2[]" placeholder="' + cfg.c2 + '" class="p-3 bg-gray-900 border border-gray-800 rounded-xl text-xs text-white input-hover-effect outline-none">' +
                         '</div>' +
                         '<div class="grid grid-cols-1 md:grid-cols-2 gap-3">' +
-                        '<input type="text" name="repeater_col3[]" placeholder="' + cfg.c3 + '" class="p-3 bg-gray-900 border border-gray-800 rounded-xl text-xs text-white focus:ring-2 focus:ring-blue-500 outline-none">' +
-                        '<input type="text" name="repeater_col4[]" placeholder="' + cfg.c4 + '" class="p-3 bg-gray-900 border border-gray-800 rounded-xl text-xs text-white focus:ring-2 focus:ring-blue-500 outline-none">' +
+                        '<input type="text" name="repeater_col3[]" placeholder="' + cfg.c3 + '" class="p-3 bg-gray-900 border border-gray-800 rounded-xl text-xs text-white input-hover-effect outline-none">' +
+                        '<input type="text" name="repeater_col4[]" placeholder="' + cfg.c4 + '" class="p-3 bg-gray-900 border border-gray-800 rounded-xl text-xs text-white input-hover-effect outline-none">' +
                         '</div>' +
                         '<div class="flex gap-2">' +
-                        '<input type="text" name="repeater_col5[]" placeholder="' + cfg.c5 + '" class="w-full p-3 bg-gray-900 border border-gray-800 rounded-xl text-xs text-white focus:ring-2 focus:ring-blue-500 outline-none">' +
-                        '<button type="button" class="del-row-btn bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white px-3 rounded-xl text-xs font-bold transition">✕</button>' +
+                        '<input type="text" name="repeater_col5[]" placeholder="' + cfg.c5 + '" class="w-full p-3 bg-gray-900 border border-gray-800 rounded-xl text-xs text-white input-hover-effect outline-none">' +
+                        '<button type="button" class="del-row-btn bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white px-3 rounded-xl text-xs font-bold btn-hover-effect">✕</button>' +
                         '</div>';
                     
                     repeaterContainer.appendChild(rowCard);
@@ -713,8 +742,8 @@ def admin_panel():
             <div class="bg-gray-900 p-8 rounded-3xl border border-gray-800 shadow-xl">
                 <h2 class="text-2xl font-bold mb-4">🔒 Admin Portal Login</h2>
                 <form method="POST" class="space-y-4">
-                    <input type="password" name="password" required placeholder="Password" class="w-full p-3 rounded-xl bg-gray-800 border border-gray-700 text-center focus:ring-2 focus:ring-blue-500 outline-none">
-                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 py-3 rounded-xl font-bold transition">Login</button>
+                    <input type="password" name="password" required placeholder="Password" class="w-full p-3 rounded-xl bg-gray-800 border border-gray-700 text-center input-hover-effect outline-none">
+                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 py-3 rounded-xl font-bold btn-hover-effect">Login</button>
                 </form>
             </div>
         </main>
@@ -767,7 +796,7 @@ def admin_panel():
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <a href="/admin?module=business&tab=pending" class="bg-gray-900 p-8 rounded-3xl border border-gray-800 hover:border-blue-500 transition-all duration-300 transform hover:-translate-y-2 shadow-2xl flex flex-col justify-between group">
+                <a href="/admin?module=business&tab=pending" class="bg-gray-900 p-8 rounded-3xl border border-gray-800 card-hover-effect flex flex-col justify-between group shadow-2xl">
                     <div>
                         <div class="flex justify-between items-center mb-6">
                             <span class="text-6xl group-hover:scale-110 transition-transform">🏢</span>
@@ -782,7 +811,7 @@ def admin_panel():
                     </div>
                 </a>
 
-                <a href="/admin?module=payment&tab=pending" class="bg-gray-900 p-8 rounded-3xl border border-gray-800 hover:border-indigo-500 transition-all duration-300 transform hover:-translate-y-2 shadow-2xl flex flex-col justify-between group">
+                <a href="/admin?module=payment&tab=pending" class="bg-gray-900 p-8 rounded-3xl border border-gray-800 card-hover-effect flex flex-col justify-between group shadow-2xl">
                     <div>
                         <div class="flex justify-between items-center mb-6">
                             <span class="text-6xl group-hover:scale-110 transition-transform">💳</span>
@@ -813,9 +842,9 @@ def admin_panel():
                         <p class="text-xs text-gray-400">📍 ''' + b["address"] + ''' | 📅 Joined: <span class="text-blue-400 font-semibold">''' + j_date + '''</span></p>
                     </div>
                     <div class="flex gap-2 items-center">
-                        <a href="/business/''' + b_id + '''" target="_blank" class="bg-blue-600/20 text-blue-400 hover:bg-blue-600 hover:text-white px-3 py-2 rounded-xl text-xs font-bold transition">Preview</a>
-                        <a href="/admin?module=business&tab=pending&action=approve&id=''' + b_id + '''" class="bg-green-600 hover:bg-green-500 px-4 py-2 rounded-xl text-xs font-bold transition">Approve</a>
-                        <a href="/admin?module=business&tab=pending&action=delete&id=''' + b_id + '''" class="bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white px-3 py-2 rounded-xl text-xs font-bold transition">Delete</a>
+                        <a href="/business/''' + b_id + '''" target="_blank" class="bg-blue-600/20 text-blue-400 hover:bg-blue-600 hover:text-white px-3 py-2 rounded-xl text-xs font-bold btn-hover-effect">Preview</a>
+                        <a href="/admin?module=business&tab=pending&action=approve&id=''' + b_id + '''" class="bg-green-600 hover:bg-green-500 px-4 py-2 rounded-xl text-xs font-bold btn-hover-effect">Approve</a>
+                        <a href="/admin?module=business&tab=pending&action=delete&id=''' + b_id + '''" class="bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white px-3 py-2 rounded-xl text-xs font-bold btn-hover-effect">Delete</a>
                     </div>
                 </div>
                 '''
@@ -831,8 +860,8 @@ def admin_panel():
                         <p class="text-xs text-gray-400">📍 ''' + b["address"] + ''' | 📅 Joined: <span class="text-blue-400 font-semibold">''' + j_date + '''</span></p>
                     </div>
                     <div class="flex gap-2 items-center">
-                        <a href="/business/''' + b_id + '''" target="_blank" class="bg-blue-600/20 text-blue-400 hover:bg-blue-600 hover:text-white px-3 py-1.5 rounded-xl text-xs font-bold transition">View</a>
-                        <a href="/admin?module=business&tab=approved&action=delete&id=''' + b_id + '''" class="bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white px-3 py-1.5 rounded-xl text-xs font-bold transition">Delete</a>
+                        <a href="/business/''' + b_id + '''" target="_blank" class="bg-blue-600/20 text-blue-400 hover:bg-blue-600 hover:text-white px-3 py-1.5 rounded-xl text-xs font-bold btn-hover-effect">View</a>
+                        <a href="/admin?module=business&tab=approved&action=delete&id=''' + b_id + '''" class="bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white px-3 py-1.5 rounded-xl text-xs font-bold btn-hover-effect">Delete</a>
                     </div>
                 </div>
                 '''
@@ -863,7 +892,7 @@ def admin_panel():
                         <h4 class="font-bold">''' + b["name"] + '''</h4>
                         <p class="text-xs text-gray-400">Method: <span class="text-blue-400 font-bold">''' + b.get('payment_method', 'N/A') + '''</span> | Ref: <span class="text-indigo-400 font-mono font-bold">''' + b.get('payment_ref', 'N/A') + '''</span></p>
                     </div>
-                    <a href="/admin?module=payment&tab=pending&action=approve_pay&id=''' + b_id + '''" class="bg-green-600 hover:bg-green-500 px-4 py-2 rounded-xl text-xs font-bold transition">Verify & Activate (60 Days)</a>
+                    <a href="/admin?module=payment&tab=pending&action=approve_pay&id=''' + b_id + '''" class="bg-green-600 hover:bg-green-500 px-4 py-2 rounded-xl text-xs font-bold btn-hover-effect">Verify & Activate (60 Days)</a>
                 </div>
                 '''
             if not content:
@@ -877,7 +906,7 @@ def admin_panel():
                         <h4 class="font-bold">''' + b["name"] + '''</h4>
                         <p class="text-xs text-yellow-400 font-semibold">⚠️ Expires on: ''' + ed + '''</p>
                     </div>
-                    <a href="/admin?module=payment&tab=alerts&action=approve_pay&id=''' + b_id + '''" class="bg-yellow-600 hover:bg-yellow-500 text-gray-950 px-4 py-2 rounded-xl text-xs font-bold transition">Renew 60 Days</a>
+                    <a href="/admin?module=payment&tab=alerts&action=approve_pay&id=''' + b_id + '''" class="bg-yellow-600 hover:bg-yellow-500 text-gray-950 px-4 py-2 rounded-xl text-xs font-bold btn-hover-effect">Renew 60 Days</a>
                 </div>
                 '''
             if not content:
@@ -891,7 +920,7 @@ def admin_panel():
                         <h4 class="font-bold">''' + b["name"] + '''</h4>
                         <p class="text-xs text-red-400 font-semibold">❌ Expired on: ''' + ed + '''</p>
                     </div>
-                    <a href="/admin?module=payment&tab=expired&action=approve_pay&id=''' + b_id + '''" class="bg-red-600 hover:bg-red-500 text-white px-4 py-2 rounded-xl text-xs font-bold transition">Restore & Renew</a>
+                    <a href="/admin?module=payment&tab=expired&action=approve_pay&id=''' + b_id + '''" class="bg-red-600 hover:bg-red-500 text-white px-4 py-2 rounded-xl text-xs font-bold btn-hover-effect">Restore & Renew</a>
                 </div>
                 '''
             if not content:
