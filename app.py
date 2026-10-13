@@ -1,4 +1,4 @@
-"""SwatBiz Hub - Admin Navigation Fixed to Admin Dashboard."""
+"""SwatBiz Hub - Qualifications Field & Smart Admin Navigation Fix."""
 from datetime import datetime, timedelta
 import os
 import json
@@ -30,6 +30,7 @@ BUSINESSES = {
             {
                 'name': 'Dr. Muhammad Ali',
                 'specialty': 'Cardiologist',
+                'qualifications': 'MBBS, FCPS (Cardiology), Head of Cardiology Dept',
                 'appt_timing': '9:00 AM - 2:00 PM',
                 'clinic_timing': 'Mon - Sat (9 AM - 5 PM)',
                 'room': 'OPD Block - Room 12',
@@ -38,6 +39,7 @@ BUSINESSES = {
             {
                 'name': 'Dr. Ayesha Khan',
                 'specialty': 'Pediatrician',
+                'qualifications': 'MBBS, DCH, MCPS (Pediatrics)',
                 'appt_timing': '10:00 AM - 4:00 PM',
                 'clinic_timing': 'Mon - Fri (10 AM - 4 PM)',
                 'room': 'Children Ward - Room 04',
@@ -67,6 +69,7 @@ BUSINESSES = {
             {
                 'name': 'Chef Rashid',
                 'specialty': 'Master Grill & BBQ Chef',
+                'qualifications': '15+ Years Culinary Experience',
                 'appt_timing': '12:00 PM - 11:00 PM',
                 'clinic_timing': 'Daily Open',
                 'room': 'Main Grill Section / Family Cabin',
@@ -96,6 +99,7 @@ BUSINESSES = {
             {
                 'name': 'Prof. Shah Zarin',
                 'specialty': 'Principal & Academic Head',
+                'qualifications': 'M.Phil Education, Gold Medalist',
                 'appt_timing': '8:00 AM - 2:00 PM',
                 'clinic_timing': 'Mon - Sat',
                 'room': 'Main Administration Block',
@@ -343,7 +347,7 @@ def category_page(cat_slug):
         match_subcat = True
         
         if search_query:
-            doctors_str = " ".join([d.get('name', '') + " " + d.get('specialty', '') for d in b.get('doctors', [])]).lower()
+            doctors_str = " ".join([d.get('name', '') + " " + d.get('specialty', '') + " " + d.get('qualifications', '') for d in b.get('doctors', [])]).lower()
             if not (search_query in b.get('name', '').lower() or 
                     search_query in b.get('address', '').lower() or 
                     search_query in b.get('subcategory', '').lower() or 
@@ -520,9 +524,12 @@ def business_detail(b_id):
     if doctors_data:
         for idx, doc in enumerate(doctors_data):
             appt_nums = doc.get('appt_numbers', ", ".join(b.get('phones', [])))
+            quals = doc.get('qualifications', '')
+            
             doc_json = json.dumps({
                 'name': doc.get('name', ''),
                 'specialty': doc.get('specialty', ''),
+                'qualifications': quals,
                 'appt_timing': doc.get('appt_timing', ''),
                 'clinic_timing': doc.get('clinic_timing', ''),
                 'room': doc.get('room', ''),
@@ -532,12 +539,15 @@ def business_detail(b_id):
                 'hospital_phones': ", ".join(b.get('phones', []))
             }).replace("'", "&#39;")
             
+            quals_badge = f'<p class="text-[11px] text-gray-500 dark:text-gray-400 italic">🎓 {quals}</p>' if quals else ''
+            
             doctors_cards_html += f'''
             <div onclick='openDoctorModal({doc_json})' class="doc-card-item bg-gray-50 dark:bg-gray-950 p-5 rounded-2xl border border-gray-200 dark:border-gray-800 card-hover-effect space-y-2 cursor-pointer group">
                 <div class="flex justify-between items-start">
                     <div>
                         <h4 class="text-base font-extrabold text-blue-600 dark:text-blue-400 group-hover:underline">{doc.get('name', 'N/A')}</h4>
                         <p class="text-xs font-semibold text-indigo-600 dark:text-indigo-400">{doc.get('specialty', 'Specialist')}</p>
+                        {quals_badge}
                     </div>
                     <span class="bg-blue-100 dark:bg-blue-600/20 text-blue-700 dark:text-blue-400 text-[10px] px-2.5 py-1 rounded-full font-bold">View Info →</span>
                 </div>
@@ -572,6 +582,7 @@ def business_detail(b_id):
                     <div>
                         <h3 id="mDocName" class="text-xl font-black text-gray-900 dark:text-white">Dr. Name</h3>
                         <p id="mDocSpec" class="text-xs font-bold text-blue-600 dark:text-blue-400">Specialty</p>
+                        <p id="mDocQuals" class="text-[11px] text-gray-500 dark:text-gray-400 italic">Qualifications</p>
                     </div>
                 </div>
                 <button type="button" onclick="closeDoctorModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-white text-xl font-bold bg-gray-100 dark:bg-gray-800 w-8 h-8 rounded-full flex items-center justify-center">✕</button>
@@ -658,6 +669,15 @@ def business_detail(b_id):
         function openDoctorModal(doc) {
             document.getElementById('mDocName').innerText = doc.name || 'N/A';
             document.getElementById('mDocSpec').innerText = doc.specialty || 'Specialist';
+            
+            var qualsEl = document.getElementById('mDocQuals');
+            if (doc.qualifications) {
+                qualsEl.innerText = '🎓 ' + doc.qualifications;
+                qualsEl.style.display = 'block';
+            } else {
+                qualsEl.style.display = 'none';
+            }
+
             document.getElementById('mDocHospital').innerText = doc.hospital_name || 'N/A';
             document.getElementById('mDocAddress').innerText = '📍 ' + (doc.hospital_address || 'N/A');
             document.getElementById('mDocAppt').innerText = doc.appt_timing || 'N/A';
@@ -717,6 +737,7 @@ def register_business():
         col4_vals = request.form.getlist('repeater_col4[]')
         col5_vals = request.form.getlist('repeater_col5[]')
         col6_vals = request.form.getlist('repeater_col6[]')
+        col7_vals = request.form.getlist('repeater_col7[]')
 
         doctors_list = []
         formatted_repeater_list = []
@@ -725,10 +746,11 @@ def register_business():
                 doc_obj = {
                     'name': names[i].strip(),
                     'specialty': col2_vals[i].strip() if i < len(col2_vals) else 'N/A',
-                    'appt_timing': col3_vals[i].strip() if i < len(col3_vals) else 'N/A',
-                    'clinic_timing': col4_vals[i].strip() if i < len(col4_vals) else 'N/A',
-                    'room': col5_vals[i].strip() if i < len(col5_vals) else 'N/A',
-                    'appt_numbers': col6_vals[i].strip() if i < len(col6_vals) else ', '.join(clean_phones)
+                    'qualifications': col3_vals[i].strip() if i < len(col3_vals) else '',
+                    'appt_timing': col4_vals[i].strip() if i < len(col4_vals) else 'N/A',
+                    'clinic_timing': col5_vals[i].strip() if i < len(col5_vals) else 'N/A',
+                    'room': col6_vals[i].strip() if i < len(col6_vals) else 'N/A',
+                    'appt_numbers': col7_vals[i].strip() if i < len(col7_vals) else ', '.join(clean_phones)
                 }
                 doctors_list.append(doc_obj)
                 
@@ -875,10 +897,11 @@ def register_business():
                 addBtnText: '+ Add New Doctor',
                 extraTitle: '🔬 Tests & Medical Services (Optional)',
                 extraPlaceholder: 'e.g. MRI, CT Scan, Blood Tests, Ultrasound, OPD Services...',
-                c1: 'Doctor Name (Dr. Ahmad)', c2: 'Specialty (Cardiologist)',
-                c3: 'Appointment Timing (9 AM - 2 PM)', c4: 'Clinic Timing (Mon-Sat, 9 AM - 5 PM)',
-                c5: 'Clinic / Room (Room 12, OPD Block)',
-                c6: 'Appointment Phone Number(s) (e.g. +92 300 1234567, +92 946 9240125)'
+                c1: 'Doctor Name (Dr. Ahmad)', c2: 'Specialty (Cardiologist / Urologist)',
+                c3: 'Qualifications / Info (Optional: MBBS, FCPS, Head of Dept)',
+                c4: 'Appointment Timing (9 AM - 2 PM)', c5: 'Clinic Timing (Mon-Sat, 9 AM - 5 PM)',
+                c6: 'Clinic / Room (Room 12, OPD Block)',
+                c7: 'Appointment Phone Number(s) (e.g. +92 300 1234567, +92 946 9240125)'
             },
             'restaurants': {
                 title: '👨‍🍳 Chefs, Special Dishes & Menu Items',
@@ -886,9 +909,10 @@ def register_business():
                 extraTitle: '🍲 Special Dishes & Menu Highlights (Optional)',
                 extraPlaceholder: 'e.g. Dumba Karahi (Rs. 2400/kg), Shinwari Tikka, Kabab...',
                 c1: 'Item / Dish Name (Dumba Karahi)', c2: 'Category (BBQ / Main Course)',
-                c3: 'Price (Rs. 2400)', c4: 'Availability (Daily)',
-                c5: 'Description / Special Serving Notes',
-                c6: 'Order / Reservation Contact Number(s)'
+                c3: 'Special Serving / Tag (Optional: Chef Special, Fresh)',
+                c4: 'Price (Rs. 2400)', c5: 'Availability (Daily)',
+                c6: 'Description / Special Serving Notes',
+                c7: 'Order / Reservation Contact Number(s)'
             },
             'education': {
                 title: '🎓 Faculty, Teachers & Courses',
@@ -896,9 +920,10 @@ def register_business():
                 extraTitle: '📚 Offered Courses & Academic Programs (Optional)',
                 extraPlaceholder: 'e.g. FSc Pre-Medical, ICS, English Language Diploma...',
                 c1: 'Teacher / Course Name (Prof. Ali)', c2: 'Department / Course (Computer Science)',
-                c3: 'Timing (Morning / Evening)', c4: 'Days (Mon-Fri)',
-                c5: 'Fee / Room No (Lab 2)',
-                c6: 'Direct Contact / Helpline Number(s)'
+                c3: 'Qualifications / Title (Optional: M.Phil, Gold Medalist)',
+                c4: 'Timing (Morning / Evening)', c5: 'Days (Mon-Fri)',
+                c6: 'Fee / Room No (Lab 2)',
+                c7: 'Direct Contact / Helpline Number(s)'
             },
             'pharmacies': {
                 title: '💊 Pharmacists & Staff Info',
@@ -906,9 +931,10 @@ def register_business():
                 extraTitle: '💊 Available Medicines & Healthcare Products (Optional)',
                 extraPlaceholder: 'e.g. BP Checking, Sugar Testing Kits, Surgical Items...',
                 c1: 'Staff Name (Dr. Bilal)', c2: 'Qualification (Pharm-D)',
-                c3: 'Shift Timing (8 AM - 4 PM)', c4: 'Available Days (Mon-Sat)',
-                c5: 'Counter / Section',
-                c6: 'Direct Contact / Order Number(s)'
+                c3: 'Experience / Role (Optional: Senior Pharmacist)',
+                c4: 'Shift Timing (8 AM - 4 PM)', c5: 'Available Days (Mon-Sat)',
+                c6: 'Counter / Section',
+                c7: 'Direct Contact / Order Number(s)'
             },
             'supermarts': {
                 title: '🏬 Store Sections & Managers',
@@ -916,8 +942,9 @@ def register_business():
                 extraTitle: '🛍️ Featured Groceries & Products (Optional)',
                 extraPlaceholder: 'e.g. Fresh Vegetables, Bakery Items, Household Goods...',
                 c1: 'Manager / Section (Tariq - Grocery)', c2: 'Department',
-                c3: 'Timing', c4: 'Days', c5: 'Floor / Location',
-                c6: 'Section Contact Number(s)'
+                c3: 'Role / Designation (Optional: Incharge)',
+                c4: 'Timing', c5: 'Days', c6: 'Floor / Location',
+                c7: 'Section Contact Number(s)'
             },
             'property': {
                 title: '🏡 Real Estate Agents & Deals',
@@ -925,8 +952,9 @@ def register_business():
                 extraTitle: '🏡 Featured Plots & Real Estate Deals (Optional)',
                 extraPlaceholder: 'e.g. 5 Marla Plot in Kanju Township, Commercial Shops...',
                 c1: 'Agent / Property Title (Malik Zubair)', c2: 'Type (5 Marla Plot)',
-                c3: 'Price / Contact', c4: 'Area / Location', c5: 'Details',
-                c6: 'Agent Contact Number(s)'
+                c3: 'Tag / Status (Optional: Urgent Sale, Prime Location)',
+                c4: 'Price / Contact', c5: 'Area / Location', c6: 'Details',
+                c7: 'Agent Contact Number(s)'
             },
             'hotels': {
                 title: '🛏️ Rooms, Suites & Rates',
@@ -934,8 +962,9 @@ def register_business():
                 extraTitle: '🛏️ Hotel Services & Room Amenities (Optional)',
                 extraPlaceholder: 'e.g. Deluxe Family Rooms, Mountain View, Free Breakfast...',
                 c1: 'Room Type (Deluxe Family Suite)', c2: 'Capacity (4 Persons)',
-                c3: 'Rate per Night (Rs. 8000)', c4: 'Facilities (AC, WiFi, River View)', c5: 'Floor / Block',
-                c6: 'Booking / Reception Contact Number(s)'
+                c3: 'Special Feature (Optional: River View, Balcony)',
+                c4: 'Rate per Night (Rs. 8000)', c5: 'Facilities (AC, WiFi)', c6: 'Floor / Block',
+                c7: 'Booking / Reception Contact Number(s)'
             }
         };
 
@@ -1020,13 +1049,14 @@ def register_business():
                         '<input type="text" name="repeater_col1[]" placeholder="' + cfg.c1 + '" class="p-3 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-800 text-gray-900 dark:text-white rounded-xl text-xs input-hover-effect outline-none">' +
                         '<input type="text" name="repeater_col2[]" placeholder="' + cfg.c2 + '" class="p-3 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-800 text-gray-900 dark:text-white rounded-xl text-xs input-hover-effect outline-none">' +
                         '</div>' +
+                        '<input type="text" name="repeater_col3[]" placeholder="' + cfg.c3 + '" class="w-full p-3 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-800 text-gray-900 dark:text-white rounded-xl text-xs input-hover-effect outline-none">' +
                         '<div class="grid grid-cols-1 md:grid-cols-2 gap-3">' +
-                        '<input type="text" name="repeater_col3[]" placeholder="' + cfg.c3 + '" class="p-3 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-800 text-gray-900 dark:text-white rounded-xl text-xs input-hover-effect outline-none">' +
                         '<input type="text" name="repeater_col4[]" placeholder="' + cfg.c4 + '" class="p-3 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-800 text-gray-900 dark:text-white rounded-xl text-xs input-hover-effect outline-none">' +
+                        '<input type="text" name="repeater_col5[]" placeholder="' + cfg.c5 + '" class="p-3 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-800 text-gray-900 dark:text-white rounded-xl text-xs input-hover-effect outline-none">' +
                         '</div>' +
-                        '<input type="text" name="repeater_col5[]" placeholder="' + cfg.c5 + '" class="w-full p-3 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-800 text-gray-900 dark:text-white rounded-xl text-xs input-hover-effect outline-none">' +
-                        '<div class="flex gap-2">' +
                         '<input type="text" name="repeater_col6[]" placeholder="' + cfg.c6 + '" class="w-full p-3 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-800 text-gray-900 dark:text-white rounded-xl text-xs input-hover-effect outline-none">' +
+                        '<div class="flex gap-2">' +
+                        '<input type="text" name="repeater_col7[]" placeholder="' + cfg.c7 + '" class="w-full p-3 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-800 text-gray-900 dark:text-white rounded-xl text-xs input-hover-effect outline-none">' +
                         '<button type="button" class="del-row-btn bg-red-100 dark:bg-red-600/20 text-red-600 dark:text-red-400 hover:bg-red-600 hover:text-white px-3 rounded-xl text-xs font-bold btn-hover-effect">✕</button>' +
                         '</div>';
                     
@@ -1088,9 +1118,6 @@ def admin_panel():
             session['admin_logged_in'] = True
             return redirect('/admin')
 
-    admin_back_url = "/admin"
-    admin_back_text = "Admin Dashboard"
-
     if not session.get('admin_logged_in'):
         html = get_base_head(back_url="/", back_text="Back to Home") + '''
         <main class="max-w-md mx-auto px-4 py-20 text-center animate-fade-in">
@@ -1143,7 +1170,11 @@ def admin_panel():
             if (v.get('expiry_date') - now).days < 0:
                 expired_subs[k] = v
 
+    # Smart Navigation Header Fix
     if not module:
+        admin_back_url = "/"
+        admin_back_text = "Back to Main Site"
+        
         html = get_base_head(back_url=admin_back_url, back_text=admin_back_text) + '''
         <main class="max-w-5xl mx-auto px-4 py-12 animate-fade-in">
             <div class="flex justify-between items-center mb-10">
@@ -1185,116 +1216,119 @@ def admin_panel():
         ''' + FOOTER
         return render_template_string(html)
 
-    elif module == 'business':
+    else:
+        admin_back_url = "/admin"
+        admin_back_text = "Admin Dashboard"
+
         content = ""
-        if tab == 'pending':
-            for b_id, b in pending_biz.items():
-                j_date = b.get('joining_date', datetime.now()).strftime('%Y-%m-%d')
-                content += '''
-                <div class="bg-gray-50 dark:bg-gray-800/60 p-4 rounded-2xl flex justify-between items-center hover:bg-gray-100 dark:hover:bg-gray-800 transition">
-                    <div>
-                        <h4 class="font-bold text-gray-900 dark:text-white">''' + b["name"] + ''' <span class="text-xs text-indigo-600 dark:text-indigo-400">(''' + b.get('subcategory', 'General') + ''')</span></h4>
-                        <p class="text-xs text-gray-500 dark:text-gray-400">📍 ''' + b["address"] + ''' | 📅 Joined: <span class="text-blue-600 dark:text-blue-400 font-semibold">''' + j_date + '''</span></p>
+        if module == 'business':
+            if tab == 'pending':
+                for b_id, b in pending_biz.items():
+                    j_date = b.get('joining_date', datetime.now()).strftime('%Y-%m-%d')
+                    content += '''
+                    <div class="bg-gray-50 dark:bg-gray-800/60 p-4 rounded-2xl flex justify-between items-center hover:bg-gray-100 dark:hover:bg-gray-800 transition">
+                        <div>
+                            <h4 class="font-bold text-gray-900 dark:text-white">''' + b["name"] + ''' <span class="text-xs text-indigo-600 dark:text-indigo-400">(''' + b.get('subcategory', 'General') + ''')</span></h4>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">📍 ''' + b["address"] + ''' | 📅 Joined: <span class="text-blue-600 dark:text-blue-400 font-semibold">''' + j_date + '''</span></p>
+                        </div>
+                        <div class="flex gap-2 items-center">
+                            <a href="/business/''' + b_id + '''" target="_blank" class="bg-blue-100 dark:bg-blue-600/20 text-blue-600 dark:text-blue-400 hover:bg-blue-600 hover:text-white px-3 py-2 rounded-xl text-xs font-bold btn-hover-effect">Preview</a>
+                            <a href="/admin?module=business&tab=pending&action=approve&id=''' + b_id + '''" class="bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded-xl text-xs font-bold btn-hover-effect">Approve</a>
+                            <a href="/admin?module=business&tab=pending&action=delete&id=''' + b_id + '''" class="bg-red-100 dark:bg-red-600/20 text-red-600 dark:text-red-400 hover:bg-red-600 hover:text-white px-3 py-2 rounded-xl text-xs font-bold btn-hover-effect">Delete</a>
+                        </div>
                     </div>
-                    <div class="flex gap-2 items-center">
-                        <a href="/business/''' + b_id + '''" target="_blank" class="bg-blue-100 dark:bg-blue-600/20 text-blue-600 dark:text-blue-400 hover:bg-blue-600 hover:text-white px-3 py-2 rounded-xl text-xs font-bold btn-hover-effect">Preview</a>
-                        <a href="/admin?module=business&tab=pending&action=approve&id=''' + b_id + '''" class="bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded-xl text-xs font-bold btn-hover-effect">Approve</a>
-                        <a href="/admin?module=business&tab=pending&action=delete&id=''' + b_id + '''" class="bg-red-100 dark:bg-red-600/20 text-red-600 dark:text-red-400 hover:bg-red-600 hover:text-white px-3 py-2 rounded-xl text-xs font-bold btn-hover-effect">Delete</a>
+                    '''
+                if not content:
+                    content = '<p class="text-gray-500 text-center py-8">No pending business approvals.</p>'
+            else:
+                for b_id, b in approved_biz.items():
+                    j_date = b.get('joining_date', datetime.now()).strftime('%Y-%m-%d')
+                    content += '''
+                    <div class="bg-gray-50 dark:bg-gray-800/40 p-4 rounded-2xl flex justify-between items-center hover:bg-gray-100 dark:hover:bg-gray-800/70 transition">
+                        <div>
+                            <h4 class="font-bold text-gray-900 dark:text-white">''' + b["name"] + ''' <span class="text-xs text-indigo-600 dark:text-indigo-400">(''' + b.get('subcategory', 'General') + ''')</span></h4>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">📍 ''' + b["address"] + ''' | 📅 Joined: <span class="text-blue-600 dark:text-blue-400 font-semibold">''' + j_date + '''</span></p>
+                        </div>
+                        <div class="flex gap-2 items-center">
+                            <a href="/business/''' + b_id + '''" target="_blank" class="bg-blue-100 dark:bg-blue-600/20 text-blue-600 dark:text-blue-400 hover:bg-blue-600 hover:text-white px-3 py-1.5 rounded-xl text-xs font-bold btn-hover-effect">View</a>
+                            <a href="/admin?module=business&tab=approved&action=delete&id=''' + b_id + '''" class="bg-red-100 dark:bg-red-600/20 text-red-600 dark:text-red-400 hover:bg-red-600 hover:text-white px-3 py-1.5 rounded-xl text-xs font-bold btn-hover-effect">Delete</a>
+                        </div>
                     </div>
-                </div>
-                '''
-            if not content:
-                content = '<p class="text-gray-500 text-center py-8">No pending business approvals.</p>'
-        else:
-            for b_id, b in approved_biz.items():
-                j_date = b.get('joining_date', datetime.now()).strftime('%Y-%m-%d')
-                content += '''
-                <div class="bg-gray-50 dark:bg-gray-800/40 p-4 rounded-2xl flex justify-between items-center hover:bg-gray-100 dark:hover:bg-gray-800/70 transition">
-                    <div>
-                        <h4 class="font-bold text-gray-900 dark:text-white">''' + b["name"] + ''' <span class="text-xs text-indigo-600 dark:text-indigo-400">(''' + b.get('subcategory', 'General') + ''')</span></h4>
-                        <p class="text-xs text-gray-500 dark:text-gray-400">📍 ''' + b["address"] + ''' | 📅 Joined: <span class="text-blue-600 dark:text-blue-400 font-semibold">''' + j_date + '''</span></p>
-                    </div>
-                    <div class="flex gap-2 items-center">
-                        <a href="/business/''' + b_id + '''" target="_blank" class="bg-blue-100 dark:bg-blue-600/20 text-blue-600 dark:text-blue-400 hover:bg-blue-600 hover:text-white px-3 py-1.5 rounded-xl text-xs font-bold btn-hover-effect">View</a>
-                        <a href="/admin?module=business&tab=approved&action=delete&id=''' + b_id + '''" class="bg-red-100 dark:bg-red-600/20 text-red-600 dark:text-red-400 hover:bg-red-600 hover:text-white px-3 py-1.5 rounded-xl text-xs font-bold btn-hover-effect">Delete</a>
-                    </div>
-                </div>
-                '''
-            if not content:
-                content = '<p class="text-gray-500 text-center py-8">No approved listings.</p>'
+                    '''
+                if not content:
+                    content = '<p class="text-gray-500 text-center py-8">No approved listings.</p>'
 
-        html = get_base_head(back_url=admin_back_url, back_text=admin_back_text) + '''
-        <main class="max-w-4xl mx-auto px-4 py-12 animate-fade-in">
-            <h2 class="text-2xl font-bold mb-6 text-gray-900 dark:text-white">🏢 Business Directory Management</h2>
-            <div class="flex space-x-3 mb-6">
-                <a href="/admin?module=business&tab=pending" class="px-5 py-2.5 rounded-xl font-bold text-sm transition ''' + ('bg-blue-600 text-white shadow-lg' if tab=='pending' else 'bg-gray-200 dark:bg-gray-900 text-gray-700 dark:text-gray-400 hover:bg-gray-300 dark:hover:bg-gray-800') + '''">Pending (''' + str(len(pending_biz)) + ''')</a>
-                <a href="/admin?module=business&tab=approved" class="px-5 py-2.5 rounded-xl font-bold text-sm transition ''' + ('bg-blue-600 text-white shadow-lg' if tab=='approved' else 'bg-gray-200 dark:bg-gray-900 text-gray-700 dark:text-gray-400 hover:bg-gray-300 dark:hover:bg-gray-800') + '''">Approved (''' + str(len(approved_biz)) + ''')</a>
-            </div>
-            <div class="bg-white dark:bg-gray-900 p-6 rounded-3xl border border-gray-200 dark:border-gray-800 space-y-4 shadow-lg">
-                ''' + content + '''
-            </div>
-        </main>
-        ''' + FOOTER
-        return render_template_string(html)
+            html = get_base_head(back_url=admin_back_url, back_text=admin_back_text) + '''
+            <main class="max-w-4xl mx-auto px-4 py-12 animate-fade-in">
+                <h2 class="text-2xl font-bold mb-6 text-gray-900 dark:text-white">🏢 Business Directory Management</h2>
+                <div class="flex space-x-3 mb-6">
+                    <a href="/admin?module=business&tab=pending" class="px-5 py-2.5 rounded-xl font-bold text-sm transition ''' + ('bg-blue-600 text-white shadow-lg' if tab=='pending' else 'bg-gray-200 dark:bg-gray-900 text-gray-700 dark:text-gray-400 hover:bg-gray-300 dark:hover:bg-gray-800') + '''">Pending (''' + str(len(pending_biz)) + ''')</a>
+                    <a href="/admin?module=business&tab=approved" class="px-5 py-2.5 rounded-xl font-bold text-sm transition ''' + ('bg-blue-600 text-white shadow-lg' if tab=='approved' else 'bg-gray-200 dark:bg-gray-900 text-gray-700 dark:text-gray-400 hover:bg-gray-300 dark:hover:bg-gray-800') + '''">Approved (''' + str(len(approved_biz)) + ''')</a>
+                </div>
+                <div class="bg-white dark:bg-gray-900 p-6 rounded-3xl border border-gray-200 dark:border-gray-800 space-y-4 shadow-lg">
+                    ''' + content + '''
+                </div>
+            </main>
+            ''' + FOOTER
+            return render_template_string(html)
 
-    elif module == 'payment':
-        content = ""
-        if tab == 'pending':
-            for b_id, b in pending_pay.items():
-                content += '''
-                <div class="bg-gray-50 dark:bg-gray-800/60 p-4 rounded-2xl flex justify-between items-center">
-                    <div>
-                        <h4 class="font-bold text-gray-900 dark:text-white">''' + b["name"] + '''</h4>
-                        <p class="text-xs text-gray-500 dark:text-gray-400">Method: <span class="text-blue-600 dark:text-blue-400 font-bold">''' + b.get('payment_method', 'N/A') + '''</span> | Ref: <span class="text-indigo-600 dark:text-indigo-400 font-mono font-bold">''' + b.get('payment_ref', 'N/A') + '''</span></p>
+        elif module == 'payment':
+            if tab == 'pending':
+                for b_id, b in pending_pay.items():
+                    content += '''
+                    <div class="bg-gray-50 dark:bg-gray-800/60 p-4 rounded-2xl flex justify-between items-center">
+                        <div>
+                            <h4 class="font-bold text-gray-900 dark:text-white">''' + b["name"] + '''</h4>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">Method: <span class="text-blue-600 dark:text-blue-400 font-bold">''' + b.get('payment_method', 'N/A') + '''</span> | Ref: <span class="text-indigo-600 dark:text-indigo-400 font-mono font-bold">''' + b.get('payment_ref', 'N/A') + '''</span></p>
+                        </div>
+                        <a href="/admin?module=payment&tab=pending&action=approve_pay&id=''' + b_id + '''" class="bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded-xl text-xs font-bold btn-hover-effect">Verify & Activate (60 Days)</a>
                     </div>
-                    <a href="/admin?module=payment&tab=pending&action=approve_pay&id=''' + b_id + '''" class="bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded-xl text-xs font-bold btn-hover-effect">Verify & Activate (60 Days)</a>
-                </div>
-                '''
-            if not content:
-                content = '<p class="text-gray-500 text-center py-8">No pending payment verifications.</p>'
-        elif tab == 'alerts':
-            for b_id, b in expiring_alerts.items():
-                ed = b.get('expiry_date').strftime('%Y-%m-%d')
-                content += '''
-                <div class="bg-yellow-50 dark:bg-yellow-500/10 border border-yellow-200 dark:border-yellow-500/30 p-4 rounded-2xl flex justify-between items-center">
-                    <div>
-                        <h4 class="font-bold text-gray-900 dark:text-white">''' + b["name"] + '''</h4>
-                        <p class="text-xs text-yellow-600 dark:text-yellow-400 font-semibold">⚠️ Expires on: ''' + ed + '''</p>
+                    '''
+                if not content:
+                    content = '<p class="text-gray-500 text-center py-8">No pending payment verifications.</p>'
+            elif tab == 'alerts':
+                for b_id, b in expiring_alerts.items():
+                    ed = b.get('expiry_date').strftime('%Y-%m-%d')
+                    content += '''
+                    <div class="bg-yellow-50 dark:bg-yellow-500/10 border border-yellow-200 dark:border-yellow-500/30 p-4 rounded-2xl flex justify-between items-center">
+                        <div>
+                            <h4 class="font-bold text-gray-900 dark:text-white">''' + b["name"] + '''</h4>
+                            <p class="text-xs text-yellow-600 dark:text-yellow-400 font-semibold">⚠️ Expires on: ''' + ed + '''</p>
+                        </div>
+                        <a href="/admin?module=payment&tab=alerts&action=approve_pay&id=''' + b_id + '''" class="bg-yellow-500 hover:bg-yellow-400 text-gray-950 px-4 py-2 rounded-xl text-xs font-bold btn-hover-effect">Renew 60 Days</a>
                     </div>
-                    <a href="/admin?module=payment&tab=alerts&action=approve_pay&id=''' + b_id + '''" class="bg-yellow-500 hover:bg-yellow-400 text-gray-950 px-4 py-2 rounded-xl text-xs font-bold btn-hover-effect">Renew 60 Days</a>
-                </div>
-                '''
-            if not content:
-                content = '<p class="text-gray-500 text-center py-8">No subscriptions expiring in the next 5 days.</p>'
-        else:
-            for b_id, b in expired_subs.items():
-                ed = b.get('expiry_date').strftime('%Y-%m-%d')
-                content += '''
-                <div class="bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 p-4 rounded-2xl flex justify-between items-center">
-                    <div>
-                        <h4 class="font-bold text-gray-900 dark:text-white">''' + b["name"] + '''</h4>
-                        <p class="text-xs text-red-600 dark:text-red-400 font-semibold">❌ Expired on: ''' + ed + '''</p>
+                    '''
+                if not content:
+                    content = '<p class="text-gray-500 text-center py-8">No subscriptions expiring in the next 5 days.</p>'
+            else:
+                for b_id, b in expired_subs.items():
+                    ed = b.get('expiry_date').strftime('%Y-%m-%d')
+                    content += '''
+                    <div class="bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 p-4 rounded-2xl flex justify-between items-center">
+                        <div>
+                            <h4 class="font-bold text-gray-900 dark:text-white">''' + b["name"] + '''</h4>
+                            <p class="text-xs text-red-600 dark:text-red-400 font-semibold">❌ Expired on: ''' + ed + '''</p>
+                        </div>
+                        <a href="/admin?module=payment&tab=expired&action=approve_pay&id=''' + b_id + '''" class="bg-red-600 hover:bg-red-500 text-white px-4 py-2 rounded-xl text-xs font-bold btn-hover-effect">Restore & Renew</a>
                     </div>
-                    <a href="/admin?module=payment&tab=expired&action=approve_pay&id=''' + b_id + '''" class="bg-red-600 hover:bg-red-500 text-white px-4 py-2 rounded-xl text-xs font-bold btn-hover-effect">Restore & Renew</a>
-                </div>
-                '''
-            if not content:
-                content = '<p class="text-gray-500 text-center py-8">No expired subscriptions found.</p>'
+                    '''
+                if not content:
+                    content = '<p class="text-gray-500 text-center py-8">No expired subscriptions found.</p>'
 
-        html = get_base_head(back_url=admin_back_url, back_text=admin_back_text) + '''
-        <main class="max-w-4xl mx-auto px-4 py-12 animate-fade-in">
-            <h2 class="text-2xl font-bold mb-6 text-gray-900 dark:text-white">💳 Payment & Subscription Hub</h2>
-            <div class="flex space-x-3 mb-6">
-                <a href="/admin?module=payment&tab=pending" class="px-5 py-2.5 rounded-xl font-bold text-sm transition ''' + ('bg-indigo-600 text-white shadow-lg' if tab=='pending' else 'bg-gray-200 dark:bg-gray-900 text-gray-700 dark:text-gray-400 hover:bg-gray-300 dark:hover:bg-gray-800') + '''">Unpaid (''' + str(len(pending_pay)) + ''')</a>
-                <a href="/admin?module=payment&tab=alerts" class="px-5 py-2.5 rounded-xl font-bold text-sm transition ''' + ('bg-yellow-500 text-gray-950 shadow-lg' if tab=='alerts' else 'bg-gray-200 dark:bg-gray-900 text-gray-700 dark:text-gray-400 hover:bg-gray-300 dark:hover:bg-gray-800') + '''">Expiry Alerts (''' + str(len(expiring_alerts)) + ''')</a>
-                <a href="/admin?module=payment&tab=expired" class="px-5 py-2.5 rounded-xl font-bold text-sm transition ''' + ('bg-red-600 text-white shadow-lg' if tab=='expired' else 'bg-gray-200 dark:bg-gray-900 text-gray-700 dark:text-gray-400 hover:bg-gray-300 dark:hover:bg-gray-800') + '''">Expired (''' + str(len(expired_subs)) + ''')</a>
-            </div>
-            <div class="bg-white dark:bg-gray-900 p-6 rounded-3xl border border-gray-200 dark:border-gray-800 space-y-4 shadow-lg">
-                ''' + content + '''
-            </div>
-        </main>
-        ''' + FOOTER
-        return render_template_string(html)
+            html = get_base_head(back_url=admin_back_url, back_text=admin_back_text) + '''
+            <main class="max-w-4xl mx-auto px-4 py-12 animate-fade-in">
+                <h2 class="text-2xl font-bold mb-6 text-gray-900 dark:text-white">💳 Payment & Subscription Hub</h2>
+                <div class="flex space-x-3 mb-6">
+                    <a href="/admin?module=payment&tab=pending" class="px-5 py-2.5 rounded-xl font-bold text-sm transition ''' + ('bg-indigo-600 text-white shadow-lg' if tab=='pending' else 'bg-gray-200 dark:bg-gray-900 text-gray-700 dark:text-gray-400 hover:bg-gray-300 dark:hover:bg-gray-800') + '''">Unpaid (''' + str(len(pending_pay)) + ''')</a>
+                    <a href="/admin?module=payment&tab=alerts" class="px-5 py-2.5 rounded-xl font-bold text-sm transition ''' + ('bg-yellow-500 text-gray-950 shadow-lg' if tab=='alerts' else 'bg-gray-200 dark:bg-gray-900 text-gray-700 dark:text-gray-400 hover:bg-gray-300 dark:hover:bg-gray-800') + '''">Expiry Alerts (''' + str(len(expiring_alerts)) + ''')</a>
+                    <a href="/admin?module=payment&tab=expired" class="px-5 py-2.5 rounded-xl font-bold text-sm transition ''' + ('bg-red-600 text-white shadow-lg' if tab=='expired' else 'bg-gray-200 dark:bg-gray-900 text-gray-700 dark:text-gray-400 hover:bg-gray-300 dark:hover:bg-gray-800') + '''">Expired (''' + str(len(expired_subs)) + ''')</a>
+                </div>
+                <div class="bg-white dark:bg-gray-900 p-6 rounded-3xl border border-gray-200 dark:border-gray-800 space-y-4 shadow-lg">
+                    ''' + content + '''
+                </div>
+            </main>
+            ''' + FOOTER
+            return render_template_string(html)
 
 if __name__ == '__main__':
     app.run(debug=True)
