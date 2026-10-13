@@ -1,6 +1,7 @@
-"""SwatBiz Hub - Real-time Auto-Suggestions Search & Subcategory Filtering."""
+"""SwatBiz Hub - Structured Doctor Cards, Top Header Navigation & Complete Theme Switcher."""
 from datetime import datetime, timedelta
 import os
+import json
 from flask import Flask, abort, redirect, render_template_string, request, url_for, session
 
 SITE_NAME = 'SwatBiz Hub'
@@ -25,7 +26,23 @@ BUSINESSES = {
         'payment_status': 'paid',
         'joining_date': datetime.now() - timedelta(days=10),
         'expiry_date': datetime.now() + timedelta(days=50),
-        'special_info': 'Dr. Muhammad Ali (Cardiologist - OPD Block Room 12), Dr. Ayesha Khan (Pediatrician - Children Ward)',
+        'doctors': [
+            {
+                'name': 'Dr. Muhammad Ali',
+                'specialty': 'Cardiologist',
+                'appt_timing': '9:00 AM - 2:00 PM',
+                'clinic_timing': 'Mon - Sat (9 AM - 5 PM)',
+                'room': 'OPD Block - Room 12'
+            },
+            {
+                'name': 'Dr. Ayesha Khan',
+                'specialty': 'Pediatrician',
+                'appt_timing': '10:00 AM - 4:00 PM',
+                'clinic_timing': 'Mon - Fri (10 AM - 4 PM)',
+                'room': 'Children Ward - Room 04'
+            }
+        ],
+        'special_info': 'Dr. Muhammad Ali (Cardiologist), Dr. Ayesha Khan (Pediatrician)',
         'tests_dishes': 'MRI, CT Scan, X-Ray, Ultrasound, Emergency Care',
         'client_password': 'client123'
     },
@@ -44,7 +61,16 @@ BUSINESSES = {
         'payment_status': 'paid',
         'joining_date': datetime.now(),
         'expiry_date': datetime.now() + timedelta(days=60),
-        'special_info': 'Special Family Cabin Available | Chef Rashid (Master Grill Chef)',
+        'doctors': [
+            {
+                'name': 'Chef Rashid',
+                'specialty': 'Master Grill & BBQ Chef',
+                'appt_timing': '12:00 PM - 11:00 PM',
+                'clinic_timing': 'Daily Open',
+                'room': 'Main Grill Section / Family Cabin'
+            }
+        ],
+        'special_info': 'Special Family Cabin Available | Chef Rashid',
         'tests_dishes': 'Dumba Karahi (Rs. 2400/kg), Shinwari Tikka (Rs. 1800/kg), Mutton Kabab, Green Tea',
         'client_password': 'client123'
     },
@@ -63,27 +89,17 @@ BUSINESSES = {
         'payment_status': 'paid',
         'joining_date': datetime.now() - timedelta(days=5),
         'expiry_date': datetime.now() + timedelta(days=55),
-        'special_info': 'Prof. Shah Zarin (Principal), Admissions open for Metric & FSc Pre-Medical / Pre-Engineering',
+        'doctors': [
+            {
+                'name': 'Prof. Shah Zarin',
+                'specialty': 'Principal & Academic Head',
+                'appt_timing': '8:00 AM - 2:00 PM',
+                'clinic_timing': 'Mon - Sat',
+                'room': 'Main Administration Block'
+            }
+        ],
+        'special_info': 'Prof. Shah Zarin (Principal), Admissions open for Metric & FSc',
         'tests_dishes': 'Science Labs, Computer Labs, Library, Sports Ground',
-        'client_password': 'client123'
-    },
-    '4': {
-        'id': '4',
-        'category': 'education',
-        'subcategory': 'University',
-        'name': 'University of Swat',
-        'address': 'Charbagh, Swat',
-        'phones': ['+92 946 730500'],
-        'image': 'https://images.unsplash.com/photo-1541829070764-84a7d30dd3f3?auto=format&fit=crop&w=800&q=80',
-        'images': ['https://images.unsplash.com/photo-1541829070764-84a7d30dd3f3?auto=format&fit=crop&w=800&q=80'],
-        'status': 'approved',
-        'payment_method': 'Free Trial',
-        'payment_ref': 'TRIAL-FREE',
-        'payment_status': 'paid',
-        'joining_date': datetime.now() - timedelta(days=15),
-        'expiry_date': datetime.now() + timedelta(days=45),
-        'special_info': 'BS Computer Science, Software Engineering, BBA, Pharm-D programs available',
-        'tests_dishes': 'Research Center, Digital Library, Hostel Facility',
         'client_password': 'client123'
     }
 }
@@ -243,7 +259,16 @@ HOME_HEAD = '''
     </header>
 '''
 
-BASE_HEAD = '''
+FOOTER = '''
+    <footer class="text-center py-8 text-sm text-gray-500 border-t border-gray-200 dark:border-gray-800/80 mt-20 animate-fade-in">
+        <p>&copy; 2026 ''' + SITE_NAME + '''. All rights reserved.</p>
+    </footer>
+</body>
+</html>
+'''
+
+def get_base_head(back_url="/", back_text="Back to Home"):
+    return '''
 <!DOCTYPE html>
 <html lang="en" id="html-root" class="dark">
 <head>
@@ -258,21 +283,15 @@ BASE_HEAD = '''
 <body class="bg-gray-100 dark:bg-gray-950 text-gray-900 dark:text-gray-100 min-h-screen transition-colors duration-300">
     <header class="bg-white dark:bg-slate-900/90 border-b border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white shadow-md sticky top-0 z-40 backdrop-blur-md">
         <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-            <a href="/" class="text-xl font-bold text-gray-800 dark:text-gray-200 hover:text-blue-500 dark:hover:text-blue-400 transition-all transform hover:-translate-x-1 flex items-center gap-2">← Back to Home</a>
+            <a href="''' + back_url + '''" class="text-sm font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-600/10 border border-blue-200 dark:border-blue-500/20 px-4 py-2 rounded-xl hover:bg-blue-600 hover:text-white transition flex items-center gap-2 shadow-sm">
+                ← ''' + back_text + '''
+            </a>
             <div class="flex items-center space-x-3">
                 ''' + HEADER_THEME_BTN + '''
                 <a href="/register" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2.5 rounded-xl text-sm font-bold shadow-lg btn-hover-effect">＋ Register Business</a>
             </div>
         </div>
     </header>
-'''
-
-FOOTER = '''
-    <footer class="text-center py-8 text-sm text-gray-500 border-t border-gray-200 dark:border-gray-800/80 mt-20 animate-fade-in">
-        <p>&copy; 2026 ''' + SITE_NAME + '''. All rights reserved.</p>
-    </footer>
-</body>
-</html>
 '''
 
 @app.route('/')
@@ -320,9 +339,11 @@ def category_page(cat_slug):
         match_subcat = True
         
         if search_query:
+            doctors_str = " ".join([d.get('name', '') + " " + d.get('specialty', '') for d in b.get('doctors', [])]).lower()
             if not (search_query in b.get('name', '').lower() or 
                     search_query in b.get('address', '').lower() or 
                     search_query in b.get('subcategory', '').lower() or 
+                    search_query in doctors_str or
                     search_query in b.get('special_info', '').lower() or 
                     search_query in b.get('tests_dishes', '').lower()):
                 match_search = False
@@ -360,7 +381,6 @@ def category_page(cat_slug):
     if not cards:
         cards = '<div class="col-span-3 text-center py-20 text-gray-500 dark:text-gray-400"><p class="text-xl">No active or approved listings found matching your search.</p></div>'
 
-    import json
     biz_json_data = json.dumps([{
         'id': b['id'],
         'name': b['name'],
@@ -368,7 +388,7 @@ def category_page(cat_slug):
         'subcategory': b.get('subcategory', '')
     } for b in all_biz])
 
-    html = BASE_HEAD + '''
+    html = get_base_head(back_url="/", back_text="Back to Home") + '''
     <main class="max-w-7xl mx-auto px-4 py-12 animate-fade-in">
         <div class="mb-8 text-center">
             <span class="text-6xl inline-block animate-bounce">''' + cat['icon'] + '''</span>
@@ -467,8 +487,10 @@ def business_detail(b_id):
             error_msg = "Incorrect Client Password! Please try again."
 
     now = datetime.now()
+    category_back_url = f"/category/{b['category']}"
+    
     if (b.get('status') != 'approved' or b.get('expiry_date', now) < now) and not is_admin and not is_client:
-        html = BASE_HEAD + '''
+        html = get_base_head(back_url=category_back_url, back_text="Back to Category") + '''
         <main class="max-w-xl mx-auto px-4 py-20 text-center animate-fade-in">
             <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-10 shadow-xl space-y-4">
                 <span class="text-6xl inline-block">🔒</span>
@@ -482,7 +504,7 @@ def business_detail(b_id):
                 ''' + (f'<p class="text-red-500 text-xs font-semibold">{error_msg}</p>' if error_msg else '') + '''
 
                 <div class="pt-4">
-                    <a href="/" class="text-gray-500 dark:text-gray-400 hover:underline text-xs">Return to Home</a>
+                    <a href="''' + category_back_url + '''" class="text-gray-500 dark:text-gray-400 hover:underline text-xs">Return to Category</a>
                 </div>
             </div>
         </main>
@@ -490,7 +512,32 @@ def business_detail(b_id):
         return render_template_string(html)
 
     cat_meta = CATEGORIES.get(b['category'], {'info_title': 'Special Info', 'extra_title': 'Tests & Services'})
-    special_info = b.get('special_info', 'Not specified')
+    doctors_data = b.get('doctors', [])
+    
+    # Generate Structured Interactive Doctor/Staff Cards
+    doctors_cards_html = ""
+    if doctors_data:
+        for idx, doc in enumerate(doctors_data):
+            doctors_cards_html += f'''
+            <div class="bg-gray-50 dark:bg-gray-950 p-5 rounded-2xl border border-gray-200 dark:border-gray-800 card-hover-effect space-y-2">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <h4 class="text-base font-extrabold text-blue-600 dark:text-blue-400">{doc.get('name', 'N/A')}</h4>
+                        <p class="text-xs font-semibold text-indigo-600 dark:text-indigo-400">{doc.get('specialty', 'Specialist')}</p>
+                    </div>
+                    <span class="bg-blue-100 dark:bg-blue-600/20 text-blue-700 dark:text-blue-400 text-[10px] px-2.5 py-1 rounded-full font-bold">Available</span>
+                </div>
+                <div class="pt-2 border-t border-gray-200 dark:border-gray-800/80 text-xs space-y-1 text-gray-700 dark:text-gray-300">
+                    <p>🕒 <strong>Appt Timing:</strong> {doc.get('appt_timing', 'N/A')}</p>
+                    <p>📅 <strong>Clinic Days:</strong> {doc.get('clinic_timing', 'N/A')}</p>
+                    <p>🚪 <strong>Room / Block:</strong> {doc.get('room', 'N/A')}</p>
+                    <p class="text-[11px] text-gray-500 dark:text-gray-400 pt-1">🏥 <strong>Hospital:</strong> {b['name']} ({b['address']})</p>
+                </div>
+            </div>
+            '''
+    else:
+        doctors_cards_html = f'''<p class="text-gray-700 dark:text-gray-300 text-sm leading-relaxed whitespace-pre-line">{b.get('special_info', 'Not specified')}</p>'''
+
     tests_dishes = b.get('tests_dishes', 'Not specified')
     phones_list = b.get('phones', ['N/A'])
     phones_html = ", ".join([f'<a href="tel:{p}" class="text-blue-600 dark:text-white hover:underline font-bold">{p}</a>' for p in phones_list])
@@ -501,7 +548,7 @@ def business_detail(b_id):
         if img_url:
             gallery_html += f'<img src="{img_url}" class="w-full h-64 object-cover rounded-2xl border border-gray-200 dark:border-gray-800 hover:scale-105 transition duration-300 shadow-md">'
 
-    html = BASE_HEAD + '''
+    html = get_base_head(back_url=category_back_url, back_text="Back to Category") + '''
     <main class="max-w-4xl mx-auto px-4 py-12 animate-fade-in">
         <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl overflow-hidden shadow-xl space-y-6 p-8">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -522,9 +569,11 @@ def business_detail(b_id):
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-gray-200 dark:border-gray-800">
-                <div class="bg-gray-50 dark:bg-gray-800/50 p-6 rounded-2xl border border-gray-200 dark:border-gray-700/50 card-hover-effect">
-                    <h3 class="text-lg font-bold text-blue-600 dark:text-blue-400 mb-2">''' + cat_meta['info_title'] + '''</h3>
-                    <p class="text-gray-700 dark:text-gray-300 text-sm leading-relaxed whitespace-pre-line">''' + special_info + '''</p>
+                <div class="bg-gray-50 dark:bg-gray-800/50 p-6 rounded-2xl border border-gray-200 dark:border-gray-700/50 card-hover-effect space-y-3">
+                    <h3 class="text-lg font-bold text-blue-600 dark:text-blue-400">''' + cat_meta['info_title'] + '''</h3>
+                    <div class="space-y-3">
+                        ''' + doctors_cards_html + '''
+                    </div>
                 </div>
                 <div class="bg-gray-50 dark:bg-gray-800/50 p-6 rounded-2xl border border-gray-200 dark:border-gray-700/50 card-hover-effect">
                     <h3 class="text-lg font-bold text-emerald-600 dark:text-emerald-400 mb-2">''' + cat_meta['extra_title'] + '''</h3>
@@ -534,7 +583,7 @@ def business_detail(b_id):
 
             <div class="pt-4 border-t border-gray-200 dark:border-gray-800 flex justify-between items-center">
                 <span class="text-xs text-gray-500">🔒 Secure Client Access Active</span>
-                <a href="/category/''' + b['category'] + '''" class="bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 px-5 py-2.5 rounded-xl text-sm font-semibold transition transform hover:-translate-x-1">← Back to Category</a>
+                <a href="''' + category_back_url + '''" class="bg-blue-600 text-white hover:bg-blue-500 px-5 py-2.5 rounded-xl text-sm font-semibold transition transform hover:-translate-x-1 shadow-md">← Back to Category</a>
             </div>
         </div>
     </main>
@@ -555,14 +604,21 @@ def register_business():
         col4_vals = request.form.getlist('repeater_col4[]')
         col5_vals = request.form.getlist('repeater_col5[]')
 
+        doctors_list = []
         formatted_repeater_list = []
         for i in range(len(names)):
             if names[i].strip():
+                doc_obj = {
+                    'name': names[i].strip(),
+                    'specialty': col2_vals[i].strip() if i < len(col2_vals) else 'N/A',
+                    'appt_timing': col3_vals[i].strip() if i < len(col3_vals) else 'N/A',
+                    'clinic_timing': col4_vals[i].strip() if i < len(col4_vals) else 'N/A',
+                    'room': col5_vals[i].strip() if i < len(col5_vals) else 'N/A'
+                }
+                doctors_list.append(doc_obj)
+                
                 entry_str = "• " + names[i].strip()
                 if i < len(col2_vals) and col2_vals[i].strip(): entry_str += " (" + col2_vals[i].strip() + ")"
-                if i < len(col3_vals) and col3_vals[i].strip(): entry_str += " | Timing: " + col3_vals[i].strip()
-                if i < len(col4_vals) and col4_vals[i].strip(): entry_str += " | Hours: " + col4_vals[i].strip()
-                if i < len(col5_vals) and col5_vals[i].strip(): entry_str += " | Location/Room: " + col5_vals[i].strip()
                 formatted_repeater_list.append(entry_str)
 
         combined_repeater_text = "\n".join(formatted_repeater_list) if formatted_repeater_list else request.form.get('special_info', 'N/A')
@@ -583,6 +639,7 @@ def register_business():
             'phones': clean_phones if clean_phones else ['N/A'],
             'image': primary_img,
             'images': img_urls if img_urls else [primary_img],
+            'doctors': doctors_list,
             'special_info': combined_repeater_text,
             'tests_dishes': request.form.get('tests_dishes', 'N/A'),
             'status': 'pending',
@@ -599,10 +656,9 @@ def register_business():
     for k, v in CATEGORIES.items():
         opts += '<option value="' + k + '">' + v["title"] + '</option>'
 
-    import json
     subcat_json_data = json.dumps({k: v['subcategories'] for k, v in CATEGORIES.items()})
 
-    html = BASE_HEAD + '''
+    html = get_base_head(back_url="/", back_text="Back to Home") + '''
     <!-- Custom Animated Confirmation Modal -->
     <div id="confirmModal" class="fixed inset-0 bg-black/60 dark:bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center hidden">
         <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-6 md:p-8 max-w-sm w-full mx-4 shadow-2xl animate-modal text-center space-y-4">
@@ -911,7 +967,7 @@ def admin_panel():
             return redirect('/admin')
 
     if not session.get('admin_logged_in'):
-        html = BASE_HEAD + '''
+        html = get_base_head(back_url="/", back_text="Back to Home") + '''
         <main class="max-w-md mx-auto px-4 py-20 text-center animate-fade-in">
             <div class="bg-white dark:bg-gray-900 p-8 rounded-3xl border border-gray-200 dark:border-gray-800 shadow-xl">
                 <h2 class="text-2xl font-bold mb-4 text-gray-900 dark:text-white">🔒 Admin Portal Login</h2>
@@ -963,7 +1019,7 @@ def admin_panel():
                 expired_subs[k] = v
 
     if not module:
-        html = BASE_HEAD + '''
+        html = get_base_head(back_url="/", back_text="Back to Home") + '''
         <main class="max-w-5xl mx-auto px-4 py-12 animate-fade-in">
             <div class="flex justify-between items-center mb-10">
                 <h2 class="text-3xl font-extrabold text-gray-900 dark:text-white">🛠️ Admin Control Center</h2>
@@ -1042,7 +1098,7 @@ def admin_panel():
             if not content:
                 content = '<p class="text-gray-500 text-center py-8">No approved listings.</p>'
 
-        html = BASE_HEAD + '''
+        html = get_base_head(back_url="/", back_text="Back to Home") + '''
         <main class="max-w-4xl mx-auto px-4 py-12 animate-fade-in">
             <h2 class="text-2xl font-bold mb-6 text-gray-900 dark:text-white">🏢 Business Directory Management</h2>
             <div class="flex space-x-3 mb-6">
@@ -1100,7 +1156,7 @@ def admin_panel():
             if not content:
                 content = '<p class="text-gray-500 text-center py-8">No expired subscriptions found.</p>'
 
-        html = BASE_HEAD + '''
+        html = get_base_head(back_url="/", back_text="Back to Home") + '''
         <main class="max-w-4xl mx-auto px-4 py-12 animate-fade-in">
             <h2 class="text-2xl font-bold mb-6 text-gray-900 dark:text-white">💳 Payment & Subscription Hub</h2>
             <div class="flex space-x-3 mb-6">
