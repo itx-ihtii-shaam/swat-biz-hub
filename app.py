@@ -1,4 +1,4 @@
-"""SwatBiz Hub - Fixed Dynamic Repeater & Subcategory Select Application."""
+"""SwatBiz Hub - Subcategory Optional & Row Delete Confirmation Application."""
 from datetime import datetime, timedelta
 import os
 from flask import Flask, abort, redirect, render_template_string, request, url_for, session
@@ -382,11 +382,14 @@ def register_business():
                 formatted_repeater_list.append(entry_str)
 
         combined_repeater_text = "\n".join(formatted_repeater_list) if formatted_repeater_list else request.form.get('special_info', 'N/A')
+        subcat = request.form.get('subcategory', '').strip()
+        if not subcat:
+            subcat = 'General'
 
         BUSINESSES[b_id] = {
             'id': b_id,
             'category': request.form.get('category'),
-            'subcategory': request.form.get('subcategory', 'General'),
+            'subcategory': subcat,
             'name': request.form.get('name'),
             'address': request.form.get('address'),
             'phones': [request.form.get('phone', '')],
@@ -419,7 +422,7 @@ def register_business():
                     <select name="category" id="categorySelect" class="w-full p-3.5 rounded-xl bg-gray-900 border border-gray-800 focus:ring-2 focus:ring-blue-500 outline-none transition">''' + opts + '''</select>
                 </div>
                 <div>
-                    <label class="block text-xs font-bold text-gray-400 mb-1">Subcategory</label>
+                    <label class="block text-xs font-bold text-gray-400 mb-1">Subcategory (Optional)</label>
                     <select name="subcategory" id="subcategorySelect" class="w-full p-3.5 rounded-xl bg-gray-900 border border-gray-800 focus:ring-2 focus:ring-blue-500 outline-none transition"></select>
                 </div>
             </div>
@@ -530,6 +533,13 @@ def register_business():
         var addRowBtn = document.getElementById('addRowBtn');
         var repeaterContainer = document.getElementById('repeaterContainer');
 
+        function deleteRowWithConfirm(btn) {
+            if (confirm("Are you sure you want to delete this row?")) {
+                var row = btn.parentElement.parentElement;
+                row.remove();
+            }
+        }
+
         function addNewRow() {
             var cat = catSelect.value;
             var cfg = categoryRowConfigs[cat] || categoryRowConfigs['hospitals'];
@@ -547,7 +557,7 @@ def register_business():
                 '</div>' +
                 '<div class="flex gap-2">' +
                 '<input type="text" name="repeater_col5[]" placeholder="' + cfg.c5 + '" class="w-full p-3 bg-gray-950 border border-gray-800 rounded-xl text-xs text-white focus:ring-2 focus:ring-blue-500 outline-none">' +
-                '<button type="button" onclick="this.parentElement.parentElement.remove()" class="bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white px-3 rounded-xl text-xs font-bold transition">✕</button>' +
+                '<button type="button" onclick="deleteRowWithConfirm(this)" class="bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white px-3 rounded-xl text-xs font-bold transition">✕</button>' +
                 '</div>';
             repeaterContainer.appendChild(rowCard);
         }
@@ -556,6 +566,12 @@ def register_business():
             var val = catSelect.value;
             subcatSelect.innerHTML = '';
             
+            // Optional default subcategory option
+            var defaultOpt = document.createElement('option');
+            defaultOpt.value = '';
+            defaultOpt.textContent = '-- Select Subcategory (Optional) --';
+            subcatSelect.appendChild(defaultOpt);
+
             if(subcategoriesData[val]) {
                 for(var i=0; i<subcategoriesData[val].length; i++) {
                     var opt = document.createElement('option');
