@@ -1,4 +1,4 @@
-"""SwatBiz Hub - Final Complete Application with 2-Month Free Trial, Dynamic Details & Animations."""
+"""SwatBiz Hub - Final Application with Dynamic Repeater Fields & Category Dynamic Inputs."""
 from datetime import datetime, timedelta
 import os
 from flask import Flask, abort, redirect, render_template_string, request, url_for, session
@@ -24,7 +24,7 @@ BUSINESSES = {
         'payment_status': 'paid',
         'joining_date': datetime.now() - timedelta(days=10),
         'expiry_date': datetime.now() + timedelta(days=50),
-        'special_info': 'Dr. Muhammad Ali (Cardiologist), Dr. Ayesha Khan (Pediatrician)',
+        'special_info': 'Dr. Muhammad Ali (Cardiologist - OPD Block Room 12), Dr. Ayesha Khan (Pediatrician - Children Ward)',
         'tests_dishes': 'MRI, CT Scan, X-Ray, Ultrasound, Emergency Care',
         'client_password': 'client123'
     },
@@ -42,8 +42,8 @@ BUSINESSES = {
         'payment_status': 'paid',
         'joining_date': datetime.now(),
         'expiry_date': datetime.now() + timedelta(days=60),
-        'special_info': 'Special Family Cabin Available',
-        'tests_dishes': 'Dumba Karahi, Shinwari Tikka, Mutton Kabab, Green Tea',
+        'special_info': 'Special Family Cabin Available | Chef Rashid (Master Grill Chef)',
+        'tests_dishes': 'Dumba Karahi (Rs. 2400/kg), Shinwari Tikka (Rs. 1800/kg), Mutton Kabab, Green Tea',
         'client_password': 'client123'
     },
     '3': {
@@ -60,39 +60,39 @@ BUSINESSES = {
         'payment_status': 'paid',
         'joining_date': datetime.now() - timedelta(days=45),
         'expiry_date': datetime.now() + timedelta(days=15),
-        'special_info': 'Available Pharmacist: Dr. Bilal Ahmed',
-        'tests_dishes': 'Blood Pressure Check, Blood Glucose Testing, First Aid',
+        'special_info': 'Available Pharmacist: Dr. Bilal Ahmed (B.Pharm)',
+        'tests_dishes': 'Blood Pressure Check, Blood Glucose Testing, First Aid Kit',
         'client_password': 'client123'
     }
 }
 
 CATEGORIES = {
     'hospitals': {
-        'title': 'Hospitals & Healthcare', 'icon': '🏥', 'search_hint': 'Search name or location...', 'info_title': '👨‍⚕️ Doctor & Specialist Info', 'extra_title': '🔬 Available Tests & Services',
+        'title': 'Hospitals & Healthcare', 'icon': '🏥', 'search_hint': 'Search name or location...', 'info_title': '👨‍⚕️ Doctors, Clinic & Timings', 'extra_title': '🔬 Available Tests & Services',
         'subcategories': ['General Hospital', 'Dental Clinic', 'Eye Specialist', 'Cardiology Clinic', 'Laboratory & Diagnostics']
     },
     'pharmacies': {
-        'title': 'Pharmacies & Medical Stores', 'icon': '💊', 'search_hint': 'Search medicine or store...', 'info_title': '🧑‍⚕️ Pharmacist / Staff Info', 'extra_title': '💊 Medicines & Items',
+        'title': 'Pharmacies & Medical Stores', 'icon': '💊', 'search_hint': 'Search medicine or store...', 'info_title': '🧑‍⚕️ Qualified Pharmacists & Staff', 'extra_title': '💊 Available Medicines & Items',
         'subcategories': ['Medical Store', 'Homeopathic Store', 'Herbal & Organic', 'Surgical Equipment']
     },
     'restaurants': {
-        'title': 'Restaurants & Cafes', 'icon': '🍽️', 'search_hint': 'Search restaurant...', 'info_title': '👨‍🍳 Chef & Speciality Info', 'extra_title': '🍲 Special Dishes & Menu',
+        'title': 'Restaurants & Cafes', 'icon': '🍽️', 'search_hint': 'Search restaurant...', 'info_title': '👨‍🍳 Chefs & Dining Features', 'extra_title': '🍲 Menu, Dishes & Prices',
         'subcategories': ['Traditional / Shinwari', 'Fast Food & Burgers', 'BBQ & Grill', 'Coffee Shop & Cafe', 'Desi Restaurant']
     },
     'supermarts': {
-        'title': 'Supermarts & Grocery', 'icon': '🛒', 'search_hint': 'Search store or item...', 'info_title': '🏬 Store Info', 'extra_title': '🛍️ Available Items & Groceries',
+        'title': 'Supermarts & Grocery', 'icon': '🛒', 'search_hint': 'Search store or item...', 'info_title': '🏬 Store Facilities & Staff', 'extra_title': '🛍️ Available Groceries & Products',
         'subcategories': ['General Store', 'Supermarket', 'Vegetables & Fruits', 'Bakery & Sweets']
     },
     'property': {
-        'title': 'Property Dealers', 'icon': '🏠', 'search_hint': 'Search plot or house...', 'info_title': '🧑‍💼 Dealer Info', 'extra_title': '🏡 Plots & Properties',
+        'title': 'Property Dealers', 'icon': '🏠', 'search_hint': 'Search plot or house...', 'info_title': '🧑‍💼 Agents & Dealers', 'extra_title': '🏡 Featured Plots & Properties',
         'subcategories': ['Plot & Land Dealer', 'House & Villa Rentals', 'Commercial Plaza', 'Real Estate Agency']
     },
     'hotels': {
-        'title': 'Hotels & Guest Houses', 'icon': '🏨', 'search_hint': 'Search hotel...', 'info_title': '🛎️ Management Info', 'extra_title': '🛏️ Rooms & Facilities',
+        'title': 'Hotels & Guest Houses', 'icon': '🏨', 'search_hint': 'Search hotel...', 'info_title': '🛎️ Management & Reception', 'extra_title': '🛏️ Rooms, Rates & Facilities',
         'subcategories': ['Luxury Hotel', 'Guest House', 'Resort', 'Budget Inn']
     },
     'education': {
-        'title': 'Educational Institutes', 'icon': '🎓', 'search_hint': 'Search school or college...', 'info_title': '👨‍🏫 Principal & Faculty Info', 'extra_title': '📚 Courses & Programs',
+        'title': 'Educational Institutes', 'icon': '🎓', 'search_hint': 'Search school or college...', 'info_title': '👨‍🏫 Faculty & Teachers Info', 'extra_title': '📚 Offered Courses & Programs',
         'subcategories': ['School & College', 'University', 'Academy & Tuition', 'Language & Computer Center']
     }
 }
@@ -385,11 +385,11 @@ def business_detail(b_id):
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2 border-t border-gray-800">
                     <div class="bg-gray-800/50 p-6 rounded-2xl border border-gray-700/50">
                         <h3 class="text-lg font-bold text-blue-400 mb-2">''' + cat_meta['info_title'] + '''</h3>
-                        <p class="text-gray-300 text-sm leading-relaxed">''' + special_info + '''</p>
+                        <p class="text-gray-300 text-sm leading-relaxed whitespace-pre-line">''' + special_info + '''</p>
                     </div>
                     <div class="bg-gray-800/50 p-6 rounded-2xl border border-gray-700/50">
                         <h3 class="text-lg font-bold text-emerald-400 mb-2">''' + cat_meta['extra_title'] + '''</h3>
-                        <p class="text-gray-300 text-sm leading-relaxed">''' + tests_dishes + '''</p>
+                        <p class="text-gray-300 text-sm leading-relaxed whitespace-pre-line">''' + tests_dishes + '''</p>
                     </div>
                 </div>
 
@@ -407,6 +407,26 @@ def business_detail(b_id):
 def register_business():
     if request.method == 'POST':
         b_id = str(len(BUSINESSES) + 1)
+        
+        # Combine repeated field entries into structured string
+        names = request.form.getlist('repeater_col1[]')
+        col2_vals = request.form.getlist('repeater_col2[]')
+        col3_vals = request.form.getlist('repeater_col3[]')
+        col4_vals = request.form.getlist('repeater_col4[]')
+        col5_vals = request.form.getlist('repeater_col5[]')
+
+        formatted_repeater_list = []
+        for i in range(len(names)):
+            if names[i].strip():
+                entry_str = f"• {names[i].strip()}"
+                if i < len(col2_vals) and col2_vals[i].strip(): entry_str += f" ({col2_vals[i].strip()})"
+                if i < len(col3_vals) and col3_vals[i].strip(): entry_str += f" | Timing: {col3_vals[i].strip()}"
+                if i < len(col4_vals) and col4_vals[i].strip(): entry_str += f" | Hours: {col4_vals[i].strip()}"
+                if i < len(col5_vals) and col5_vals[i].strip(): entry_str += f" | Location/Room: {col5_vals[i].strip()}"
+                formatted_repeater_list.append(entry_str)
+
+        combined_repeater_text = "\n".join(formatted_repeater_list) if formatted_repeater_list else request.form.get('special_info', 'N/A')
+
         BUSINESSES[b_id] = {
             'id': b_id,
             'category': request.form.get('category'),
@@ -414,14 +434,14 @@ def register_business():
             'name': request.form.get('name'),
             'address': request.form.get('address'),
             'phones': [request.form.get('phone', '')],
-            'special_info': request.form.get('special_info', 'N/A'),
+            'special_info': combined_repeater_text,
             'tests_dishes': request.form.get('tests_dishes', 'N/A'),
             'status': 'pending',
             'payment_method': request.form.get('payment_method', 'Free Trial'),
             'payment_ref': request.form.get('payment_ref', 'TRIAL-60DAYS'),
             'payment_status': 'paid',
             'joining_date': datetime.now(),
-            'expiry_date': datetime.now() + timedelta(days=60),  # 2 Months Free Trial
+            'expiry_date': datetime.now() + timedelta(days=60),
             'client_password': request.form.get('client_password', 'client123')
         }
         return redirect('/')
@@ -431,7 +451,7 @@ def register_business():
         opts += '<option value="' + k + '">' + v["title"] + '</option>'
 
     html = BASE_HEAD + '''
-    <main class="max-w-2xl mx-auto px-4 py-12">
+    <main class="max-w-3xl mx-auto px-4 py-12">
         <h2 class="text-3xl font-extrabold text-center mb-2">Register Business</h2>
         <p class="text-center text-sm text-gray-400 mb-8">Enjoy 2 Months Free Trial upon registration!</p>
         <form method="POST" class="space-y-4">
@@ -456,10 +476,22 @@ def register_business():
                 <input type="password" name="client_password" required placeholder="Enter secret client password" class="w-full p-3.5 rounded-xl bg-gray-900 border border-gray-800 focus:ring-2 focus:ring-blue-500 outline-none text-sm transition">
             </div>
 
+            <!-- Dynamic Repeating Rows Section (e.g. Doctors, Menu, Courses) -->
             <div class="border-t border-gray-800 pt-4 mt-4">
-                <label class="block text-xs font-bold text-gray-400 mb-2" id="dynamicLabel">Custom Business Details (Optional)</label>
-                <textarea name="special_info" id="infoField" placeholder="Doctor info, Chef details, or Management info..." class="w-full p-3.5 rounded-xl bg-gray-900 border border-gray-800 focus:ring-2 focus:ring-blue-500 outline-none text-sm transition" rows="2"></textarea>
-                <textarea name="tests_dishes" id="dishesField" placeholder="Tests & Services, Special Dishes / Menu items, or Products..." class="w-full p-3.5 rounded-xl bg-gray-900 border border-gray-800 focus:ring-2 focus:ring-blue-500 outline-none text-sm mt-3 transition" rows="2"></textarea>
+                <div class="flex justify-between items-center mb-3">
+                    <label class="block text-sm font-bold text-blue-400" id="repeaterTitle">🩺 Doctors, Clinic & Timings</label>
+                </div>
+                
+                <div id="repeaterContainer" class="space-y-4"></div>
+                
+                <button type="button" id="addRowBtn" onclick="addNewRow()" class="mt-4 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs px-5 py-3 rounded-xl transition transform hover:scale-105 inline-flex items-center gap-1.5 shadow-lg">
+                    + Add Another Entry
+                </button>
+            </div>
+
+            <div class="border-t border-gray-800 pt-4 mt-4">
+                <label class="block text-xs font-bold text-gray-400 mb-2" id="extraTitle">Tests, Menu Items or Products (Optional)</label>
+                <textarea name="tests_dishes" id="dishesField" placeholder="Tests & Services, Special Dishes / Menu items, or Products..." class="w-full p-3.5 rounded-xl bg-gray-900 border border-gray-800 focus:ring-2 focus:ring-blue-500 outline-none text-sm transition" rows="2"></textarea>
             </div>
 
             <div class="border-t border-gray-800 pt-4 mt-4">
@@ -476,6 +508,7 @@ def register_business():
             <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 py-3.5 rounded-xl font-bold transition transform hover:-translate-y-0.5 shadow-lg">Submit Business</button>
         </form>
     </main>
+
     <script>
         const subcategoriesData = {
             'hospitals': ['General Hospital', 'Dental Clinic', 'Eye Specialist', 'Cardiology Clinic', 'Laboratory & Diagnostics'],
@@ -487,24 +520,89 @@ def register_business():
             'education': ['School & College', 'University', 'Academy & Tuition', 'Language & Computer Center']
         };
 
-        const placeholders = {
-            'hospitals': {label: '🏥 Doctor & Specialist Info', info: 'Dr. Ahmad (Cardiologist), Dr. Bilal (Pediatrician)...', extra: 'MRI, X-Ray, Emergency Care...'},
-            'pharmacies': {label: '💊 Pharmacist & Staff Info', info: 'Dr. Usman (Chief Pharmacist)...', extra: 'Blood Pressure Check, Medicines, First Aid...'},
-            'restaurants': {label: '🍽️ Chef & Speciality Info', info: 'Chef Rashid (Special Shinwari Master)...', extra: 'Dumba Karahi, Special Tikka, Green Tea...'},
-            'supermarts': {label: '🏬 Store Management Info', info: 'Manager: Tariq Khan...', extra: 'Grocery, Fresh Vegetables, Household Items...'},
-            'property': {label: '🏡 Dealer Info', info: 'Dealer: Malik Zubair...', extra: 'Plots, Luxury Houses, Commercial Plazas...'},
-            'hotels': {label: '🏨 Management Info', info: 'Manager: Inayatullah...', extra: 'Deluxe Rooms, Free WiFi, Mountain View...'},
-            'education': {label: '🎓 Faculty & Principal Info', info: 'Principal: Prof. Rahim Ullah...', extra: 'FSc Pre-Medical, ICS, English Language Course...'}
+        const categoryRowConfigs = {
+            'hospitals': {
+                title: '🩺 Doctors, Clinic & Timings',
+                addBtnText: '+ Add Another Doctor',
+                c1: 'Doctor Name (Dr. Ahmad)', c2: 'Specialty (Cardiologist)',
+                c3: 'Appointment Timing (9 AM - 2 PM)', c4: 'Clinic Timing (Mon-Sat, 9 AM - 5 PM)',
+                c5: 'Clinic / Room (Room 12, OPD Block)'
+            },
+            'restaurants': {
+                title: '👨‍🍳 Chefs, Special Dishes & Menu Items',
+                addBtnText: '+ Add Menu Item / Dish',
+                c1: 'Item / Dish Name (Dumba Karahi)', c2: 'Category (BBQ / Main Course)',
+                c3: 'Price (Rs. 2400)', c4: 'Availability (Daily)',
+                c5: 'Description / Special Serving Notes'
+            },
+            'education': {
+                title: '🎓 Faculty, Teachers & Courses',
+                addBtnText: '+ Add Teacher / Course',
+                c1: 'Teacher / Course Name (Prof. Ali)', c2: 'Department / Course (Computer Science)',
+                c3: 'Timing (Morning / Evening)', c4: 'Days (Mon-Fri)',
+                c5: 'Fee / Room No (Lab 2)'
+            },
+            'pharmacies': {
+                title: '💊 Pharmacists & Staff Info',
+                addBtnText: '+ Add Staff / Pharmacist',
+                c1: 'Staff Name (Dr. Bilal)', c2: 'Qualification (Pharm-D)',
+                c3: 'Shift Timing (8 AM - 4 PM)', c4: 'Available Days (Mon-Sat)',
+                c5: 'Counter / Section'
+            },
+            'supermarts': {
+                title: '🏬 Store Sections & Managers',
+                addBtnText: '+ Add Section / Manager',
+                c1: 'Manager / Section (Tariq - Grocery)', c2: 'Department',
+                c3: 'Timing', c4: 'Days', c5: 'Floor / Location'
+            },
+            'property': {
+                title: '🏡 Real Estate Agents & Deals',
+                addBtnText: '+ Add Agent / Featured Property',
+                c1: 'Agent / Property Title (Malik Zubair)', c2: 'Type (5 Marla Plot)',
+                c3: 'Price / Contact', c4: 'Area / Location', c5: 'Details'
+            },
+            'hotels': {
+                title: '🛏️ Rooms, Suites & Rates',
+                addBtnText: '+ Add Room Type',
+                c1: 'Room Type (Deluxe Family Suite)', c2: 'Capacity (4 Persons)',
+                c3: 'Rate per Night (Rs. 8000)', c4: 'Facilities (AC, WiFi, River View)', c5: 'Floor / Block'
+            }
         };
 
         const catSelect = document.getElementById('categorySelect');
         const subcatSelect = document.getElementById('subcategorySelect');
-        const dynamicLabel = document.getElementById('dynamicLabel');
-        const infoField = document.getElementById('infoField');
-        const dishesField = document.getElementById('dishesField');
+        const repeaterTitle = document.getElementById('repeaterTitle');
+        const addRowBtn = document.getElementById('addRowBtn');
+        const repeaterContainer = document.getElementById('repeaterContainer');
+
+        function addNewRow() {
+            const cat = catSelect.value;
+            const cfg = categoryRowConfigs[cat] || categoryRowConfigs['hospitals'];
+
+            const rowCard = document.createElement('div');
+            rowCard.className = 'bg-gray-900/90 border border-gray-800 p-4 rounded-2xl space-y-3 relative group';
+
+            rowCard.innerHTML = `
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <input type="text" name="repeater_col1[]" placeholder="${cfg.c1}" class="p-3 bg-gray-950 border border-gray-800 rounded-xl text-xs text-white focus:ring-2 focus:ring-blue-500 outline-none">
+                    <input type="text" name="repeater_col2[]" placeholder="${cfg.c2}" class="p-3 bg-gray-950 border border-gray-800 rounded-xl text-xs text-white focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <input type="text" name="repeater_col3[]" placeholder="${cfg.c3}" class="p-3 bg-gray-950 border border-gray-800 rounded-xl text-xs text-white focus:ring-2 focus:ring-blue-500 outline-none">
+                    <input type="text" name="repeater_col4[]" placeholder="${cfg.c4}" class="p-3 bg-gray-950 border border-gray-800 rounded-xl text-xs text-white focus:ring-2 focus:ring-blue-500 outline-none">
+                </div>
+                <div class="flex gap-2">
+                    <input type="text" name="repeater_col5[]" placeholder="${cfg.c5}" class="w-full p-3 bg-gray-950 border border-gray-800 rounded-xl text-xs text-white focus:ring-2 focus:ring-blue-500 outline-none">
+                    <button type="button" onclick="this.closest('.group').remove()" class="bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white px-3 rounded-xl text-xs font-bold transition">✕</button>
+                </div>
+            `;
+            repeaterContainer.appendChild(rowCard);
+        }
 
         function updateFormFields() {
             const val = catSelect.value;
+            
+            // 1. Subcategories Dropdown
             subcatSelect.innerHTML = '';
             if(subcategoriesData[val]) {
                 subcategoriesData[val].forEach(sub => {
@@ -514,11 +612,15 @@ def register_business():
                     subcatSelect.appendChild(opt);
                 });
             }
-            if(placeholders[val]) {
-                dynamicLabel.innerText = placeholders[val].label;
-                infoField.placeholder = placeholders[val].info;
-                dishesField.placeholder = placeholders[val].extra;
-            }
+
+            // 2. Repeater Row Setup
+            const cfg = categoryRowConfigs[val] || categoryRowConfigs['hospitals'];
+            repeaterTitle.innerText = cfg.title;
+            addRowBtn.innerText = cfg.addBtnText;
+
+            // Clear & Add initial row
+            repeaterContainer.innerHTML = '';
+            addNewRow();
         }
 
         catSelect.addEventListener('change', updateFormFields);
