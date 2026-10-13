@@ -1,4 +1,4 @@
-"""SwatBiz Hub - Structured Doctor Cards, Top Header Navigation & Complete Theme Switcher."""
+"""SwatBiz Hub - Admin Navigation Fixed to Admin Dashboard."""
 from datetime import datetime, timedelta
 import os
 import json
@@ -32,14 +32,16 @@ BUSINESSES = {
                 'specialty': 'Cardiologist',
                 'appt_timing': '9:00 AM - 2:00 PM',
                 'clinic_timing': 'Mon - Sat (9 AM - 5 PM)',
-                'room': 'OPD Block - Room 12'
+                'room': 'OPD Block - Room 12',
+                'appt_numbers': '+92 300 9240001, +92 946 9240123'
             },
             {
                 'name': 'Dr. Ayesha Khan',
                 'specialty': 'Pediatrician',
                 'appt_timing': '10:00 AM - 4:00 PM',
                 'clinic_timing': 'Mon - Fri (10 AM - 4 PM)',
-                'room': 'Children Ward - Room 04'
+                'room': 'Children Ward - Room 04',
+                'appt_numbers': '+92 301 8881122'
             }
         ],
         'special_info': 'Dr. Muhammad Ali (Cardiologist), Dr. Ayesha Khan (Pediatrician)',
@@ -67,7 +69,8 @@ BUSINESSES = {
                 'specialty': 'Master Grill & BBQ Chef',
                 'appt_timing': '12:00 PM - 11:00 PM',
                 'clinic_timing': 'Daily Open',
-                'room': 'Main Grill Section / Family Cabin'
+                'room': 'Main Grill Section / Family Cabin',
+                'appt_numbers': '+92 946 881122'
             }
         ],
         'special_info': 'Special Family Cabin Available | Chef Rashid',
@@ -95,7 +98,8 @@ BUSINESSES = {
                 'specialty': 'Principal & Academic Head',
                 'appt_timing': '8:00 AM - 2:00 PM',
                 'clinic_timing': 'Mon - Sat',
-                'room': 'Main Administration Block'
+                'room': 'Main Administration Block',
+                'appt_numbers': '+92 946 720111'
             }
         ],
         'special_info': 'Prof. Shah Zarin (Principal), Admissions open for Metric & FSc',
@@ -394,7 +398,6 @@ def category_page(cat_slug):
             <span class="text-6xl inline-block animate-bounce">''' + cat['icon'] + '''</span>
             <h2 class="text-4xl font-extrabold mt-4 text-gray-900 dark:text-white">''' + cat['title'] + '''</h2>
             
-            <!-- Realtime Search with Auto Suggestions -->
             <div class="mt-6 max-w-xl mx-auto relative">
                 <form method="GET" action="/category/''' + cat_slug + '''" class="flex gap-3">
                     <input type="hidden" name="subcat" value="''' + selected_subcat + '''">
@@ -406,7 +409,6 @@ def category_page(cat_slug):
                 </form>
             </div>
 
-            <!-- Subcategory Filter Pills -->
             <div class="mt-6 flex flex-wrap justify-center gap-2 max-w-4xl mx-auto">
                 ''' + pills_html + '''
             </div>
@@ -514,23 +516,36 @@ def business_detail(b_id):
     cat_meta = CATEGORIES.get(b['category'], {'info_title': 'Special Info', 'extra_title': 'Tests & Services'})
     doctors_data = b.get('doctors', [])
     
-    # Generate Structured Interactive Doctor/Staff Cards
     doctors_cards_html = ""
     if doctors_data:
         for idx, doc in enumerate(doctors_data):
+            appt_nums = doc.get('appt_numbers', ", ".join(b.get('phones', [])))
+            doc_json = json.dumps({
+                'name': doc.get('name', ''),
+                'specialty': doc.get('specialty', ''),
+                'appt_timing': doc.get('appt_timing', ''),
+                'clinic_timing': doc.get('clinic_timing', ''),
+                'room': doc.get('room', ''),
+                'appt_numbers': appt_nums,
+                'hospital_name': b['name'],
+                'hospital_address': b['address'],
+                'hospital_phones': ", ".join(b.get('phones', []))
+            }).replace("'", "&#39;")
+            
             doctors_cards_html += f'''
-            <div class="bg-gray-50 dark:bg-gray-950 p-5 rounded-2xl border border-gray-200 dark:border-gray-800 card-hover-effect space-y-2">
+            <div onclick='openDoctorModal({doc_json})' class="doc-card-item bg-gray-50 dark:bg-gray-950 p-5 rounded-2xl border border-gray-200 dark:border-gray-800 card-hover-effect space-y-2 cursor-pointer group">
                 <div class="flex justify-between items-start">
                     <div>
-                        <h4 class="text-base font-extrabold text-blue-600 dark:text-blue-400">{doc.get('name', 'N/A')}</h4>
+                        <h4 class="text-base font-extrabold text-blue-600 dark:text-blue-400 group-hover:underline">{doc.get('name', 'N/A')}</h4>
                         <p class="text-xs font-semibold text-indigo-600 dark:text-indigo-400">{doc.get('specialty', 'Specialist')}</p>
                     </div>
-                    <span class="bg-blue-100 dark:bg-blue-600/20 text-blue-700 dark:text-blue-400 text-[10px] px-2.5 py-1 rounded-full font-bold">Available</span>
+                    <span class="bg-blue-100 dark:bg-blue-600/20 text-blue-700 dark:text-blue-400 text-[10px] px-2.5 py-1 rounded-full font-bold">View Info →</span>
                 </div>
                 <div class="pt-2 border-t border-gray-200 dark:border-gray-800/80 text-xs space-y-1 text-gray-700 dark:text-gray-300">
                     <p>🕒 <strong>Appt Timing:</strong> {doc.get('appt_timing', 'N/A')}</p>
                     <p>📅 <strong>Clinic Days:</strong> {doc.get('clinic_timing', 'N/A')}</p>
                     <p>🚪 <strong>Room / Block:</strong> {doc.get('room', 'N/A')}</p>
+                    <p>📞 <strong>Appt Phone(s):</strong> <span class="text-blue-600 dark:text-blue-400 font-bold">{appt_nums}</span></p>
                     <p class="text-[11px] text-gray-500 dark:text-gray-400 pt-1">🏥 <strong>Hospital:</strong> {b['name']} ({b['address']})</p>
                 </div>
             </div>
@@ -549,6 +564,52 @@ def business_detail(b_id):
             gallery_html += f'<img src="{img_url}" class="w-full h-64 object-cover rounded-2xl border border-gray-200 dark:border-gray-800 hover:scale-105 transition duration-300 shadow-md">'
 
     html = get_base_head(back_url=category_back_url, back_text="Back to Category") + '''
+    <div id="doctorModal" class="fixed inset-0 bg-black/60 dark:bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-6 md:p-8 max-w-md w-full shadow-2xl animate-modal space-y-4">
+            <div class="flex justify-between items-start">
+                <div class="flex items-center gap-3">
+                    <span class="text-4xl p-2 bg-blue-50 dark:bg-blue-600/20 rounded-2xl">👨‍⚕️</span>
+                    <div>
+                        <h3 id="mDocName" class="text-xl font-black text-gray-900 dark:text-white">Dr. Name</h3>
+                        <p id="mDocSpec" class="text-xs font-bold text-blue-600 dark:text-blue-400">Specialty</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closeDoctorModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-white text-xl font-bold bg-gray-100 dark:bg-gray-800 w-8 h-8 rounded-full flex items-center justify-center">✕</button>
+            </div>
+
+            <div class="space-y-3 pt-2 text-xs text-gray-700 dark:text-gray-300 border-t border-gray-100 dark:border-gray-800">
+                <div class="bg-gray-50 dark:bg-gray-800/50 p-3 rounded-xl border border-gray-200 dark:border-gray-700/50">
+                    <p class="font-bold text-gray-500 dark:text-gray-400 mb-1">🏥 Hospital / Clinic Location:</p>
+                    <p id="mDocHospital" class="font-extrabold text-sm text-gray-900 dark:text-white">Hospital Name</p>
+                    <p id="mDocAddress" class="text-gray-600 dark:text-gray-400">Address Location</p>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                    <div class="bg-gray-50 dark:bg-gray-800/50 p-3 rounded-xl border border-gray-200 dark:border-gray-700/50">
+                        <p class="font-bold text-gray-500 dark:text-gray-400 mb-0.5">🕒 Appt Timing:</p>
+                        <p id="mDocAppt" class="font-semibold text-gray-900 dark:text-white">9 AM - 2 PM</p>
+                    </div>
+                    <div class="bg-gray-50 dark:bg-gray-800/50 p-3 rounded-xl border border-gray-200 dark:border-gray-700/50">
+                        <p class="font-bold text-gray-500 dark:text-gray-400 mb-0.5">📅 Clinic Days:</p>
+                        <p id="mDocDays" class="font-semibold text-gray-900 dark:text-white">Mon - Sat</p>
+                    </div>
+                </div>
+
+                <div class="bg-gray-50 dark:bg-gray-800/50 p-3 rounded-xl border border-gray-200 dark:border-gray-700/50">
+                    <p class="font-bold text-gray-500 dark:text-gray-400 mb-0.5">🚪 Room / Location:</p>
+                    <p id="mDocRoom" class="font-semibold text-gray-900 dark:text-white">Room 12, OPD Block</p>
+                </div>
+
+                <div class="bg-blue-50 dark:bg-blue-600/10 p-3 rounded-xl border border-blue-200 dark:border-blue-500/20 flex flex-col gap-1">
+                    <span class="font-bold text-blue-600 dark:text-blue-400">📞 Doctor / Appointment Number(s):</span>
+                    <span id="mDocApptNums" class="font-bold text-gray-900 dark:text-white text-sm">Numbers</span>
+                </div>
+            </div>
+
+            <button type="button" onclick="closeDoctorModal()" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-3 rounded-xl font-bold btn-hover-effect text-xs shadow-lg">Close Details</button>
+        </div>
+    </div>
+
     <main class="max-w-4xl mx-auto px-4 py-12 animate-fade-in">
         <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl overflow-hidden shadow-xl space-y-6 p-8">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -563,18 +624,23 @@ def business_detail(b_id):
                 <h1 class="text-3xl md:text-4xl font-black mt-3 text-gray-900 dark:text-white">''' + b['name'] + '''</h1>
                 <p class="text-gray-600 dark:text-gray-400 mt-1 text-base">📍 ''' + b['address'] + '''</p>
                 <div class="mt-4 inline-flex items-center gap-2 bg-blue-50 dark:bg-blue-600/10 border border-blue-200 dark:border-blue-500/20 px-4 py-2.5 rounded-xl">
-                    <span class="text-blue-600 dark:text-blue-400 text-sm font-bold">📞 Phone Numbers:</span>
+                    <span class="text-blue-600 dark:text-blue-400 text-sm font-bold">📞 Hospital Landline / Main Numbers:</span>
                     <span class="text-sm">''' + phones_html + '''</span>
                 </div>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-gray-200 dark:border-gray-800">
                 <div class="bg-gray-50 dark:bg-gray-800/50 p-6 rounded-2xl border border-gray-200 dark:border-gray-700/50 card-hover-effect space-y-3">
-                    <h3 class="text-lg font-bold text-blue-600 dark:text-blue-400">''' + cat_meta['info_title'] + '''</h3>
-                    <div class="space-y-3">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
+                        <h3 class="text-lg font-bold text-blue-600 dark:text-blue-400">''' + cat_meta['info_title'] + '''</h3>
+                        <input type="text" id="docSearchInput" placeholder="🔍 Search Doctor..." class="px-3 py-1.5 rounded-xl bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect w-full sm:w-40">
+                    </div>
+
+                    <div id="doctorsContainer" class="space-y-3">
                         ''' + doctors_cards_html + '''
                     </div>
                 </div>
+                
                 <div class="bg-gray-50 dark:bg-gray-800/50 p-6 rounded-2xl border border-gray-200 dark:border-gray-700/50 card-hover-effect">
                     <h3 class="text-lg font-bold text-emerald-600 dark:text-emerald-400 mb-2">''' + cat_meta['extra_title'] + '''</h3>
                     <p class="text-gray-700 dark:text-gray-300 text-sm leading-relaxed whitespace-pre-line">''' + tests_dishes + '''</p>
@@ -587,6 +653,53 @@ def business_detail(b_id):
             </div>
         </div>
     </main>
+
+    <script>
+        function openDoctorModal(doc) {
+            document.getElementById('mDocName').innerText = doc.name || 'N/A';
+            document.getElementById('mDocSpec').innerText = doc.specialty || 'Specialist';
+            document.getElementById('mDocHospital').innerText = doc.hospital_name || 'N/A';
+            document.getElementById('mDocAddress').innerText = '📍 ' + (doc.hospital_address || 'N/A');
+            document.getElementById('mDocAppt').innerText = doc.appt_timing || 'N/A';
+            document.getElementById('mDocDays').innerText = doc.clinic_timing || 'N/A';
+            document.getElementById('mDocRoom').innerText = doc.room || 'N/A';
+            
+            var rawApptNums = doc.appt_numbers || doc.hospital_phones || 'N/A';
+            var numArr = rawApptNums.split(',');
+            var linksHtml = numArr.map(function(num) {
+                var clean = num.trim();
+                return '<a href="tel:' + clean + '" class="hover:underline text-blue-600 dark:text-blue-400 font-bold block">' + clean + '</a>';
+            }).join('');
+
+            document.getElementById('mDocApptNums').innerHTML = linksHtml;
+
+            var modal = document.getElementById('doctorModal');
+            if (modal) modal.classList.remove('hidden');
+        }
+
+        function closeDoctorModal() {
+            var modal = document.getElementById('doctorModal');
+            if (modal) modal.classList.add('hidden');
+        }
+
+        window.addEventListener('DOMContentLoaded', function() {
+            var docInput = document.getElementById('docSearchInput');
+            if (docInput) {
+                docInput.addEventListener('input', function() {
+                    var val = this.value.toLowerCase().trim();
+                    var cards = document.querySelectorAll('.doc-card-item');
+                    cards.forEach(function(card) {
+                        var txt = card.innerText.toLowerCase();
+                        if (txt.includes(val)) {
+                            card.style.display = 'block';
+                        } else {
+                            card.style.display = 'none';
+                        }
+                    });
+                });
+            }
+        });
+    </script>
     ''' + FOOTER
     return render_template_string(html)
 
@@ -603,6 +716,7 @@ def register_business():
         col3_vals = request.form.getlist('repeater_col3[]')
         col4_vals = request.form.getlist('repeater_col4[]')
         col5_vals = request.form.getlist('repeater_col5[]')
+        col6_vals = request.form.getlist('repeater_col6[]')
 
         doctors_list = []
         formatted_repeater_list = []
@@ -613,7 +727,8 @@ def register_business():
                     'specialty': col2_vals[i].strip() if i < len(col2_vals) else 'N/A',
                     'appt_timing': col3_vals[i].strip() if i < len(col3_vals) else 'N/A',
                     'clinic_timing': col4_vals[i].strip() if i < len(col4_vals) else 'N/A',
-                    'room': col5_vals[i].strip() if i < len(col5_vals) else 'N/A'
+                    'room': col5_vals[i].strip() if i < len(col5_vals) else 'N/A',
+                    'appt_numbers': col6_vals[i].strip() if i < len(col6_vals) else ', '.join(clean_phones)
                 }
                 doctors_list.append(doc_obj)
                 
@@ -659,7 +774,6 @@ def register_business():
     subcat_json_data = json.dumps({k: v['subcategories'] for k, v in CATEGORIES.items()})
 
     html = get_base_head(back_url="/", back_text="Back to Home") + '''
-    <!-- Custom Animated Confirmation Modal -->
     <div id="confirmModal" class="fixed inset-0 bg-black/60 dark:bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center hidden">
         <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-6 md:p-8 max-w-sm w-full mx-4 shadow-2xl animate-modal text-center space-y-4">
             <div class="w-14 h-14 bg-red-100 dark:bg-red-500/10 text-red-600 dark:text-red-500 rounded-2xl flex items-center justify-center mx-auto text-2xl font-bold">⚠️</div>
@@ -703,7 +817,7 @@ def register_business():
             </div>
 
             <div>
-                <label class="block text-xs font-bold text-gray-700 dark:text-gray-400 mb-1">Phone Number(s) *</label>
+                <label class="block text-xs font-bold text-gray-700 dark:text-gray-400 mb-1">Main Phone Number(s) *</label>
                 <div id="phonesContainer" class="space-y-2">
                     <div class="flex gap-2">
                         <input type="text" name="phones[]" required placeholder="e.g. +92 946 9240123" class="w-full p-3 bg-gray-50 dark:bg-gray-950 border border-gray-300 dark:border-gray-800 text-gray-900 dark:text-white rounded-xl text-xs input-hover-effect outline-none">
@@ -763,7 +877,8 @@ def register_business():
                 extraPlaceholder: 'e.g. MRI, CT Scan, Blood Tests, Ultrasound, OPD Services...',
                 c1: 'Doctor Name (Dr. Ahmad)', c2: 'Specialty (Cardiologist)',
                 c3: 'Appointment Timing (9 AM - 2 PM)', c4: 'Clinic Timing (Mon-Sat, 9 AM - 5 PM)',
-                c5: 'Clinic / Room (Room 12, OPD Block)'
+                c5: 'Clinic / Room (Room 12, OPD Block)',
+                c6: 'Appointment Phone Number(s) (e.g. +92 300 1234567, +92 946 9240125)'
             },
             'restaurants': {
                 title: '👨‍🍳 Chefs, Special Dishes & Menu Items',
@@ -772,7 +887,8 @@ def register_business():
                 extraPlaceholder: 'e.g. Dumba Karahi (Rs. 2400/kg), Shinwari Tikka, Kabab...',
                 c1: 'Item / Dish Name (Dumba Karahi)', c2: 'Category (BBQ / Main Course)',
                 c3: 'Price (Rs. 2400)', c4: 'Availability (Daily)',
-                c5: 'Description / Special Serving Notes'
+                c5: 'Description / Special Serving Notes',
+                c6: 'Order / Reservation Contact Number(s)'
             },
             'education': {
                 title: '🎓 Faculty, Teachers & Courses',
@@ -781,7 +897,8 @@ def register_business():
                 extraPlaceholder: 'e.g. FSc Pre-Medical, ICS, English Language Diploma...',
                 c1: 'Teacher / Course Name (Prof. Ali)', c2: 'Department / Course (Computer Science)',
                 c3: 'Timing (Morning / Evening)', c4: 'Days (Mon-Fri)',
-                c5: 'Fee / Room No (Lab 2)'
+                c5: 'Fee / Room No (Lab 2)',
+                c6: 'Direct Contact / Helpline Number(s)'
             },
             'pharmacies': {
                 title: '💊 Pharmacists & Staff Info',
@@ -790,7 +907,8 @@ def register_business():
                 extraPlaceholder: 'e.g. BP Checking, Sugar Testing Kits, Surgical Items...',
                 c1: 'Staff Name (Dr. Bilal)', c2: 'Qualification (Pharm-D)',
                 c3: 'Shift Timing (8 AM - 4 PM)', c4: 'Available Days (Mon-Sat)',
-                c5: 'Counter / Section'
+                c5: 'Counter / Section',
+                c6: 'Direct Contact / Order Number(s)'
             },
             'supermarts': {
                 title: '🏬 Store Sections & Managers',
@@ -798,7 +916,8 @@ def register_business():
                 extraTitle: '🛍️ Featured Groceries & Products (Optional)',
                 extraPlaceholder: 'e.g. Fresh Vegetables, Bakery Items, Household Goods...',
                 c1: 'Manager / Section (Tariq - Grocery)', c2: 'Department',
-                c3: 'Timing', c4: 'Days', c5: 'Floor / Location'
+                c3: 'Timing', c4: 'Days', c5: 'Floor / Location',
+                c6: 'Section Contact Number(s)'
             },
             'property': {
                 title: '🏡 Real Estate Agents & Deals',
@@ -806,7 +925,8 @@ def register_business():
                 extraTitle: '🏡 Featured Plots & Real Estate Deals (Optional)',
                 extraPlaceholder: 'e.g. 5 Marla Plot in Kanju Township, Commercial Shops...',
                 c1: 'Agent / Property Title (Malik Zubair)', c2: 'Type (5 Marla Plot)',
-                c3: 'Price / Contact', c4: 'Area / Location', c5: 'Details'
+                c3: 'Price / Contact', c4: 'Area / Location', c5: 'Details',
+                c6: 'Agent Contact Number(s)'
             },
             'hotels': {
                 title: '🛏️ Rooms, Suites & Rates',
@@ -814,7 +934,8 @@ def register_business():
                 extraTitle: '🛏️ Hotel Services & Room Amenities (Optional)',
                 extraPlaceholder: 'e.g. Deluxe Family Rooms, Mountain View, Free Breakfast...',
                 c1: 'Room Type (Deluxe Family Suite)', c2: 'Capacity (4 Persons)',
-                c3: 'Rate per Night (Rs. 8000)', c4: 'Facilities (AC, WiFi, River View)', c5: 'Floor / Block'
+                c3: 'Rate per Night (Rs. 8000)', c4: 'Facilities (AC, WiFi, River View)', c5: 'Floor / Block',
+                c6: 'Booking / Reception Contact Number(s)'
             }
         };
 
@@ -903,8 +1024,9 @@ def register_business():
                         '<input type="text" name="repeater_col3[]" placeholder="' + cfg.c3 + '" class="p-3 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-800 text-gray-900 dark:text-white rounded-xl text-xs input-hover-effect outline-none">' +
                         '<input type="text" name="repeater_col4[]" placeholder="' + cfg.c4 + '" class="p-3 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-800 text-gray-900 dark:text-white rounded-xl text-xs input-hover-effect outline-none">' +
                         '</div>' +
-                        '<div class="flex gap-2">' +
                         '<input type="text" name="repeater_col5[]" placeholder="' + cfg.c5 + '" class="w-full p-3 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-800 text-gray-900 dark:text-white rounded-xl text-xs input-hover-effect outline-none">' +
+                        '<div class="flex gap-2">' +
+                        '<input type="text" name="repeater_col6[]" placeholder="' + cfg.c6 + '" class="w-full p-3 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-800 text-gray-900 dark:text-white rounded-xl text-xs input-hover-effect outline-none">' +
                         '<button type="button" class="del-row-btn bg-red-100 dark:bg-red-600/20 text-red-600 dark:text-red-400 hover:bg-red-600 hover:text-white px-3 rounded-xl text-xs font-bold btn-hover-effect">✕</button>' +
                         '</div>';
                     
@@ -966,6 +1088,9 @@ def admin_panel():
             session['admin_logged_in'] = True
             return redirect('/admin')
 
+    admin_back_url = "/admin"
+    admin_back_text = "Admin Dashboard"
+
     if not session.get('admin_logged_in'):
         html = get_base_head(back_url="/", back_text="Back to Home") + '''
         <main class="max-w-md mx-auto px-4 py-20 text-center animate-fade-in">
@@ -1019,7 +1144,7 @@ def admin_panel():
                 expired_subs[k] = v
 
     if not module:
-        html = get_base_head(back_url="/", back_text="Back to Home") + '''
+        html = get_base_head(back_url=admin_back_url, back_text=admin_back_text) + '''
         <main class="max-w-5xl mx-auto px-4 py-12 animate-fade-in">
             <div class="flex justify-between items-center mb-10">
                 <h2 class="text-3xl font-extrabold text-gray-900 dark:text-white">🛠️ Admin Control Center</h2>
@@ -1098,7 +1223,7 @@ def admin_panel():
             if not content:
                 content = '<p class="text-gray-500 text-center py-8">No approved listings.</p>'
 
-        html = get_base_head(back_url="/", back_text="Back to Home") + '''
+        html = get_base_head(back_url=admin_back_url, back_text=admin_back_text) + '''
         <main class="max-w-4xl mx-auto px-4 py-12 animate-fade-in">
             <h2 class="text-2xl font-bold mb-6 text-gray-900 dark:text-white">🏢 Business Directory Management</h2>
             <div class="flex space-x-3 mb-6">
@@ -1156,7 +1281,7 @@ def admin_panel():
             if not content:
                 content = '<p class="text-gray-500 text-center py-8">No expired subscriptions found.</p>'
 
-        html = get_base_head(back_url="/", back_text="Back to Home") + '''
+        html = get_base_head(back_url=admin_back_url, back_text=admin_back_text) + '''
         <main class="max-w-4xl mx-auto px-4 py-12 animate-fade-in">
             <h2 class="text-2xl font-bold mb-6 text-gray-900 dark:text-white">💳 Payment & Subscription Hub</h2>
             <div class="flex space-x-3 mb-6">
