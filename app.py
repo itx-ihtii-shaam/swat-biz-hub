@@ -1,4 +1,4 @@
-"""SwatBiz Hub - Interactive Subcategory Pills, Dynamic Search Suggestions & Theme Application."""
+"""SwatBiz Hub - Real-time Auto-Suggestions Search & Subcategory Filtering."""
 from datetime import datetime, timedelta
 import os
 from flask import Flask, abort, redirect, render_template_string, request, url_for, session
@@ -334,7 +334,6 @@ def category_page(cat_slug):
         if match_search and match_subcat:
             filtered.append(b)
 
-    # Subcategory Filter Pills Generation
     pills_html = f'<a href="/category/{cat_slug}?q={search_query}" class="px-4 py-2 rounded-xl text-xs font-bold transition btn-hover-effect ' + \
                  ('bg-blue-600 text-white shadow-md' if not selected_subcat else 'bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-700') + '">All</a>'
     
@@ -360,6 +359,14 @@ def category_page(cat_slug):
         '''
     if not cards:
         cards = '<div class="col-span-3 text-center py-20 text-gray-500 dark:text-gray-400"><p class="text-xl">No active or approved listings found matching your search.</p></div>'
+
+    import json
+    biz_json_data = json.dumps([{
+        'id': b['id'],
+        'name': b['name'],
+        'address': b['address'],
+        'subcategory': b.get('subcategory', '')
+    } for b in all_biz])
 
     html = BASE_HEAD + '''
     <main class="max-w-7xl mx-auto px-4 py-12 animate-fade-in">
@@ -391,12 +398,7 @@ def category_page(cat_slug):
     </main>
 
     <script>
-        var categoryBusinesses = ''' + str([{
-            'id': b['id'],
-            'name': b['name'],
-            'address': b['address'],
-            'subcategory': b.get('subcategory', '')
-        } for b in all_biz]).replace("'", '"') + ''';
+        var categoryBusinesses = ''' + biz_json_data + ''';
 
         window.addEventListener('DOMContentLoaded', function() {
             var input = document.getElementById('searchInput');
@@ -405,7 +407,7 @@ def category_page(cat_slug):
             if (!input || !dropdown) return;
 
             input.addEventListener('input', function() {
-                var q = this.value.toLowerCase().strip ? this.value.toLowerCase().trim() : '';
+                var q = this.value.trim().toLowerCase();
                 dropdown.innerHTML = '';
                 
                 if (q.length < 1) {
@@ -423,7 +425,7 @@ def category_page(cat_slug):
                     matches.forEach(function(b) {
                         var div = document.createElement('div');
                         div.className = 'p-3 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer flex justify-between items-center text-left border-b border-gray-100 dark:border-gray-800/50 last:border-0';
-                        div.innerHTML = '<div><p class="font-bold text-sm text-gray-900 dark:text-white">' + b.name + '</p><p class="text-xs text-gray-500 dark:text-gray-400">📍 ' + b.address + '</p></div><span class="text-xs bg-blue-100 dark:bg-blue-600/20 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-md">' + b.subcategory + '</span>';
+                        div.innerHTML = '<div><p class="font-bold text-sm text-gray-900 dark:text-white">' + b.name + '</p><p class="text-xs text-gray-500 dark:text-gray-400">📍 ' + b.address + '</p></div><span class="text-xs bg-blue-100 dark:bg-blue-600/20 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-md font-semibold">' + b.subcategory + '</span>';
                         div.addEventListener('click', function() {
                             window.location.href = '/business/' + b.id;
                         });
@@ -597,6 +599,9 @@ def register_business():
     for k, v in CATEGORIES.items():
         opts += '<option value="' + k + '">' + v["title"] + '</option>'
 
+    import json
+    subcat_json_data = json.dumps({k: v['subcategories'] for k, v in CATEGORIES.items()})
+
     html = BASE_HEAD + '''
     <!-- Custom Animated Confirmation Modal -->
     <div id="confirmModal" class="fixed inset-0 bg-black/60 dark:bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center hidden">
@@ -692,7 +697,7 @@ def register_business():
     </main>
 
     <script>
-        var subcategoriesData = ''' + str({k: v['subcategories'] for k, v in CATEGORIES.items()}).replace("'", '"') + ''';
+        var subcategoriesData = ''' + subcat_json_data + ''';
 
         var categoryRowConfigs = {
             'hospitals': {
