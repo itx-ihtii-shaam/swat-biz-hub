@@ -1,4 +1,4 @@
-"""SwatBiz Hub - Dark/Light Theme Switcher & Interactive Application."""
+"""SwatBiz Hub - Interactive Subcategory Pills, Dynamic Search Suggestions & Theme Application."""
 from datetime import datetime, timedelta
 import os
 from flask import Flask, abort, redirect, render_template_string, request, url_for, session
@@ -47,37 +47,75 @@ BUSINESSES = {
         'special_info': 'Special Family Cabin Available | Chef Rashid (Master Grill Chef)',
         'tests_dishes': 'Dumba Karahi (Rs. 2400/kg), Shinwari Tikka (Rs. 1800/kg), Mutton Kabab, Green Tea',
         'client_password': 'client123'
+    },
+    '3': {
+        'id': '3',
+        'category': 'education',
+        'subcategory': 'School & College',
+        'name': 'Swat Public School & Science College',
+        'address': 'Saidu Sharif, Mingora, Swat',
+        'phones': ['+92 946 720111'],
+        'image': 'https://images.unsplash.com/photo-1562774053-701939374585?auto=format&fit=crop&w=800&q=80',
+        'images': ['https://images.unsplash.com/photo-1562774053-701939374585?auto=format&fit=crop&w=800&q=80'],
+        'status': 'approved',
+        'payment_method': 'Free Trial',
+        'payment_ref': 'TRIAL-FREE',
+        'payment_status': 'paid',
+        'joining_date': datetime.now() - timedelta(days=5),
+        'expiry_date': datetime.now() + timedelta(days=55),
+        'special_info': 'Prof. Shah Zarin (Principal), Admissions open for Metric & FSc Pre-Medical / Pre-Engineering',
+        'tests_dishes': 'Science Labs, Computer Labs, Library, Sports Ground',
+        'client_password': 'client123'
+    },
+    '4': {
+        'id': '4',
+        'category': 'education',
+        'subcategory': 'University',
+        'name': 'University of Swat',
+        'address': 'Charbagh, Swat',
+        'phones': ['+92 946 730500'],
+        'image': 'https://images.unsplash.com/photo-1541829070764-84a7d30dd3f3?auto=format&fit=crop&w=800&q=80',
+        'images': ['https://images.unsplash.com/photo-1541829070764-84a7d30dd3f3?auto=format&fit=crop&w=800&q=80'],
+        'status': 'approved',
+        'payment_method': 'Free Trial',
+        'payment_ref': 'TRIAL-FREE',
+        'payment_status': 'paid',
+        'joining_date': datetime.now() - timedelta(days=15),
+        'expiry_date': datetime.now() + timedelta(days=45),
+        'special_info': 'BS Computer Science, Software Engineering, BBA, Pharm-D programs available',
+        'tests_dishes': 'Research Center, Digital Library, Hostel Facility',
+        'client_password': 'client123'
     }
 }
 
 CATEGORIES = {
     'hospitals': {
-        'title': 'Hospitals & Healthcare', 'icon': '🏥', 'search_hint': 'Search name or location...', 'info_title': '👨‍⚕️ Doctors, Clinic & Timings', 'extra_title': '🔬 Available Tests & Medical Services',
+        'title': 'Hospitals & Healthcare', 'icon': '🏥', 'search_hint': 'Search name, doctor or location (e.g. Saidu)...', 'info_title': '👨‍⚕️ Doctors, Clinic & Timings', 'extra_title': '🔬 Available Tests & Medical Services',
         'subcategories': ['General Hospital', 'Dental Clinic', 'Eye Specialist', 'Cardiology Clinic', 'Laboratory & Diagnostics']
     },
     'pharmacies': {
-        'title': 'Pharmacies & Medical Stores', 'icon': '💊', 'search_hint': 'Search medicine or store...', 'info_title': '🧑‍⚕️ Qualified Pharmacists & Staff', 'extra_title': '💊 Available Medicines & Supplies',
+        'title': 'Pharmacies & Medical Stores', 'icon': '💊', 'search_hint': 'Search medicine, store or place...', 'info_title': '🧑‍⚕️ Qualified Pharmacists & Staff', 'extra_title': '💊 Available Medicines & Supplies',
         'subcategories': ['Medical Store', 'Homeopathic Store', 'Herbal & Organic', 'Surgical Equipment']
     },
     'restaurants': {
-        'title': 'Restaurants & Cafes', 'icon': '🍽️', 'search_hint': 'Search restaurant...', 'info_title': '👨‍🍳 Chefs & Dining Features', 'extra_title': '🍲 Menu, Special Dishes & Prices',
+        'title': 'Restaurants & Cafes', 'icon': '🍽️', 'search_hint': 'Search restaurant, dish or location (e.g. Fizagat)...', 'info_title': '👨‍🍳 Chefs & Dining Features', 'extra_title': '🍲 Menu, Special Dishes & Prices',
         'subcategories': ['Traditional / Shinwari', 'Fast Food & Burgers', 'BBQ & Grill', 'Coffee Shop & Cafe', 'Desi Restaurant']
     },
     'supermarts': {
-        'title': 'Supermarts & Grocery', 'icon': '🛒', 'search_hint': 'Search store or item...', 'info_title': '🏬 Store Facilities & Staff', 'extra_title': '🛍️ Available Groceries & Products',
+        'title': 'Supermarts & Grocery', 'icon': '🛒', 'search_hint': 'Search store, item or area...', 'info_title': '🏬 Store Facilities & Staff', 'extra_title': '🛍️ Available Groceries & Products',
         'subcategories': ['General Store', 'Supermarket', 'Vegetables & Fruits', 'Bakery & Sweets']
     },
     'property': {
-        'title': 'Property Dealers', 'icon': '🏠', 'search_hint': 'Search plot or house...', 'info_title': '🧑‍💼 Agents & Dealers', 'extra_title': '🏡 Featured Plots & Properties',
+        'title': 'Property Dealers', 'icon': '🏠', 'search_hint': 'Search plot, house or dealer...', 'info_title': '🧑‍💼 Agents & Dealers', 'extra_title': '🏡 Featured Plots & Properties',
         'subcategories': ['Plot & Land Dealer', 'House & Villa Rentals', 'Commercial Plaza', 'Real Estate Agency']
     },
     'hotels': {
-        'title': 'Hotels & Guest Houses', 'icon': '🏨', 'search_hint': 'Search hotel...', 'info_title': '🛎️ Management & Reception', 'extra_title': '🛏️ Rooms, Rates & Facilities',
+        'title': 'Hotels & Guest Houses', 'icon': '🏨', 'search_hint': 'Search hotel or area...', 'info_title': '🛎️ Management & Reception', 'extra_title': '🛏️ Rooms, Rates & Facilities',
         'subcategories': ['Luxury Hotel', 'Guest House', 'Resort', 'Budget Inn']
     },
     'education': {
-        'title': 'Educational Institutes', 'icon': '🎓', 'search_hint': 'Search school or college...', 'info_title': '👨‍🏫 Faculty & Teachers Info', 'extra_title': '📚 Offered Courses & Programs',
-        'subcategories': ['School & College', 'University', 'Academy & Tuition', 'Language & Computer Center']
+        'title': 'Educational Institutes', 'icon': '🎓', 'search_hint': 'Search school, college, university or place (e.g. Saidu)...', 'info_title': '👨‍🏫 Faculty & Teachers Info', 'extra_title': '📚 Offered Courses & Programs',
+        'subcategories': ['School', 'School & College', 'College', 'University', 'Academy & Tuition', 'Language & Computer Center']
     }
 }
 
@@ -271,16 +309,39 @@ def category_page(cat_slug):
     
     cat = CATEGORIES[cat_slug]
     search_query = request.args.get('q', '').lower().strip()
+    selected_subcat = request.args.get('subcat', '').strip()
     
     now = datetime.now()
     all_biz = [b for b in BUSINESSES.values() if b.get('category') == cat_slug and b.get('status') == 'approved' and b.get('expiry_date', now) >= now]
     filtered = []
+    
     for b in all_biz:
+        match_search = True
+        match_subcat = True
+        
         if search_query:
-            if search_query in b.get('name', '').lower() or search_query in b.get('address', '').lower() or search_query in b.get('subcategory', '').lower() or search_query in b.get('special_info', '').lower() or search_query in b.get('tests_dishes', '').lower():
-                filtered.append(b)
-        else:
+            if not (search_query in b.get('name', '').lower() or 
+                    search_query in b.get('address', '').lower() or 
+                    search_query in b.get('subcategory', '').lower() or 
+                    search_query in b.get('special_info', '').lower() or 
+                    search_query in b.get('tests_dishes', '').lower()):
+                match_search = False
+
+        if selected_subcat:
+            if b.get('subcategory', '').lower() != selected_subcat.lower():
+                match_subcat = False
+
+        if match_search and match_subcat:
             filtered.append(b)
+
+    # Subcategory Filter Pills Generation
+    pills_html = f'<a href="/category/{cat_slug}?q={search_query}" class="px-4 py-2 rounded-xl text-xs font-bold transition btn-hover-effect ' + \
+                 ('bg-blue-600 text-white shadow-md' if not selected_subcat else 'bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-700') + '">All</a>'
+    
+    for sc in cat['subcategories']:
+        is_active = (selected_subcat.lower() == sc.lower())
+        active_cls = 'bg-blue-600 text-white shadow-md' if is_active else 'bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-700'
+        pills_html += f'<a href="/category/{cat_slug}?subcat={sc}&q={search_query}" class="px-4 py-2 rounded-xl text-xs font-bold transition btn-hover-effect {active_cls}">{sc}</a>'
 
     cards = ""
     for b in filtered:
@@ -298,24 +359,89 @@ def category_page(cat_slug):
         </a>
         '''
     if not cards:
-        cards = '<div class="col-span-3 text-center py-20 text-gray-500"><p class="text-xl">No active or approved listings found.</p></div>'
+        cards = '<div class="col-span-3 text-center py-20 text-gray-500 dark:text-gray-400"><p class="text-xl">No active or approved listings found matching your search.</p></div>'
 
     html = BASE_HEAD + '''
     <main class="max-w-7xl mx-auto px-4 py-12 animate-fade-in">
         <div class="mb-8 text-center">
             <span class="text-6xl inline-block animate-bounce">''' + cat['icon'] + '''</span>
             <h2 class="text-4xl font-extrabold mt-4 text-gray-900 dark:text-white">''' + cat['title'] + '''</h2>
-            <div class="mt-6 max-w-xl mx-auto">
+            
+            <!-- Realtime Search with Auto Suggestions -->
+            <div class="mt-6 max-w-xl mx-auto relative">
                 <form method="GET" action="/category/''' + cat_slug + '''" class="flex gap-3">
-                    <input type="text" id="searchInput" name="q" value="''' + search_query + '''" placeholder="''' + cat['search_hint'] + '''" autocomplete="off" class="w-full px-5 py-3.5 rounded-2xl bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-800 text-gray-900 dark:text-white input-hover-effect outline-none text-sm">
+                    <input type="hidden" name="subcat" value="''' + selected_subcat + '''">
+                    <div class="relative w-full">
+                        <input type="text" id="searchInput" name="q" value="''' + search_query + '''" placeholder="''' + cat['search_hint'] + '''" autocomplete="off" class="w-full px-5 py-3.5 rounded-2xl bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-800 text-gray-900 dark:text-white input-hover-effect outline-none text-sm">
+                        <div id="suggestionsDropdown" class="absolute left-0 right-0 top-full mt-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-2xl z-50 max-h-60 overflow-y-auto hidden"></div>
+                    </div>
                     <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-white px-6 py-3.5 rounded-2xl font-semibold btn-hover-effect shadow-md">Search</button>
                 </form>
             </div>
+
+            <!-- Subcategory Filter Pills -->
+            <div class="mt-6 flex flex-wrap justify-center gap-2 max-w-4xl mx-auto">
+                ''' + pills_html + '''
+            </div>
         </div>
+
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
             ''' + cards + '''
         </div>
     </main>
+
+    <script>
+        var categoryBusinesses = ''' + str([{
+            'id': b['id'],
+            'name': b['name'],
+            'address': b['address'],
+            'subcategory': b.get('subcategory', '')
+        } for b in all_biz]).replace("'", '"') + ''';
+
+        window.addEventListener('DOMContentLoaded', function() {
+            var input = document.getElementById('searchInput');
+            var dropdown = document.getElementById('suggestionsDropdown');
+
+            if (!input || !dropdown) return;
+
+            input.addEventListener('input', function() {
+                var q = this.value.toLowerCase().strip ? this.value.toLowerCase().trim() : '';
+                dropdown.innerHTML = '';
+                
+                if (q.length < 1) {
+                    dropdown.classList.add('hidden');
+                    return;
+                }
+
+                var matches = categoryBusinesses.filter(function(b) {
+                    return b.name.toLowerCase().includes(q) || 
+                           b.address.toLowerCase().includes(q) || 
+                           b.subcategory.toLowerCase().includes(q);
+                });
+
+                if (matches.length > 0) {
+                    matches.forEach(function(b) {
+                        var div = document.createElement('div');
+                        div.className = 'p-3 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer flex justify-between items-center text-left border-b border-gray-100 dark:border-gray-800/50 last:border-0';
+                        div.innerHTML = '<div><p class="font-bold text-sm text-gray-900 dark:text-white">' + b.name + '</p><p class="text-xs text-gray-500 dark:text-gray-400">📍 ' + b.address + '</p></div><span class="text-xs bg-blue-100 dark:bg-blue-600/20 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-md">' + b.subcategory + '</span>';
+                        div.addEventListener('click', function() {
+                            window.location.href = '/business/' + b.id;
+                        });
+                        dropdown.appendChild(div);
+                    });
+                    dropdown.classList.remove('hidden');
+                } else {
+                    dropdown.classList.add('hidden');
+                }
+            });
+
+            document.addEventListener('click', function(e) {
+                if (!input.contains(e.target) && !dropdown.contains(e.target)) {
+                    dropdown.classList.add('hidden');
+                }
+            });
+        });
+    </script>
     ''' + FOOTER
     return render_template_string(html)
 
@@ -566,15 +692,7 @@ def register_business():
     </main>
 
     <script>
-        var subcategoriesData = {
-            'hospitals': ['General Hospital', 'Dental Clinic', 'Eye Specialist', 'Cardiology Clinic', 'Laboratory & Diagnostics'],
-            'pharmacies': ['Medical Store', 'Homeopathic Store', 'Herbal & Organic', 'Surgical Equipment'],
-            'restaurants': ['Traditional / Shinwari', 'Fast Food & Burgers', 'BBQ & Grill', 'Coffee Shop & Cafe', 'Desi Restaurant'],
-            'supermarts': ['General Store', 'Supermarket', 'Vegetables & Fruits', 'Bakery & Sweets'],
-            'property': ['Plot & Land Dealer', 'House & Villa Rentals', 'Commercial Plaza', 'Real Estate Agency'],
-            'hotels': ['Luxury Hotel', 'Guest House', 'Resort', 'Budget Inn'],
-            'education': ['School & College', 'University', 'Academy & Tuition', 'Language & Computer Center']
-        };
+        var subcategoriesData = ''' + str({k: v['subcategories'] for k, v in CATEGORIES.items()}).replace("'", '"') + ''';
 
         var categoryRowConfigs = {
             'hospitals': {
