@@ -1,4 +1,4 @@
-"""SwatBiz Hub - Animated Multi-Phone, Dynamic Labels & Multi-Image Upload Application."""
+"""SwatBiz Hub - Fixed DOM Load & Dynamic Repeater Application."""
 from datetime import datetime, timedelta
 import os
 from flask import Flask, abort, redirect, render_template_string, request, url_for, session
@@ -282,7 +282,6 @@ def business_detail(b_id):
     phones_list = b.get('phones', ['N/A'])
     phones_html = ", ".join([f'<a href="tel:{p}" class="text-white hover:text-blue-400 transition font-bold">{p}</a>' for p in phones_list])
 
-    # Gallery Images
     gallery_imgs = b.get('images', [b.get('image')])
     gallery_html = ""
     for img_url in gallery_imgs:
@@ -334,11 +333,9 @@ def register_business():
     if request.method == 'POST':
         b_id = str(len(BUSINESSES) + 1)
         
-        # Multiple Phone Numbers
         phones = request.form.getlist('phones[]')
         clean_phones = [p.strip() for p in phones if p.strip()]
 
-        # Dynamic Repeater Data
         names = request.form.getlist('repeater_col1[]')
         col2_vals = request.form.getlist('repeater_col2[]')
         col3_vals = request.form.getlist('repeater_col3[]')
@@ -357,12 +354,10 @@ def register_business():
 
         combined_repeater_text = "\n".join(formatted_repeater_list) if formatted_repeater_list else request.form.get('special_info', 'N/A')
         
-        # Subcategory Optional Check
         subcat = request.form.get('subcategory', '').strip()
         if not subcat:
             subcat = 'General'
 
-        # Image URLs / Upload Handling
         img_urls = [url.strip() for url in request.form.getlist('image_urls[]') if url.strip()]
         primary_img = img_urls[0] if img_urls else 'https://images.unsplash.com/photo-1557804506-669a67965ba0?auto=format&fit=crop&w=800&q=80'
 
@@ -420,7 +415,6 @@ def register_business():
                 <input type="text" name="address" required placeholder="Address (e.g. Saidu Sharif, Mingora Swat)" class="w-full p-3.5 rounded-xl bg-gray-950 border border-gray-800 focus:ring-2 focus:ring-blue-500 outline-none transition text-sm">
             </div>
 
-            <!-- Multiple Phone Numbers -->
             <div>
                 <label class="block text-xs font-bold text-gray-400 mb-1">Phone Number(s) *</label>
                 <div id="phonesContainer" class="space-y-2">
@@ -436,7 +430,6 @@ def register_business():
                 <input type="password" name="client_password" required placeholder="Enter secret password" class="w-full p-3.5 rounded-xl bg-gray-950 border border-gray-800 focus:ring-2 focus:ring-blue-500 outline-none text-sm transition">
             </div>
 
-            <!-- Category Specific Dynamic Repeater Fields -->
             <div class="border-t border-gray-800 pt-4">
                 <label class="block text-sm font-bold text-blue-400 mb-3" id="repeaterTitle">🩺 Doctors, Clinic & Timings</label>
                 <div id="repeaterContainer" class="space-y-3"></div>
@@ -445,21 +438,17 @@ def register_business():
                 </button>
             </div>
 
-            <!-- Business Words Corrected Field (No 'Menu' in Hospitals) -->
             <div class="border-t border-gray-800 pt-4">
                 <label class="block text-xs font-bold text-gray-400 mb-1" id="extraTitle">Tests & Medical Services (Optional)</label>
                 <textarea name="tests_dishes" id="dishesField" placeholder="Enter details..." class="w-full p-3.5 rounded-xl bg-gray-950 border border-gray-800 focus:ring-2 focus:ring-blue-500 outline-none text-sm transition" rows="2"></textarea>
             </div>
 
-            <!-- Multiple Image URLs / File Inputs -->
             <div class="border-t border-gray-800 pt-4">
-                <label class="block text-xs font-bold text-gray-400 mb-1">Business Images (Optional - Enter URLs or Upload Files)</label>
+                <label class="block text-xs font-bold text-gray-400 mb-1">Business Images (Optional - Enter URLs)</label>
                 <div id="imagesContainer" class="space-y-2">
                     <input type="url" name="image_urls[]" placeholder="Image URL (e.g. https://images.unsplash.com/...)" class="w-full p-3 bg-gray-950 border border-gray-800 rounded-xl text-xs focus:ring-2 focus:ring-blue-500 outline-none">
                 </div>
-                <div class="flex justify-between items-center mt-2">
-                    <button type="button" onclick="addImageUrlField()" class="text-xs font-bold text-blue-400 hover:text-blue-300 transition">+ Add Another Image URL</button>
-                </div>
+                <button type="button" onclick="addImageUrlField()" class="mt-2 text-xs font-bold text-blue-400 hover:text-blue-300 transition">+ Add Another Image URL</button>
             </div>
 
             <div class="border-t border-gray-800 pt-4">
@@ -550,97 +539,312 @@ def register_business():
             }
         };
 
-        var catSelect = document.getElementById('categorySelect');
-        var subcatSelect = document.getElementById('subcategorySelect');
-        var repeaterTitle = document.getElementById('repeaterTitle');
-        var addRowBtn = document.getElementById('addRowBtn');
-        var repeaterContainer = document.getElementById('repeaterContainer');
-        var extraTitle = document.getElementById('extraTitle');
-        var dishesField = document.getElementById('dishesField');
+        window.addEventListener('DOMContentLoaded', function() {
+            var catSelect = document.getElementById('categorySelect');
+            var subcatSelect = document.getElementById('subcategorySelect');
+            var repeaterTitle = document.getElementById('repeaterTitle');
+            var addRowBtn = document.getElementById('addRowBtn');
+            var repeaterContainer = document.getElementById('repeaterContainer');
+            var extraTitle = document.getElementById('extraTitle');
+            var dishesField = document.getElementById('dishesField');
 
-        function addPhoneField() {
-            var container = document.getElementById('phonesContainer');
-            var div = document.createElement('div');
-            div.className = 'flex gap-2';
-            div.innerHTML = '<input type="text" name="phones[]" placeholder="e.g. +92 300 1234567" class="w-full p-3 bg-gray-950 border border-gray-800 rounded-xl text-xs focus:ring-2 focus:ring-blue-500 outline-none">' +
-                            '<button type="button" onclick="if(confirm(\'Delete phone number?\')) this.parentElement.remove()" class="bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white px-3 rounded-xl text-xs font-bold transition">✕</button>';
-            container.appendChild(div);
-        }
+            if(!catSelect) return;
 
-        function addImageUrlField() {
-            var container = document.getElementById('imagesContainer');
-            var div = document.createElement('div');
-            div.className = 'flex gap-2';
-            div.innerHTML = '<input type="url" name="image_urls[]" placeholder="Another Image URL..." class="w-full p-3 bg-gray-950 border border-gray-800 rounded-xl text-xs focus:ring-2 focus:ring-blue-500 outline-none">' +
-                            '<button type="button" onclick="if(confirm(\'Delete image URL?\')) this.parentElement.remove()" class="bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white px-3 rounded-xl text-xs font-bold transition">✕</button>';
-            container.appendChild(div);
-        }
+            window.addPhoneField = function() {
+                var container = document.getElementById('phonesContainer');
+                var div = document.createElement('div');
+                div.className = 'flex gap-2';
+                div.innerHTML = '<input type="text" name="phones[]" placeholder="e.g. +92 300 1234567" class="w-full p-3 bg-gray-950 border border-gray-800 rounded-xl text-xs focus:ring-2 focus:ring-blue-500 outline-none">' +
+                                '<button type="button" onclick="if(confirm(\'Delete phone number?\')) this.parentElement.remove()" class="bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white px-3 rounded-xl text-xs font-bold transition">✕</button>';
+                container.appendChild(div);
+            };
 
-        function deleteRowWithConfirm(btn) {
-            if (confirm("Are you sure you want to delete this row?")) {
-                var row = btn.parentElement.parentElement;
-                row.remove();
-            }
-        }
+            window.addImageUrlField = function() {
+                var container = document.getElementById('imagesContainer');
+                var div = document.createElement('div');
+                div.className = 'flex gap-2';
+                div.innerHTML = '<input type="url" name="image_urls[]" placeholder="Another Image URL..." class="w-full p-3 bg-gray-950 border border-gray-800 rounded-xl text-xs focus:ring-2 focus:ring-blue-500 outline-none">' +
+                                '<button type="button" onclick="if(confirm(\'Delete image URL?\')) this.parentElement.remove()" class="bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white px-3 rounded-xl text-xs font-bold transition">✕</button>';
+                container.appendChild(div);
+            };
 
-        function addNewRow() {
-            var cat = catSelect.value;
-            var cfg = categoryRowConfigs[cat] || categoryRowConfigs['hospitals'];
-
-            var rowCard = document.createElement('div');
-            rowCard.className = 'bg-gray-950 border border-gray-800/80 p-4 rounded-2xl space-y-3 relative group shadow-sm';
-
-            rowCard.innerHTML = '<div class="grid grid-cols-1 md:grid-cols-2 gap-3">' +
-                '<input type="text" name="repeater_col1[]" placeholder="' + cfg.c1 + '" class="p-3 bg-gray-900 border border-gray-800 rounded-xl text-xs text-white focus:ring-2 focus:ring-blue-500 outline-none">' +
-                '<input type="text" name="repeater_col2[]" placeholder="' + cfg.c2 + '" class="p-3 bg-gray-900 border border-gray-800 rounded-xl text-xs text-white focus:ring-2 focus:ring-blue-500 outline-none">' +
-                '</div>' +
-                '<div class="grid grid-cols-1 md:grid-cols-2 gap-3">' +
-                '<input type="text" name="repeater_col3[]" placeholder="' + cfg.c3 + '" class="p-3 bg-gray-900 border border-gray-800 rounded-xl text-xs text-white focus:ring-2 focus:ring-blue-500 outline-none">' +
-                '<input type="text" name="repeater_col4[]" placeholder="' + cfg.c4 + '" class="p-3 bg-gray-900 border border-gray-800 rounded-xl text-xs text-white focus:ring-2 focus:ring-blue-500 outline-none">' +
-                '</div>' +
-                '<div class="flex gap-2">' +
-                '<input type="text" name="repeater_col5[]" placeholder="' + cfg.c5 + '" class="w-full p-3 bg-gray-900 border border-gray-800 rounded-xl text-xs text-white focus:ring-2 focus:ring-blue-500 outline-none">' +
-                '<button type="button" onclick="deleteRowWithConfirm(this)" class="bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white px-3 rounded-xl text-xs font-bold transition">✕</button>' +
-                '</div>';
-            repeaterContainer.appendChild(rowCard);
-        }
-
-        function updateFormFields() {
-            var val = catSelect.value;
-            subcatSelect.innerHTML = '';
-            
-            var defaultOpt = document.createElement('option');
-            defaultOpt.value = '';
-            defaultOpt.textContent = '-- Select Subcategory (Optional) --';
-            subcatSelect.appendChild(defaultOpt);
-
-            if(subcategoriesData[val]) {
-                for(var i=0; i<subcategoriesData[val].length; i++) {
-                    var opt = document.createElement('option');
-                    opt.value = subcategoriesData[val][i];
-                    opt.textContent = subcategoriesData[val][i];
-                    subcatSelect.appendChild(opt);
+            window.deleteRowWithConfirm = function(btn) {
+                if (confirm("Are you sure you want to delete this row?")) {
+                    var row = btn.parentElement.parentElement;
+                    row.remove();
                 }
+            };
+
+            function addNewRow() {
+                var cat = catSelect.value;
+                var cfg = categoryRowConfigs[cat] || categoryRowConfigs['hospitals'];
+
+                var rowCard = document.createElement('div');
+                rowCard.className = 'bg-gray-950 border border-gray-800/80 p-4 rounded-2xl space-y-3 relative group shadow-sm';
+
+                rowCard.innerHTML = '<div class="grid grid-cols-1 md:grid-cols-2 gap-3">' +
+                    '<input type="text" name="repeater_col1[]" placeholder="' + cfg.c1 + '" class="p-3 bg-gray-900 border border-gray-800 rounded-xl text-xs text-white focus:ring-2 focus:ring-blue-500 outline-none">' +
+                    '<input type="text" name="repeater_col2[]" placeholder="' + cfg.c2 + '" class="p-3 bg-gray-900 border border-gray-800 rounded-xl text-xs text-white focus:ring-2 focus:ring-blue-500 outline-none">' +
+                    '</div>' +
+                    '<div class="grid grid-cols-1 md:grid-cols-2 gap-3">' +
+                    '<input type="text" name="repeater_col3[]" placeholder="' + cfg.c3 + '" class="p-3 bg-gray-900 border border-gray-800 rounded-xl text-xs text-white focus:ring-2 focus:ring-blue-500 outline-none">' +
+                    '<input type="text" name="repeater_col4[]" placeholder="' + cfg.c4 + '" class="p-3 bg-gray-900 border border-gray-800 rounded-xl text-xs text-white focus:ring-2 focus:ring-blue-500 outline-none">' +
+                    '</div>' +
+                    '<div class="flex gap-2">' +
+                    '<input type="text" name="repeater_col5[]" placeholder="' + cfg.c5 + '" class="w-full p-3 bg-gray-900 border border-gray-800 rounded-xl text-xs text-white focus:ring-2 focus:ring-blue-500 outline-none">' +
+                    '<button type="button" onclick="deleteRowWithConfirm(this)" class="bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white px-3 rounded-xl text-xs font-bold transition">✕</button>' +
+                    '</div>';
+                repeaterContainer.appendChild(rowCard);
             }
 
-            var cfg = categoryRowConfigs[val] || categoryRowConfigs['hospitals'];
-            repeaterTitle.innerText = cfg.title;
-            addRowBtn.innerText = cfg.addBtnText;
-            extraTitle.innerText = cfg.extraTitle;
-            dishesField.placeholder = cfg.extraPlaceholder;
+            function updateFormFields() {
+                var val = catSelect.value;
+                subcatSelect.innerHTML = '';
+                
+                var defaultOpt = document.createElement('option');
+                defaultOpt.value = '';
+                defaultOpt.textContent = '-- Select Subcategory (Optional) --';
+                subcatSelect.appendChild(defaultOpt);
 
-            repeaterContainer.innerHTML = '';
-            addNewRow();
-        }
+                if(subcategoriesData[val]) {
+                    for(var i=0; i<subcategoriesData[val].length; i++) {
+                        var opt = document.createElement('option');
+                        opt.value = subcategoriesData[val][i];
+                        opt.textContent = subcategoriesData[val][i];
+                        subcatSelect.appendChild(opt);
+                    }
+                }
 
-        catSelect.addEventListener('change', updateFormFields);
-        addRowBtn.addEventListener('click', addNewRow);
-        
-        // Initial Setup
-        updateFormFields();
+                var cfg = categoryRowConfigs[val] || categoryRowConfigs['hospitals'];
+                repeaterTitle.innerText = cfg.title;
+                addRowBtn.innerText = cfg.addBtnText;
+                extraTitle.innerText = cfg.extraTitle;
+                dishesField.placeholder = cfg.extraPlaceholder;
+
+                repeaterContainer.innerHTML = '';
+                addNewRow();
+            }
+
+            catSelect.addEventListener('change', updateFormFields);
+            addRowBtn.addEventListener('click', addNewRow);
+            
+            updateFormFields();
+        });
     </script>
     ''' + FOOTER
     return render_template_string(html)
+
+@app.route('/admin', methods=['GET', 'POST'])
+def admin_panel():
+    if request.method == 'POST':
+        if request.form.get('password') == ADMIN_PASSWORD:
+            session['admin_logged_in'] = True
+            return redirect('/admin')
+
+    if not session.get('admin_logged_in'):
+        html = BASE_HEAD + '''
+        <main class="max-w-md mx-auto px-4 py-20 text-center">
+            <div class="bg-gray-900 p-8 rounded-3xl border border-gray-800 shadow-xl">
+                <h2 class="text-2xl font-bold mb-4">🔒 Admin Portal Login</h2>
+                <form method="POST" class="space-y-4">
+                    <input type="password" name="password" required placeholder="Password" class="w-full p-3 rounded-xl bg-gray-800 border border-gray-700 text-center focus:ring-2 focus:ring-blue-500 outline-none">
+                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 py-3 rounded-xl font-bold transition">Login</button>
+                </form>
+            </div>
+        </main>
+        ''' + FOOTER
+        return render_template_string(html)
+
+    module = request.args.get('module')
+    tab = request.args.get('tab', 'pending')
+    action = request.args.get('action')
+    biz_id = request.args.get('id')
+
+    if action == 'logout':
+        session.pop('admin_logged_in', None)
+        return redirect('/')
+
+    if action and biz_id in BUSINESSES:
+        if action == 'approve':
+            BUSINESSES[biz_id]['status'] = 'approved'
+        elif action == 'approve_pay':
+            BUSINESSES[biz_id]['payment_status'] = 'paid'
+            BUSINESSES[biz_id]['expiry_date'] = datetime.now() + timedelta(days=60)
+        elif action == 'delete':
+            BUSINESSES[biz_id]['status'] = 'deleted'
+        return redirect('/admin?module=' + str(module) + '&tab=' + str(tab))
+
+    now = datetime.now()
+    pending_biz = {k: v for k, v in BUSINESSES.items() if v.get('status') == 'pending'}
+    approved_biz = {k: v for k, v in BUSINESSES.items() if v.get('status') == 'approved'}
+    pending_pay = {k: v for k, v in BUSINESSES.items() if v.get('payment_status') == 'unpaid'}
+    paid_pay = {k: v for k, v in BUSINESSES.items() if v.get('payment_status') == 'paid' and v.get('expiry_date', now) >= now}
+    
+    expiring_alerts = {}
+    for k, v in BUSINESSES.items():
+        if v.get('status') != 'deleted' and v.get('expiry_date'):
+            days_diff = (v.get('expiry_date') - now).days
+            if 0 <= days_diff <= 5:
+                expiring_alerts[k] = v
+
+    expired_subs = {}
+    for k, v in BUSINESSES.items():
+        if v.get('status') != 'deleted' and v.get('expiry_date'):
+            if (v.get('expiry_date') - now).days < 0:
+                expired_subs[k] = v
+
+    if not module:
+        html = ADMIN_HEAD + '''
+        <main class="max-w-5xl mx-auto px-4 py-12">
+            <div class="flex justify-between items-center mb-10">
+                <h2 class="text-3xl font-extrabold">🛠️ Admin Control Center</h2>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <a href="/admin?module=business&tab=pending" class="bg-gray-900 p-8 rounded-3xl border border-gray-800 hover:border-blue-500 transition-all duration-300 transform hover:-translate-y-2 shadow-2xl flex flex-col justify-between group">
+                    <div>
+                        <div class="flex justify-between items-center mb-6">
+                            <span class="text-6xl group-hover:scale-110 transition-transform">🏢</span>
+                            <span class="bg-yellow-500/20 text-yellow-400 text-xs px-3 py-1.5 rounded-full font-bold">''' + str(len(pending_biz)) + ''' Pending</span>
+                        </div>
+                        <h3 class="text-2xl font-black group-hover:text-blue-500 transition-colors">1. Business Directory Module</h3>
+                        <p class="text-gray-400 text-sm mt-2">Manage new business registration approvals and live directory listings.</p>
+                    </div>
+                    <div class="mt-8 text-blue-500 font-bold text-sm flex justify-between items-center">
+                        <span>Open Business Portal →</span>
+                        <span class="text-xs text-gray-500">''' + str(len(approved_biz)) + ''' Live Listings</span>
+                    </div>
+                </a>
+
+                <a href="/admin?module=payment&tab=pending" class="bg-gray-900 p-8 rounded-3xl border border-gray-800 hover:border-indigo-500 transition-all duration-300 transform hover:-translate-y-2 shadow-2xl flex flex-col justify-between group">
+                    <div>
+                        <div class="flex justify-between items-center mb-6">
+                            <span class="text-6xl group-hover:scale-110 transition-transform">💳</span>
+                            <span class="bg-red-500/20 text-red-400 text-xs px-3 py-1.5 rounded-full font-bold">''' + str(len(expired_subs)) + ''' Expired</span>
+                        </div>
+                        <h3 class="text-2xl font-black group-hover:text-indigo-500 transition-colors">2. Payment & Subscription Module</h3>
+                        <p class="text-gray-400 text-sm mt-2">Verify payments, 5-day expiry alerts, and fully expired subscriptions.</p>
+                    </div>
+                    <div class="mt-8 text-indigo-500 font-bold text-sm flex justify-between items-center">
+                        <span>Open Payment Portal →</span>
+                        <span class="text-xs text-red-400 font-bold">''' + str(len(expired_subs)) + ''' Expired / ''' + str(len(expiring_alerts)) + ''' Alerts</span>
+                    </div>
+                </a>
+            </div>
+        </main>
+        ''' + FOOTER
+        return render_template_string(html)
+
+    elif module == 'business':
+        content = ""
+        if tab == 'pending':
+            for b_id, b in pending_biz.items():
+                j_date = b.get('joining_date', datetime.now()).strftime('%Y-%m-%d')
+                content += '''
+                <div class="bg-gray-800/60 p-4 rounded-2xl flex justify-between items-center hover:bg-gray-800 transition">
+                    <div>
+                        <h4 class="font-bold">''' + b["name"] + ''' <span class="text-xs text-indigo-400">(''' + b.get('subcategory', 'General') + ''')</span></h4>
+                        <p class="text-xs text-gray-400">📍 ''' + b["address"] + ''' | 📅 Joined: <span class="text-blue-400 font-semibold">''' + j_date + '''</span></p>
+                    </div>
+                    <div class="flex gap-2 items-center">
+                        <a href="/business/''' + b_id + '''" target="_blank" class="bg-blue-600/20 text-blue-400 hover:bg-blue-600 hover:text-white px-3 py-2 rounded-xl text-xs font-bold transition">Preview</a>
+                        <a href="/admin?module=business&tab=pending&action=approve&id=''' + b_id + '''" class="bg-green-600 hover:bg-green-500 px-4 py-2 rounded-xl text-xs font-bold transition">Approve</a>
+                        <a href="/admin?module=business&tab=pending&action=delete&id=''' + b_id + '''" class="bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white px-3 py-2 rounded-xl text-xs font-bold transition">Delete</a>
+                    </div>
+                </div>
+                '''
+            if not content:
+                content = '<p class="text-gray-500 text-center py-8">No pending business approvals.</p>'
+        else:
+            for b_id, b in approved_biz.items():
+                j_date = b.get('joining_date', datetime.now()).strftime('%Y-%m-%d')
+                content += '''
+                <div class="bg-gray-800/40 p-4 rounded-2xl flex justify-between items-center hover:bg-gray-800/70 transition">
+                    <div>
+                        <h4 class="font-bold">''' + b["name"] + ''' <span class="text-xs text-indigo-400">(''' + b.get('subcategory', 'General') + ''')</span></h4>
+                        <p class="text-xs text-gray-400">📍 ''' + b["address"] + ''' | 📅 Joined: <span class="text-blue-400 font-semibold">''' + j_date + '''</span></p>
+                    </div>
+                    <div class="flex gap-2 items-center">
+                        <a href="/business/''' + b_id + '''" target="_blank" class="bg-blue-600/20 text-blue-400 hover:bg-blue-600 hover:text-white px-3 py-1.5 rounded-xl text-xs font-bold transition">View</a>
+                        <a href="/admin?module=business&tab=approved&action=delete&id=''' + b_id + '''" class="bg-red-600/20 text-red-400 hover:bg-red-600 hover:text-white px-3 py-1.5 rounded-xl text-xs font-bold transition">Delete</a>
+                    </div>
+                </div>
+                '''
+            if not content:
+                content = '<p class="text-gray-500 text-center py-8">No approved listings.</p>'
+
+        html = ADMIN_SUB_HEAD + '''
+        <main class="max-w-4xl mx-auto px-4 py-12">
+            <h2 class="text-2xl font-bold mb-6">🏢 Business Directory Management</h2>
+            <div class="flex space-x-3 mb-6">
+                <a href="/admin?module=business&tab=pending" class="px-5 py-2.5 rounded-xl font-bold text-sm transition ''' + ('bg-blue-600 text-white shadow-lg' if tab=='pending' else 'bg-gray-900 text-gray-400 hover:bg-gray-800') + '''">Pending (''' + str(len(pending_biz)) + ''')</a>
+                <a href="/admin?module=business&tab=approved" class="px-5 py-2.5 rounded-xl font-bold text-sm transition ''' + ('bg-blue-600 text-white shadow-lg' if tab=='approved' else 'bg-gray-900 text-gray-400 hover:bg-gray-800') + '''">Approved (''' + str(len(approved_biz)) + ''')</a>
+            </div>
+            <div class="bg-gray-900 p-6 rounded-3xl border border-gray-800 space-y-4">
+                ''' + content + '''
+            </div>
+        </main>
+        ''' + FOOTER
+        return render_template_string(html)
+
+    elif module == 'payment':
+        content = ""
+        if tab == 'pending':
+            for b_id, b in pending_pay.items():
+                content += '''
+                <div class="bg-gray-800/60 p-4 rounded-2xl flex justify-between items-center">
+                    <div>
+                        <h4 class="font-bold">''' + b["name"] + '''</h4>
+                        <p class="text-xs text-gray-400">Method: <span class="text-blue-400 font-bold">''' + b.get('payment_method', 'N/A') + '''</span> | Ref: <span class="text-indigo-400 font-mono font-bold">''' + b.get('payment_ref', 'N/A') + '''</span></p>
+                    </div>
+                    <a href="/admin?module=payment&tab=pending&action=approve_pay&id=''' + b_id + '''" class="bg-green-600 hover:bg-green-500 px-4 py-2 rounded-xl text-xs font-bold transition">Verify & Activate (60 Days)</a>
+                </div>
+                '''
+            if not content:
+                content = '<p class="text-gray-500 text-center py-8">No pending payment verifications.</p>'
+        elif tab == 'alerts':
+            for b_id, b in expiring_alerts.items():
+                ed = b.get('expiry_date').strftime('%Y-%m-%d')
+                content += '''
+                <div class="bg-yellow-500/10 border border-yellow-500/30 p-4 rounded-2xl flex justify-between items-center">
+                    <div>
+                        <h4 class="font-bold">''' + b["name"] + '''</h4>
+                        <p class="text-xs text-yellow-400 font-semibold">⚠️ Expires on: ''' + ed + '''</p>
+                    </div>
+                    <a href="/admin?module=payment&tab=alerts&action=approve_pay&id=''' + b_id + '''" class="bg-yellow-600 hover:bg-yellow-500 text-gray-950 px-4 py-2 rounded-xl text-xs font-bold transition">Renew 60 Days</a>
+                </div>
+                '''
+            if not content:
+                content = '<p class="text-gray-500 text-center py-8">No subscriptions expiring in the next 5 days.</p>'
+        else:
+            for b_id, b in expired_subs.items():
+                ed = b.get('expiry_date').strftime('%Y-%m-%d')
+                content += '''
+                <div class="bg-red-500/10 border border-red-500/30 p-4 rounded-2xl flex justify-between items-center">
+                    <div>
+                        <h4 class="font-bold">''' + b["name"] + '''</h4>
+                        <p class="text-xs text-red-400 font-semibold">❌ Expired on: ''' + ed + '''</p>
+                    </div>
+                    <a href="/admin?module=payment&tab=expired&action=approve_pay&id=''' + b_id + '''" class="bg-red-600 hover:bg-red-500 text-white px-4 py-2 rounded-xl text-xs font-bold transition">Restore & Renew</a>
+                </div>
+                '''
+            if not content:
+                content = '<p class="text-gray-500 text-center py-8">No expired subscriptions found.</p>'
+
+        html = ADMIN_SUB_HEAD + '''
+        <main class="max-w-4xl mx-auto px-4 py-12">
+            <h2 class="text-2xl font-bold mb-6">💳 Payment & Subscription Hub</h2>
+            <div class="flex space-x-3 mb-6">
+                <a href="/admin?module=payment&tab=pending" class="px-5 py-2.5 rounded-xl font-bold text-sm transition ''' + ('bg-indigo-600 text-white shadow-lg' if tab=='pending' else 'bg-gray-900 text-gray-400 hover:bg-gray-800') + '''">Unpaid (''' + str(len(pending_pay)) + ''')</a>
+                <a href="/admin?module=payment&tab=alerts" class="px-5 py-2.5 rounded-xl font-bold text-sm transition ''' + ('bg-yellow-600 text-gray-950 shadow-lg' if tab=='alerts' else 'bg-gray-900 text-gray-400 hover:bg-gray-800') + '''">Expiry Alerts (''' + str(len(expiring_alerts)) + ''')</a>
+                <a href="/admin?module=payment&tab=expired" class="px-5 py-2.5 rounded-xl font-bold text-sm transition ''' + ('bg-red-600 text-white shadow-lg' if tab=='expired' else 'bg-gray-900 text-gray-400 hover:bg-gray-800') + '''">Expired (''' + str(len(expired_subs)) + ''')</a>
+            </div>
+            <div class="bg-gray-900 p-6 rounded-3xl border border-gray-800 space-y-4">
+                ''' + content + '''
+            </div>
+        </main>
+        ''' + FOOTER
+        return render_template_string(html)
 
 if __name__ == '__main__':
     app.run(debug=True)
