@@ -1,4 +1,4 @@
-"""SwatBiz Hub - Full Code with Animations, Dynamic Subcategories & Image/Text Services Attachment."""
+"""SwatBiz Hub - Gallery Upload & Category Specific Placeholders."""
 from datetime import datetime, timedelta
 import os
 import json
@@ -120,19 +120,19 @@ BUSINESSES = {
 
 CATEGORIES = {
     'hospitals': {
-        'title': 'Hospitals & Healthcare', 'icon': '🏥', 'search_hint': 'Search name, doctor or location (e.g. Saidu)...', 'info_title': '👨‍⚕️ Doctors, Clinic & Timings', 'extra_title': '🔬 Available Tests & Medical Services',
+        'title': 'Hospitals & Healthcare', 'icon': '🏥', 'search_hint': 'Search hospital name, doctor or location (e.g. Saidu)...', 'info_title': '👨‍⚕️ Doctors, Clinic & Timings', 'extra_title': '🔬 Available Tests & Medical Services',
         'subcategories': ['General Hospital', 'Dental Clinic', 'Eye Specialist', 'Cardiology Clinic', 'Laboratory & Diagnostics'],
         'biz_ph': 'e.g. Saidu Teaching Hospital',
         'staff_heading': '🩺 Doctors, Clinic & Timings',
         'btn_text': '+ Add New Doctor',
         'extra_label': '🧪 Tests & Medical Services (Optional Text & Image)',
         'extra_ph': 'e.g. MRI, CT Scan, Blood Tests, Ultrasound, OPD Services...',
-        'ph_name': 'Doctor Name (Dr. Ahmad)',
-        'ph_spec': 'Specialty (Cardiologist)',
-        'ph_qual': 'Qualifications (MBBS, FCPS)',
-        'ph_appt': 'Appointment Timing (9 AM - 2 PM)',
-        'ph_clinic': 'Clinic Timing (Mon-Sat, 9 AM - 5 PM)',
-        'ph_room': 'Clinic / Room (Room 12, OPD Block)',
+        'ph_name': 'Doctor Name (e.g. Dr. Ahmad)',
+        'ph_spec': 'Specialty (e.g. Cardiologist)',
+        'ph_qual': 'Qualifications (e.g. MBBS, FCPS)',
+        'ph_appt': 'Appointment Timing (e.g. 9 AM - 2 PM)',
+        'ph_clinic': 'Clinic Timing (e.g. Mon-Sat, 9 AM - 5 PM)',
+        'ph_room': 'Clinic / Room (e.g. Room 12, OPD Block)',
         'ph_phone': 'Appointment Phone Number(s) (comma separated)'
     },
     'pharmacies': {
@@ -632,7 +632,7 @@ def business_detail(b_id):
                     <p>📅 <strong>Clinic Days:</strong> {doc.get('clinic_timing', 'N/A')}</p>
                     <p>🚪 <strong>Room / Block:</strong> {doc.get('room', 'N/A')}</p>
                     <p>📞 <strong>Appt Phone(s):</strong> <span class="text-blue-600 dark:text-blue-400 font-bold">{appt_nums}</span></p>
-                    <p class="text-[11px] text-gray-500 dark:text-gray-400 pt-1">🏥 <strong>Hospital:</strong> {b['name']} ({b['address']})</p>
+                    <p class="text-[11px] text-gray-500 dark:text-gray-400 pt-1">🏥 <strong>Business:</strong> {b['name']} ({b['address']})</p>
                 </div>
             </div>
             '''
@@ -657,20 +657,20 @@ def business_detail(b_id):
         <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-6 md:p-8 max-w-md w-full shadow-2xl animate-modal space-y-4">
             <div class="flex justify-between items-start">
                 <div class="flex items-center gap-3">
-                    <span class="text-4xl p-2 bg-blue-50 dark:bg-blue-600/20 rounded-2xl">👨‍⚕️</span>
+                    <span class="text-4xl p-2 bg-blue-50 dark:bg-blue-600/20 rounded-2xl">👤</span>
                     <div>
-                        <h3 id="mDocName" class="text-xl font-black text-gray-900 dark:text-white">Dr. Name</h3>
+                        <h3 id="mDocName" class="text-xl font-black text-gray-900 dark:text-white">Name</h3>
                         <p id="mDocSpec" class="text-xs font-bold text-blue-600 dark:text-blue-400">Specialty</p>
                         <p id="mDocQuals" class="text-[11px] text-gray-500 dark:text-gray-400 italic">Qualifications</p>
                     </div>
                 </div>
-                <button type="button" onclick="closeDoctorModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-white text-xl font-bold bg-gray-100 dark:bg-gray-800 w-8 h-8 rounded-full flex items-center justify-center">×</button>
+                <button type="button" onclick="closeDoctorModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-white text-xl font-bold bg-gray-100 dark:bg-gray-800 w-8 h-8 rounded-full flex items-center justify-center">×`</button>
             </div>
             <div class="space-y-2 text-xs text-gray-700 dark:text-gray-300 pt-2 border-t border-gray-100 dark:border-gray-800">
-                <p>🕒 <strong>Appointment Timing:</strong> <span id="mApptTiming" class="font-semibold text-gray-900 dark:text-white"></span></p>
-                <p>📅 <strong>Clinic Days / Timing:</strong> <span id="mClinicTiming" class="font-semibold text-gray-900 dark:text-white"></span></p>
-                <p>🚪 <strong>Room / Department:</strong> <span id="mRoom" class="font-semibold text-gray-900 dark:text-white"></span></p>
-                <p>📞 <strong>Appointment Phone(s):</strong> <a id="mApptPhoneLink" href="#" class="text-blue-600 dark:text-blue-400 font-bold underline"></a></p>
+                <p>🕒 <strong>Timing / Hours:</strong> <span id="mApptTiming" class="font-semibold text-gray-900 dark:text-white"></span></p>
+                <p>📅 <strong>Days / Schedule:</strong> <span id="mClinicTiming" class="font-semibold text-gray-900 dark:text-white"></span></p>
+                <p>🚪 <strong>Location / Room:</strong> <span id="mRoom" class="font-semibold text-gray-900 dark:text-white"></span></p>
+                <p>📞 <strong>Direct Phone(s):</strong> <a id="mApptPhoneLink" href="#" class="text-blue-600 dark:text-blue-400 font-bold underline"></a></p>
             </div>
             <div class="bg-gray-50 dark:bg-gray-950 p-3 rounded-xl border border-gray-200 dark:border-gray-800 text-[11px] text-gray-600 dark:text-gray-400 space-y-1">
                 <p>🏥 <strong id="mHospName"></strong></p>
@@ -875,36 +875,52 @@ def register():
                         <div class="doc-entry animate-modal bg-gray-50 dark:bg-gray-950 p-4 rounded-2xl border border-gray-200 dark:border-gray-800 space-y-3 relative">
                             <button type="button" onclick="requestDeleteDoctor(this)" title="Delete Entry" class="absolute top-3 right-3 bg-red-600 hover:bg-red-700 text-white w-8 h-8 rounded-full flex items-center justify-center font-black text-sm shadow-md transition transform hover:scale-110 z-10 border border-red-400">✕</button>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                <input type="text" name="doc_name" placeholder="Doctor Name (Dr. Ahmad)" class="doc-input-name p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
-                                <input type="text" name="doc_spec" placeholder="Specialty (Cardiologist)" class="doc-input-spec p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
+                                <input type="text" name="doc_name" placeholder="Doctor Name (e.g. Dr. Ahmad)" class="doc-input-name p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
+                                <input type="text" name="doc_spec" placeholder="Specialty (e.g. Cardiologist)" class="doc-input-spec p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
                             </div>
                             <div>
-                                <input type="text" name="doc_qual" placeholder="Qualifications (MBBS, FCPS)" class="doc-input-qual w-full p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
+                                <input type="text" name="doc_qual" placeholder="Qualifications (e.g. MBBS, FCPS)" class="doc-input-qual w-full p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
                             </div>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                <input type="text" name="doc_appt" placeholder="Appointment Timing (9 AM - 2 PM)" class="doc-input-appt p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
-                                <input type="text" name="doc_clinic" placeholder="Clinic Timing (Mon-Sat, 9 AM - 5 PM)" class="doc-input-clinic p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
+                                <input type="text" name="doc_appt" placeholder="Appointment Timing (e.g. 9 AM - 2 PM)" class="doc-input-appt p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
+                                <input type="text" name="doc_clinic" placeholder="Clinic Timing (e.g. Mon-Sat, 9 AM - 5 PM)" class="doc-input-clinic p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
                             </div>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                <input type="text" name="doc_room" placeholder="Clinic / Room (Room 12, OPD Block)" class="doc-input-room p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
+                                <input type="text" name="doc_room" placeholder="Clinic / Room (e.g. Room 12, OPD Block)" class="doc-input-room p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
                                 <input type="text" name="doc_phone" placeholder="Appointment Phone Number(s) (comma separated)" class="doc-input-phone p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
                             </div>
                         </div>
                     </div>
 
                     <button id="addStaffBtn" type="button" onclick="addDoctorRow()" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2.5 rounded-xl text-xs font-bold btn-hover-effect flex items-center gap-2 shadow-md">
-                        + Add New Doctor
+                        + Add New Entry
                     </button>
                 </div>
 
-                <!-- Extra Services Section (With Optional Text & Image) -->
+                <!-- Extra Services Section (With Optional Text & Gallery File Upload) -->
                 <div class="pt-4 border-t border-gray-100 dark:border-gray-800 space-y-3">
                     <label id="extraSectionLabel" class="block text-xs font-bold text-gray-700 dark:text-gray-300">🧪 Tests & Medical Services (Optional Text & Image)</label>
                     <textarea id="extraSectionTextarea" name="tests_dishes" rows="3" placeholder="e.g. MRI, CT Scan, Blood Tests, Ultrasound, OPD Services..." class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white input-hover-effect outline-none text-sm"></textarea>
                     
-                    <div>
-                        <label class="block text-[11px] font-bold text-gray-500 dark:text-gray-400 mb-1">🖼️ Service List / Menu / Rate Card Image URL (Optional)</label>
-                        <input type="text" name="extra_img" placeholder="https://example.com/menu-or-tests-list.jpg" class="w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white input-hover-effect outline-none">
+                    <div class="space-y-2">
+                        <label class="block text-[11px] font-bold text-gray-500 dark:text-gray-400">🖼️ Rate Card / Menu / Services Image (Upload from Phone Gallery or Paste Link)</label>
+                        
+                        <div class="flex flex-col sm:flex-row gap-3 items-center">
+                            <label class="w-full sm:w-auto bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 px-4 py-2.5 rounded-xl text-xs font-bold cursor-pointer transition flex items-center justify-center gap-2 border border-gray-300 dark:border-gray-700">
+                                📁 Select from Gallery
+                                <input type="file" accept="image/*" onchange="handleFileUpload(event)" class="hidden">
+                            </label>
+                            <span class="text-xs text-gray-400">OR</span>
+                            <input type="text" id="extraImgInput" name="extra_img" placeholder="Paste Image URL link here..." class="w-full p-2.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white input-hover-effect outline-none">
+                        </div>
+
+                        <div id="imagePreviewContainer" class="hidden mt-2 p-2 bg-gray-100 dark:bg-gray-950 rounded-2xl border border-gray-200 dark:border-gray-800 flex items-center gap-3">
+                            <img id="previewImg" src="" class="w-16 h-16 object-cover rounded-xl">
+                            <div class="text-xs">
+                                <p class="font-bold text-green-500">✓ Image Selected</p>
+                                <p class="text-gray-400 text-[10px]">Preview attached to listing</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -933,6 +949,20 @@ def register():
     <script>
         var categoriesMeta = ''' + categories_json + ''';
         var pendingDeleteTarget = null;
+
+        function handleFileUpload(event) {
+            var file = event.target.files[0];
+            if (file) {
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    var base64Img = e.target.result;
+                    document.getElementById('extraImgInput').value = base64Img;
+                    document.getElementById('previewImg').src = base64Img;
+                    document.getElementById('imagePreviewContainer').classList.remove('hidden');
+                };
+                reader.readAsDataURL(file);
+            }
+        }
 
         function updateCategoryFields() {
             var catSelect = document.getElementById('categorySelect');
