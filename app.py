@@ -156,8 +156,13 @@ ANIMATION_STYLES = '''
         0% { opacity: 0; transform: scale(0.85) translateY(-20px); }
         100% { opacity: 1; transform: scale(1) translateY(0); }
     }
+    @keyframes fadeOut {
+        0% { opacity: 1; transform: scale(1); }
+        100% { opacity: 0; transform: scale(0.9); }
+    }
     .animate-fade-in { animation: fadeInUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
     .animate-modal { animation: modalPop 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+    .animate-fade-out { animation: fadeOut 0.25s ease-out forwards; }
     
     .input-hover-effect {
         transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
@@ -672,7 +677,8 @@ def register():
         category = request.form.get('category', '').strip()
         subcategory = request.form.get('subcategory', '').strip()
         address = request.form.get('address', '').strip()
-        phone = request.form.get('phone', '').strip()
+        raw_phones = request.form.get('phone', '').strip()
+        phones_list = [p.strip() for p in raw_phones.split(',') if p.strip()]
         client_email = request.form.get('client_email', '').strip().lower()
         client_password = request.form.get('client_password', '').strip()
         tests_dishes = request.form.get('tests_dishes', '').strip()
@@ -696,7 +702,7 @@ def register():
                     'appt_timing': doc_appts[i].strip() if i < len(doc_appts) else '',
                     'clinic_timing': doc_clinics[i].strip() if i < len(doc_clinics) else '',
                     'room': doc_rooms[i].strip() if i < len(doc_rooms) else '',
-                    'appt_numbers': doc_phones[i].strip() if i < len(doc_phones) else phone
+                    'appt_numbers': doc_phones[i].strip() if i < len(doc_phones) and doc_phones[i].strip() else raw_phones
                 })
         
         if name and category and client_email and client_password:
@@ -707,7 +713,7 @@ def register():
                 'subcategory': subcategory,
                 'name': name,
                 'address': address,
-                'phones': [phone] if phone else ['+92 300 0000000'],
+                'phones': phones_list if phones_list else ['+92 300 0000000'],
                 'image': 'https://images.unsplash.com/photo-1557804506-669a67965ba0?auto=format&fit=crop&w=800&q=80',
                 'images': ['https://images.unsplash.com/photo-1557804506-669a67965ba0?auto=format&fit=crop&w=800&q=80'],
                 'status': 'approved',
@@ -731,6 +737,19 @@ def register():
     categories_json = json.dumps({k: v['subcategories'] for k, v in CATEGORIES.items()})
 
     html = get_base_head(back_url="/", back_text="Back to Home") + '''
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteConfirmModal" class="fixed inset-0 bg-black/60 dark:bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-6 max-w-sm w-full shadow-2xl animate-modal text-center space-y-4">
+            <span class="text-4xl inline-block">🗑️</span>
+            <h3 class="text-lg font-extrabold text-gray-900 dark:text-white">Delete Doctor Entry?</h3>
+            <p class="text-xs text-gray-500 dark:text-gray-400">Are you sure you want to remove this doctor entry from your form?</p>
+            <div class="flex items-center justify-center gap-3 pt-2">
+                <button type="button" onclick="cancelDeleteDoctor()" class="w-1/2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 py-2.5 rounded-xl font-bold text-xs transition">Cancel</button>
+                <button type="button" onclick="confirmDeleteDoctor()" class="w-1/2 bg-red-600 hover:bg-red-500 text-white py-2.5 rounded-xl font-bold text-xs shadow-md transition">Yes, Delete</button>
+            </div>
+        </div>
+    </div>
+
     <main class="max-w-2xl mx-auto px-4 py-12 animate-fade-in">
         <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-8 shadow-2xl space-y-6">
             <div class="text-center space-y-2">
@@ -765,8 +784,11 @@ def register():
                 </div>
 
                 <div>
-                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Phone Number *</label>
-                    <input type="text" name="phone" required placeholder="e.g. +92 300 1234567" class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white input-hover-effect outline-none text-sm">
+                    <div class="flex justify-between items-center mb-1">
+                        <label class="block text-xs font-bold text-gray-700 dark:text-gray-300">Phone Number(s) *</label>
+                        <span class="text-[10px] text-gray-400">Separate multiple numbers with commas (,)</span>
+                    </div>
+                    <input type="text" name="phone" required placeholder="e.g. +92 300 1234567, +92 946 9240125" class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white input-hover-effect outline-none text-sm">
                 </div>
 
                 <!-- Dynamic Doctors / Staff Section -->
@@ -776,22 +798,22 @@ def register():
                     </div>
 
                     <div id="doctorsContainer" class="space-y-4">
-                        <div class="doc-entry bg-gray-50 dark:bg-gray-950 p-4 rounded-2xl border border-gray-200 dark:border-gray-800 space-y-3 relative">
-                            <button type="button" onclick="removeDoctor(this)" class="absolute top-3 right-3 text-red-500 bg-red-100 dark:bg-red-900/40 w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs">✕</button>
+                        <div class="doc-entry animate-modal bg-gray-50 dark:bg-gray-950 p-4 rounded-2xl border border-gray-200 dark:border-gray-800 space-y-3 relative">
+                            <button type="button" onclick="requestDeleteDoctor(this)" class="absolute top-3 right-3 text-red-500 bg-red-100 dark:bg-red-900/40 w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs hover:bg-red-200 dark:hover:bg-red-800/60 transition">✕</button>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                <input type="text" name="doc_name" placeholder="Doctor Name (Dr. Ahmad)" class="p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none">
-                                <input type="text" name="doc_spec" placeholder="Specialty (Cardiologist)" class="p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none">
+                                <input type="text" name="doc_name" placeholder="Doctor Name (Dr. Ahmad)" class="p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
+                                <input type="text" name="doc_spec" placeholder="Specialty (Cardiologist)" class="p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
                             </div>
                             <div>
-                                <input type="text" name="doc_qual" placeholder="Qualifications (MBBS, FCPS)" class="w-full p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none">
+                                <input type="text" name="doc_qual" placeholder="Qualifications (MBBS, FCPS)" class="w-full p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
                             </div>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                <input type="text" name="doc_appt" placeholder="Appointment Timing (9 AM - 2 PM)" class="p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none">
-                                <input type="text" name="doc_clinic" placeholder="Clinic Timing (Mon-Sat, 9 AM - 5 PM)" class="p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none">
+                                <input type="text" name="doc_appt" placeholder="Appointment Timing (9 AM - 2 PM)" class="p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
+                                <input type="text" name="doc_clinic" placeholder="Clinic Timing (Mon-Sat, 9 AM - 5 PM)" class="p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
                             </div>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                <input type="text" name="doc_room" placeholder="Clinic / Room (Room 12, OPD Block)" class="p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none">
-                                <input type="text" name="doc_phone" placeholder="Appointment Phone Number(s)" class="p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none">
+                                <input type="text" name="doc_room" placeholder="Clinic / Room (Room 12, OPD Block)" class="p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
+                                <input type="text" name="doc_phone" placeholder="Appointment Phone Number(s) (comma separated)" class="p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
                             </div>
                         </div>
                     </div>
@@ -831,6 +853,7 @@ def register():
 
     <script>
         var categoriesData = ''' + categories_json + ''';
+        var pendingDeleteTarget = null;
 
         function updateSubcategories() {
             var catSelect = document.getElementById('categorySelect');
@@ -851,35 +874,54 @@ def register():
         function addDoctorRow() {
             var container = document.getElementById('doctorsContainer');
             var div = document.createElement('div');
-            div.className = 'doc-entry bg-gray-50 dark:bg-gray-950 p-4 rounded-2xl border border-gray-200 dark:border-gray-800 space-y-3 relative mt-3';
+            div.className = 'doc-entry animate-modal bg-gray-50 dark:bg-gray-950 p-4 rounded-2xl border border-gray-200 dark:border-gray-800 space-y-3 relative mt-3';
             div.innerHTML = `
-                <button type="button" onclick="removeDoctor(this)" class="absolute top-3 right-3 text-red-500 bg-red-100 dark:bg-red-900/40 w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs">✕</button>
+                <button type="button" onclick="requestDeleteDoctor(this)" class="absolute top-3 right-3 text-red-500 bg-red-100 dark:bg-red-900/40 w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs hover:bg-red-200 dark:hover:bg-red-800/60 transition">✕</button>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <input type="text" name="doc_name" placeholder="Doctor Name (Dr. Ahmad)" class="p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none">
-                    <input type="text" name="doc_spec" placeholder="Specialty (Cardiologist)" class="p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none">
+                    <input type="text" name="doc_name" placeholder="Doctor Name (Dr. Ahmad)" class="p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
+                    <input type="text" name="doc_spec" placeholder="Specialty (Cardiologist)" class="p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
                 </div>
                 <div>
-                    <input type="text" name="doc_qual" placeholder="Qualifications (MBBS, FCPS)" class="w-full p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none">
+                    <input type="text" name="doc_qual" placeholder="Qualifications (MBBS, FCPS)" class="w-full p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <input type="text" name="doc_appt" placeholder="Appointment Timing (9 AM - 2 PM)" class="p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none">
-                    <input type="text" name="doc_clinic" placeholder="Clinic Timing (Mon-Sat, 9 AM - 5 PM)" class="p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none">
+                    <input type="text" name="doc_appt" placeholder="Appointment Timing (9 AM - 2 PM)" class="p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
+                    <input type="text" name="doc_clinic" placeholder="Clinic Timing (Mon-Sat, 9 AM - 5 PM)" class="p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <input type="text" name="doc_room" placeholder="Clinic / Room (Room 12, OPD Block)" class="p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none">
-                    <input type="text" name="doc_phone" placeholder="Appointment Phone Number(s)" class="p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none">
+                    <input type="text" name="doc_room" placeholder="Clinic / Room (Room 12, OPD Block)" class="p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
+                    <input type="text" name="doc_phone" placeholder="Appointment Phone Number(s) (comma separated)" class="p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
                 </div>
             `;
             container.appendChild(div);
         }
 
-        function removeDoctor(btn) {
-            var row = btn.closest('.doc-entry');
-            if (document.querySelectorAll('.doc-entry').length > 1) {
-                row.remove();
-            } else {
-                row.querySelectorAll('input').forEach(input => input.value = '');
+        function requestDeleteDoctor(btn) {
+            pendingDeleteTarget = btn.closest('.doc-entry');
+            document.getElementById('deleteConfirmModal').classList.remove('hidden');
+        }
+
+        function cancelDeleteDoctor() {
+            pendingDeleteTarget = null;
+            document.getElementById('deleteConfirmModal').classList.add('hidden');
+        }
+
+        function confirmDeleteDoctor() {
+            if (pendingDeleteTarget) {
+                var entries = document.querySelectorAll('.doc-entry');
+                if (entries.length > 1) {
+                    pendingDeleteTarget.classList.remove('animate-modal');
+                    pendingDeleteTarget.classList.add('animate-fade-out');
+                    setTimeout(function() {
+                        pendingDeleteTarget.remove();
+                        pendingDeleteTarget = null;
+                    }, 200);
+                } else {
+                    pendingDeleteTarget.querySelectorAll('input').forEach(input => input.value = '');
+                    pendingDeleteTarget = null;
+                }
             }
+            document.getElementById('deleteConfirmModal').classList.add('hidden');
         }
 
         window.addEventListener('DOMContentLoaded', function() {
@@ -1027,7 +1069,7 @@ def client_edit_business(b_id):
                     <input type="text" name="address" value="''' + b['address'] + '''" required class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white input-hover-effect outline-none text-sm">
                 </div>
                 <div>
-                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Phone Numbers</label>
+                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Phone Numbers (separated with commas)</label>
                     <input type="text" name="phones" value="''' + ", ".join(b.get('phones', [])) + '''" required class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white input-hover-effect outline-none text-sm">
                 </div>
                 <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-3.5 rounded-xl font-bold btn-hover-effect text-sm shadow-lg">Save Changes</button>
