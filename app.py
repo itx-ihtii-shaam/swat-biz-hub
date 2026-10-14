@@ -1,4 +1,4 @@
-"""SwatBiz Hub - Qualifications Field, Smart Admin Navigation & Client Dashboard Integration."""
+"""SwatBiz Hub - Qualifications Field, Smart Admin Navigation Fix & Client Login Dashboard System."""
 from datetime import datetime, timedelta
 import os
 import json
@@ -48,6 +48,7 @@ BUSINESSES = {
         ],
         'special_info': 'Dr. Muhammad Ali (Cardiologist), Dr. Ayesha Khan (Pediatrician)',
         'tests_dishes': 'MRI, CT Scan, X-Ray, Ultrasound, Emergency Care',
+        'client_email': 'owner1@swatbiz.com',
         'client_password': 'client123'
     },
     '2': {
@@ -78,6 +79,7 @@ BUSINESSES = {
         ],
         'special_info': 'Special Family Cabin Available | Chef Rashid',
         'tests_dishes': 'Dumba Karahi (Rs. 2400/kg), Shinwari Tikka (Rs. 1800/kg), Mutton Kabab, Green Tea',
+        'client_email': 'owner2@swatbiz.com',
         'client_password': 'client123'
     },
     '3': {
@@ -108,6 +110,7 @@ BUSINESSES = {
         ],
         'special_info': 'Prof. Shah Zarin (Principal), Admissions open for Metric & FSc',
         'tests_dishes': 'Science Labs, Computer Labs, Library, Sports Ground',
+        'client_email': 'owner3@swatbiz.com',
         'client_password': 'client123'
     }
 }
@@ -243,26 +246,6 @@ THEME_JS = '''
 </script>
 '''
 
-def get_header_nav(extra_link=""):
-    client_logged_in = session.get('client_logged_in_id')
-    client_nav = f'<a href="/client/dashboard" class="bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 px-3.5 py-2 rounded-xl text-xs font-bold hover:bg-emerald-600 hover:text-white transition">📂 My Dashboard</a>' if client_logged_in else f'<a href="/client/login" class="bg-white/10 hover:bg-white/20 px-3.5 py-2 rounded-xl text-xs font-semibold transition">🔐 Client Login</a>'
-    
-    return f'''
-    <header class="bg-white dark:bg-slate-900/90 border-b border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white shadow-md sticky top-0 z-40 backdrop-blur-md">
-        <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-            <div class="flex items-center gap-3">
-                {extra_link}
-                <a href="/" class="text-2xl font-extrabold tracking-tight text-blue-600 dark:text-blue-400 hover:opacity-80 transition transform hover:scale-105">🏙️ {SITE_NAME}</a>
-            </div>
-            <div class="flex items-center space-x-3">
-                {client_nav}
-                {HEADER_THEME_BTN}
-                <a href="/register" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2.5 rounded-xl text-sm font-bold shadow-lg btn-hover-effect">＋ Register Business</a>
-            </div>
-        </div>
-    </header>
-    '''
-
 HOME_HEAD = '''
 <!DOCTYPE html>
 <html lang="en" id="html-root" class="dark">
@@ -276,7 +259,17 @@ HOME_HEAD = '''
     ''' + ANIMATION_STYLES + THEME_JS + '''
 </head>
 <body class="bg-gray-100 dark:bg-gray-950 text-gray-900 dark:text-gray-100 min-h-screen transition-colors duration-300">
-    ''' + get_header_nav()
+    <header class="bg-white dark:bg-slate-900/90 border-b border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white shadow-md sticky top-0 z-40 backdrop-blur-md">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+            <a href="/" class="text-2xl font-extrabold tracking-tight text-blue-600 dark:text-blue-400 hover:opacity-80 transition transform hover:scale-105">🏙️ ''' + SITE_NAME + '''</a>
+            <div class="flex items-center space-x-3">
+                ''' + HEADER_THEME_BTN + '''
+                <a href="/client/login" class="bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 px-4 py-2.5 rounded-xl text-sm font-bold transition">🔑 Login / Dashboard</a>
+                <a href="/register" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2.5 rounded-xl text-sm font-bold shadow-lg btn-hover-effect">＋ Register Business</a>
+            </div>
+        </div>
+    </header>
+'''
 
 FOOTER = '''
     <footer class="text-center py-8 text-sm text-gray-500 border-t border-gray-200 dark:border-gray-800/80 mt-20 animate-fade-in">
@@ -287,7 +280,6 @@ FOOTER = '''
 '''
 
 def get_base_head(back_url="/", back_text="Back to Home"):
-    extra = f'<a href="{back_url}" class="text-sm font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-600/10 border border-blue-200 dark:border-blue-500/20 px-3.5 py-2 rounded-xl hover:bg-blue-600 hover:text-white transition flex items-center gap-2 shadow-sm">← {back_text}</a>'
     return '''
 <!DOCTYPE html>
 <html lang="en" id="html-root" class="dark">
@@ -301,7 +293,19 @@ def get_base_head(back_url="/", back_text="Back to Home"):
     ''' + ANIMATION_STYLES + THEME_JS + '''
 </head>
 <body class="bg-gray-100 dark:bg-gray-950 text-gray-900 dark:text-gray-100 min-h-screen transition-colors duration-300">
-    ''' + get_header_nav(extra_link=extra)
+    <header class="bg-white dark:bg-slate-900/90 border-b border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white shadow-md sticky top-0 z-40 backdrop-blur-md">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+            <a href="''' + back_url + '''" class="text-sm font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-600/10 border border-blue-200 dark:border-blue-500/20 px-4 py-2 rounded-xl hover:bg-blue-600 hover:text-white transition flex items-center gap-2 shadow-sm">
+                ← ''' + back_text + '''
+            </a>
+            <div class="flex items-center space-x-3">
+                ''' + HEADER_THEME_BTN + '''
+                <a href="/client/login" class="bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 px-4 py-2.5 rounded-xl text-sm font-bold transition">🔑 Login / Dashboard</a>
+                <a href="/register" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2.5 rounded-xl text-sm font-bold shadow-lg btn-hover-effect">＋ Register Business</a>
+            </div>
+        </div>
+    </header>
+'''
 
 @app.route('/')
 def home():
@@ -474,40 +478,114 @@ def category_page(cat_slug):
     ''' + FOOTER
     return render_template_string(html)
 
+# ==========================================
+# CLIENT LOGIN & DASHBOARD SYSTEM (NEW)
+# ==========================================
+
 @app.route('/client/login', methods=['GET', 'POST'])
 def client_login():
-    error = ""
+    error_msg = ""
     if request.method == 'POST':
-        biz_id = request.form.get('biz_id', '').strip()
-        password = request.form.get('password', '').strip()
+        email = request.form.get('email', '').strip().lower()
+        password = request.form.get('password', '')
         
-        if biz_id in BUSINESSES and BUSINESSES[biz_id].get('client_password', 'client123') == password:
-            session['client_logged_in_id'] = biz_id
+        # Check if any business matches this client email & password
+        matched_biz_id = None
+        for b_id, b in BUSINESSES.items():
+            if b.get('client_email', '').lower() == email and b.get('client_password') == password:
+                matched_biz_id = b_id
+                break
+                
+        if matched_biz_id:
+            session['client_logged_email'] = email
             return redirect(url_for('client_dashboard'))
         else:
-            error = "Invalid Business ID or Client Password!"
+            error_msg = "Invalid Email or Password! Please check your credentials."
 
     html = get_base_head(back_url="/", back_text="Back to Home") + '''
     <main class="max-w-md mx-auto px-4 py-20 animate-fade-in">
         <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-8 shadow-2xl space-y-6">
-            <div class="text-center">
-                <span class="text-5xl inline-block mb-2">🔐</span>
-                <h1 class="text-2xl font-black text-gray-900 dark:text-white">Client Portal Login</h1>
-                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Manage your business listing, edit details or update menu/doctors.</p>
+            <div class="text-center space-y-2">
+                <span class="text-5xl inline-block">🔑</span>
+                <h1 class="text-2xl font-black text-gray-900 dark:text-white">Business Owner Login</h1>
+                <p class="text-xs text-gray-500 dark:text-gray-400">Access your business dashboard to edit or manage your listings.</p>
             </div>
 
             <form method="POST" class="space-y-4">
                 <div>
-                    <label class="block text-xs font-bold mb-1 text-gray-700 dark:text-gray-300">Business ID number</label>
-                    <input type="text" name="biz_id" required placeholder="e.g. 1, 2, 3..." class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-sm focus:border-blue-500 outline-none">
+                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Email Address</label>
+                    <input type="email" name="email" required placeholder="e.g. owner@swatbiz.com" class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white input-hover-effect outline-none text-sm">
                 </div>
                 <div>
-                    <label class="block text-xs font-bold mb-1 text-gray-700 dark:text-gray-300">Client Password</label>
-                    <input type="password" name="password" required placeholder="Enter your password" class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-sm focus:border-blue-500 outline-none">
+                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Password</label>
+                    <input type="password" name="password" required placeholder="••••••••" class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white input-hover-effect outline-none text-sm">
                 </div>
-                ''' + (f'<p class="text-red-500 text-xs font-bold text-center">{error}</p>' if error else '') + '''
-                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3.5 rounded-xl text-sm btn-hover-effect shadow-md">Login to Dashboard</button>
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-3.5 rounded-xl font-bold btn-hover-effect text-sm shadow-lg">Login to Dashboard</button>
             </form>
+
+            ''' + (f'<div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-3 rounded-xl text-red-600 dark:text-red-400 text-xs text-center font-semibold">{error_msg}</div>' if error_msg else '') + '''
+
+            <div class="text-center pt-2 border-t border-gray-100 dark:border-gray-800">
+                <p class="text-xs text-gray-500">Don't have an account yet?</p>
+                <a href="/register" class="text-blue-600 dark:text-blue-400 font-bold text-xs hover:underline mt-1 inline-block">Register your business →</a>
+            </div>
+        </div>
+    </main>
+    ''' + FOOTER
+    return render_template_string(html)
+
+@app.route('/client/dashboard')
+def client_dashboard():
+    client_email = session.get('client_logged_email')
+    if not client_email:
+        return redirect(url_for('client_login'))
+        
+    # Find all businesses owned by this email
+    owner_businesses = [b for b in BUSINESSES.values() if b.get('client_email', '').lower() == client_email.lower()]
+    
+    cards_html = ""
+    for b in owner_businesses:
+        status_color = 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' if b.get('status') == 'approved' else 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+        cards_html += f'''
+        <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6 shadow-md flex flex-col justify-between space-y-4">
+            <div class="flex items-start gap-4">
+                <img src="{b.get('image', '')}" class="w-20 h-20 object-cover rounded-xl border border-gray-200 dark:border-gray-800">
+                <div class="space-y-1">
+                    <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-md {status_color}">{b.get('status', 'pending')}</span>
+                    <h3 class="text-lg font-bold text-gray-900 dark:text-white">{b['name']}</h3>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">📍 {b['address']}</p>
+                    <p class="text-xs text-blue-600 dark:text-blue-400 font-semibold">🏷️ Category: {b['category'].capitalize()} ({b.get('subcategory', 'General')})</p>
+                </div>
+            </div>
+            <div class="flex items-center justify-between pt-3 border-t border-gray-100 dark:border-gray-800">
+                <a href="/business/{b['id']}" class="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline">View Public Page →</a>
+                <div class="flex items-center gap-2">
+                    <a href="/client/edit/{b['id']}" class="bg-blue-50 dark:bg-blue-600/20 text-blue-600 dark:text-blue-400 px-3 py-1.5 rounded-xl text-xs font-bold transition hover:bg-blue-600 hover:text-white flex items-center gap-1">Edit ✏️</a>
+                    <a href="/client/delete/{b['id']}" onclick="return confirm('Are you sure you want to delete this business?');" class="bg-red-50 dark:bg-red-600/20 text-red-600 dark:text-red-400 px-3 py-1.5 rounded-xl text-xs font-bold transition hover:bg-red-600 hover:text-white flex items-center gap-1">Delete 🗑️</a>
+                </div>
+            </div>
+        </div>
+        '''
+
+    if not cards_html:
+        cards_html = '<div class="col-span-2 text-center py-12 text-gray-500"><p>No businesses found registered under your email account.</p></div>'
+
+    html = get_base_head(back_url="/", back_text="Back to Home") + '''
+    <main class="max-w-5xl mx-auto px-4 py-12 animate-fade-in space-y-8">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white dark:bg-gray-900 p-6 rounded-3xl border border-gray-200 dark:border-gray-800 shadow-xl">
+            <div>
+                <h1 class="text-2xl font-black text-gray-900 dark:text-white">Client Dashboard</h1>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Logged in as: <strong class="text-blue-600 dark:text-blue-400">''' + client_email + '''</strong></p>
+            </div>
+            <div class="flex items-center gap-3">
+                <a href="/register" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow-md btn-hover-effect">＋ Add Another Business</a>
+                <a href="/client/logout" class="bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-600 hover:text-white px-4 py-2.5 rounded-xl text-xs font-bold transition">Logout</a>
+            </div>
+        </div>
+
+        <h2 class="text-lg font-bold text-gray-800 dark:text-white">Your Registered Businesses</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            ''' + cards_html + '''
         </div>
     </main>
     ''' + FOOTER
@@ -515,122 +593,65 @@ def client_login():
 
 @app.route('/client/logout')
 def client_logout():
-    session.pop('client_logged_in_id', None)
+    session.pop('client_logged_email', None)
     return redirect(url_for('home'))
 
-@app.route('/client/dashboard')
-def client_dashboard():
-    biz_id = session.get('client_logged_in_id')
-    if not biz_id or biz_id not in BUSINESSES:
+@app.route('/client/edit/<b_id>', methods=['GET', 'POST'])
+def client_edit_business(b_id):
+    client_email = session.get('client_logged_email')
+    if not client_email or b_id not in BUSINESSES:
         return redirect(url_for('client_login'))
-    
-    b = BUSINESSES[biz_id]
-    
-    html = get_base_head(back_url="/", back_text="Back to Home") + '''
-    <main class="max-w-4xl mx-auto px-4 py-12 animate-fade-in space-y-8">
-        <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-8 shadow-xl flex flex-col md:flex-row justify-between items-center gap-6">
-            <div class="flex items-center gap-4">
-                <img src="''' + b.get('image', '') + '''" class="w-20 h-20 rounded-2xl object-cover border border-gray-200 dark:border-gray-700">
-                <div>
-                    <span class="text-xs uppercase font-bold tracking-widest text-blue-500">''' + b.get('category', '') + '''</span>
-                    <h1 class="text-2xl font-black text-gray-900 dark:text-white">''' + b['name'] + '''</h1>
-                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">📍 ''' + b['address'] + '''</p>
-                </div>
-            </div>
-            <div class="flex items-center gap-3">
-                <a href="/client/edit/''' + biz_id + '''" class="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2.5 rounded-xl text-xs font-bold shadow-md btn-hover-effect">✏️ Edit Details</a>
-                <a href="/client/logout" class="bg-red-500/10 text-red-500 border border-red-500/30 px-4 py-2.5 rounded-xl text-xs font-bold hover:bg-red-500 hover:text-white transition">Logout</a>
-            </div>
-        </div>
+        
+    b = BUSINESSES[b_id]
+    if b.get('client_email', '').lower() != client_email.lower():
+        abort(403)
 
-        <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-8 shadow-xl space-y-6">
-            <h2 class="text-xl font-bold text-gray-900 dark:text-white">Listing Status & Info</h2>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                <div class="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-gray-200 dark:border-gray-700/50">
-                    <p class="text-xs text-gray-500 dark:text-gray-400">Status</p>
-                    <p class="font-bold text-base mt-1 uppercase text-emerald-500">''' + b.get('status', 'pending') + '''</p>
-                </div>
-                <div class="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-gray-200 dark:border-gray-700/50">
-                    <p class="text-xs text-gray-500 dark:text-gray-400">Contact Phones</p>
-                    <p class="font-bold text-sm mt-1">''' + ", ".join(b.get('phones', [])) + '''</p>
-                </div>
-                <div class="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-gray-200 dark:border-gray-700/50">
-                    <p class="text-xs text-gray-500 dark:text-gray-400">Listing ID</p>
-                    <p class="font-bold text-base mt-1"># ''' + biz_id + '''</p>
-                </div>
-            </div>
-            <div class="pt-4 flex items-center justify-between border-t border-gray-100 dark:border-gray-800">
-                <a href="/business/''' + biz_id + '''" target="_blank" class="text-xs font-bold text-blue-500 hover:underline">👁️ View Public Page as Visitor →</a>
-                <a href="/client/delete/''' + biz_id + '''" onclick="return confirm('Are you sure you want to delete your business listing?');" class="text-xs font-bold text-red-500 hover:underline">🗑️ Delete Listing</a>
-            </div>
-        </div>
-    </main>
-    ''' + FOOTER
-    return render_template_string(html)
-
-@app.route('/client/edit/<biz_id>', methods=['GET', 'POST'])
-def client_edit(biz_id):
-    logged_id = session.get('client_logged_in_id')
-    if not logged_id or logged_id != biz_id or biz_id not in BUSINESSES:
-        return redirect(url_for('client_login'))
-    
-    b = BUSINESSES[biz_id]
-    
     if request.method == 'POST':
         b['name'] = request.form.get('name', b['name'])
         b['address'] = request.form.get('address', b['address'])
-        phones = request.form.getlist('phone[]')
-        if phones:
-            b['phones'] = [p.strip() for p in phones if p.strip()]
-        
-        img_url = request.form.get('image_url', '').strip()
-        if img_url:
-            b['image'] = img_url
-            b['images'] = [img_url]
-        
+        b['phones'] = [p.strip() for p in request.form.get('phones', '').split(',') if p.strip()]
         return redirect(url_for('client_dashboard'))
 
     html = get_base_head(back_url="/client/dashboard", back_text="Back to Dashboard") + '''
-    <main class="max-w-2xl mx-auto px-4 py-12 animate-fade-in">
+    <main class="max-w-xl mx-auto px-4 py-12 animate-fade-in">
         <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-8 shadow-2xl space-y-6">
-            <h1 class="text-2xl font-black text-gray-900 dark:text-white">Edit Business Details</h1>
-            
+            <h1 class="text-2xl font-black text-gray-900 dark:text-white">Edit Business: ''' + b['name'] + '''</h1>
+
             <form method="POST" class="space-y-4">
                 <div>
-                    <label class="block text-xs font-bold mb-1 text-gray-700 dark:text-gray-300">Business Name</label>
-                    <input type="text" name="name" value="''' + b['name'] + '''" required class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-sm outline-none focus:border-blue-500">
+                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Business Name</label>
+                    <input type="text" name="name" value="''' + b['name'] + '''" required class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white input-hover-effect outline-none text-sm">
                 </div>
                 <div>
-                    <label class="block text-xs font-bold mb-1 text-gray-700 dark:text-gray-300">Address Location</label>
-                    <input type="text" name="address" value="''' + b['address'] + '''" required class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-sm outline-none focus:border-blue-500">
+                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Address / Location</label>
+                    <input type="text" name="address" value="''' + b['address'] + '''" required class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white input-hover-effect outline-none text-sm">
                 </div>
                 <div>
-                    <label class="block text-xs font-bold mb-1 text-gray-700 dark:text-gray-300">Phone Numbers</label>
-                    <input type="text" name="phone[]" value="''' + (b['phones'][0] if b.get('phones') else '') + '''" required class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-sm outline-none focus:border-blue-500">
+                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Phone Numbers (comma separated)</label>
+                    <input type="text" name="phones" value="''' + ", ".join(b.get('phones', [])) + '''" required class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white input-hover-effect outline-none text-sm">
                 </div>
-                <div>
-                    <label class="block text-xs font-bold mb-1 text-gray-700 dark:text-gray-300">Image URL</label>
-                    <input type="url" name="image_url" value="''' + b.get('image', '') + '''" class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-sm outline-none focus:border-blue-500">
-                </div>
-                <div class="flex gap-3 pt-4">
-                    <a href="/client/dashboard" class="w-1/2 bg-gray-200 dark:bg-gray-800 text-center py-3 rounded-xl text-sm font-bold hover:bg-gray-300 dark:hover:bg-gray-700 transition">Cancel</a>
-                    <button type="submit" class="w-1/2 bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl text-sm shadow-md">Save Changes</button>
-                </div>
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-3.5 rounded-xl font-bold btn-hover-effect text-sm shadow-lg">Save Changes</button>
             </form>
         </div>
     </main>
     ''' + FOOTER
     return render_template_string(html)
 
-@app.route('/client/delete/<biz_id>')
-def client_delete(biz_id):
-    logged_id = session.get('client_logged_in_id')
-    if not logged_id or logged_id != biz_id or biz_id not in BUSINESSES:
+@app.route('/client/delete/<b_id>')
+def client_delete_business(b_id):
+    client_email = session.get('client_logged_email')
+    if not client_email or b_id not in BUSINESSES:
         return redirect(url_for('client_login'))
-    
-    BUSINESSES.pop(biz_id, None)
-    session.pop('client_logged_in_id', None)
-    return redirect(url_for('home'))
+        
+    b = BUSINESSES[b_id]
+    if b.get('client_email', '').lower() == client_email.lower():
+        del BUSINESSES[b_id]
+        
+    return redirect(url_for('client_dashboard'))
+
+# ==========================================
+# EXISTING BUSINESS DETAIL & REGISTRATION
+# ==========================================
 
 @app.route('/business/<b_id>', methods=['GET', 'POST'])
 def business_detail(b_id):
@@ -744,73 +765,50 @@ def business_detail(b_id):
                         <p id="mDocQuals" class="text-[11px] text-gray-500 dark:text-gray-400 italic">Qualifications</p>
                     </div>
                 </div>
-                <button type="button" onclick="closeDoctorModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-white text-xl font-bold bg-gray-100 dark:bg-gray-800 w-8 h-8 rounded-full flex items-center justify-center">✕</button>
+                <button type="button" onclick="closeDoctorModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-white text-xl font-bold bg-gray-100 dark:bg-gray-800 w-8 h-8 rounded-full flex items-center justify-center">×</button>
             </div>
-
-            <div class="space-y-3 pt-2 text-xs text-gray-700 dark:text-gray-300 border-t border-gray-100 dark:border-gray-800">
-                <div class="bg-gray-50 dark:bg-gray-800/50 p-3 rounded-xl border border-gray-200 dark:border-gray-700/50">
-                    <p class="font-bold text-gray-500 dark:text-gray-400 mb-1">🏥 Hospital / Clinic Location:</p>
-                    <p id="mDocHospital" class="font-extrabold text-sm text-gray-900 dark:text-white">Hospital Name</p>
-                    <p id="mDocAddress" class="text-gray-600 dark:text-gray-400">Address Location</p>
-                </div>
-                <div class="grid grid-cols-2 gap-2">
-                    <div class="bg-gray-50 dark:bg-gray-800/50 p-3 rounded-xl border border-gray-200 dark:border-gray-700/50">
-                        <p class="font-bold text-gray-500 dark:text-gray-400 mb-1">🕒 Appt Timing:</p>
-                        <p id="mDocAppt" class="font-bold text-gray-900 dark:text-white">9 AM - 2 PM</p>
-                    </div>
-                    <div class="bg-gray-50 dark:bg-gray-800/50 p-3 rounded-xl border border-gray-200 dark:border-gray-700/50">
-                        <p class="font-bold text-gray-500 dark:text-gray-400 mb-1">📅 Clinic Days:</p>
-                        <p id="mDocClinic" class="font-bold text-gray-900 dark:text-white">Mon-Sat</p>
-                    </div>
-                </div>
-                <div class="bg-gray-50 dark:bg-gray-800/50 p-3 rounded-xl border border-gray-200 dark:border-gray-700/50">
-                    <p class="font-bold text-gray-500 dark:text-gray-400 mb-1">🚪 Room / OPD Block:</p>
-                    <p id="mDocRoom" class="font-bold text-gray-900 dark:text-white">Room 12</p>
-                </div>
-                <div class="bg-blue-50 dark:bg-blue-600/10 p-3 rounded-xl border border-blue-200 dark:border-blue-500/20">
-                    <p class="font-bold text-blue-600 dark:text-blue-400 mb-1">📞 Appointment Phone(s):</p>
-                    <p id="mDocPhones" class="font-extrabold text-sm text-gray-900 dark:text-white">+92 300...</p>
-                </div>
+            <div class="space-y-2 text-xs text-gray-700 dark:text-gray-300 pt-2 border-t border-gray-100 dark:border-gray-800">
+                <p>🕒 <strong>Appointment Timing:</strong> <span id="mApptTiming" class="font-semibold text-gray-900 dark:text-white"></span></p>
+                <p>📅 <strong>Clinic Days / Timing:</strong> <span id="mClinicTiming" class="font-semibold text-gray-900 dark:text-white"></span></p>
+                <p>🚪 <strong>Room / Department:</strong> <span id="mRoom" class="font-semibold text-gray-900 dark:text-white"></span></p>
+                <p>📞 <strong>Appointment Phone(s):</strong> <a id="mApptPhoneLink" href="#" class="text-blue-600 dark:text-blue-400 font-bold underline"></a></p>
             </div>
-            <button type="button" onclick="closeDoctorModal()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl text-xs shadow-md">Close Window</button>
+            <div class="bg-gray-50 dark:bg-gray-950 p-3 rounded-xl border border-gray-200 dark:border-gray-800 text-[11px] text-gray-600 dark:text-gray-400 space-y-1">
+                <p>🏥 <strong id="mHospName"></strong></p>
+                <p>📍 <span id="mHospAddress"></span></p>
+            </div>
+            <button type="button" onclick="closeDoctorModal()" class="w-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 py-2.5 rounded-xl font-bold text-xs">Close</button>
         </div>
     </div>
 
-    <main class="max-w-5xl mx-auto px-4 py-10 animate-fade-in space-y-8">
-        <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-8 shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-            <div class="space-y-2">
-                <span class="bg-blue-100 dark:bg-blue-600/20 text-blue-700 dark:text-blue-400 text-xs px-3 py-1 rounded-full font-bold uppercase tracking-wider">''' + b.get('subcategory', 'General') + '''</span>
-                <h1 class="text-3xl font-black text-gray-900 dark:text-white">''' + b['name'] + '''</h1>
-                <p class="text-sm text-gray-600 dark:text-gray-400">📍 ''' + b['address'] + '''</p>
-            </div>
-            <div class="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-2xl border border-gray-200 dark:border-gray-700/50 text-right space-y-1">
-                <p class="text-xs text-gray-500 dark:text-gray-400">Direct Phone(s)</p>
-                <p class="text-sm font-black text-blue-600 dark:text-blue-400">''' + phones_html + '''</p>
-            </div>
-        </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div class="lg:col-span-2 space-y-8">
-                <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-6 md:p-8 shadow-xl space-y-4">
-                    <h3 class="text-xl font-black text-gray-900 dark:text-white border-b border-gray-100 dark:border-gray-800 pb-3">''' + cat_meta['info_title'] + '''</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        ''' + doctors_cards_html + '''
-                    </div>
+    <main class="max-w-5xl mx-auto px-4 py-12 animate-fade-in space-y-8">
+        <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-6 md:p-10 shadow-xl space-y-6">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-gray-100 dark:border-gray-800 pb-6">
+                <div>
+                    <span class="bg-blue-100 dark:bg-blue-600/20 text-blue-600 dark:text-blue-400 text-xs px-3 py-1 rounded-md font-bold uppercase tracking-wider">''' + b['category'] + '''</span>
+                    <h1 class="text-3xl md:text-4xl font-black text-gray-900 dark:text-white mt-2">''' + b['name'] + '''</h1>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">📍 ''' + b['address'] + '''</p>
                 </div>
-
-                <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-6 md:p-8 shadow-xl space-y-4">
-                    <h3 class="text-xl font-black text-gray-900 dark:text-white border-b border-gray-100 dark:border-gray-800 pb-3">''' + cat_meta['extra_title'] + '''</h3>
-                    <p class="text-gray-700 dark:text-gray-300 text-sm leading-relaxed whitespace-pre-line">''' + tests_dishes + '''</p>
+                <div class="text-left md:text-right space-y-1">
+                    <p class="text-xs text-gray-400">Contact Number(s)</p>
+                    <p class="text-sm">📞 ''' + phones_html + '''</p>
                 </div>
             </div>
 
-            <div class="space-y-6">
-                <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-6 shadow-xl space-y-4">
-                    <h3 class="text-lg font-bold text-gray-900 dark:text-white">Photo Gallery</h3>
-                    <div class="space-y-3">
-                        ''' + gallery_html + '''
-                    </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                ''' + gallery_html + '''
+            </div>
+
+            <div class="space-y-4 pt-4 border-t border-gray-100 dark:border-gray-800">
+                <h3 class="text-xl font-bold text-gray-900 dark:text-white">''' + cat_meta['info_title'] + '''</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    ''' + doctors_cards_html + '''
                 </div>
+            </div>
+
+            <div class="space-y-2 pt-4 border-t border-gray-100 dark:border-gray-800">
+                <h3 class="text-xl font-bold text-gray-900 dark:text-white">''' + cat_meta['extra_title'] + '''</h3>
+                <p class="text-gray-700 dark:text-gray-300 text-sm leading-relaxed whitespace-pre-line bg-gray-50 dark:bg-gray-950 p-4 rounded-2xl border border-gray-200 dark:border-gray-800">''' + tests_dishes + '''</p>
             </div>
         </div>
     </main>
@@ -819,13 +817,18 @@ def business_detail(b_id):
         function openDoctorModal(doc) {
             document.getElementById('mDocName').innerText = doc.name;
             document.getElementById('mDocSpec').innerText = doc.specialty;
-            document.getElementById('mDocQuals').innerText = doc.qualifications || '';
-            document.getElementById('mDocHospital').innerText = doc.hospital_name;
-            document.getElementById('mDocAddress').innerText = doc.hospital_address;
-            document.getElementById('mDocAppt').innerText = doc.appt_timing || 'N/A';
-            document.getElementById('mDocClinic').innerText = doc.clinic_timing || 'N/A';
-            document.getElementById('mDocRoom').innerText = doc.room || 'N/A';
-            document.getElementById('mDocPhones').innerText = doc.appt_numbers || doc.hospital_phones;
+            document.getElementById('mDocQuals').innerText = doc.qualifications ? '🎓 ' + doc.qualifications : '';
+            document.getElementById('mApptTiming').innerText = doc.appt_timing;
+            document.getElementById('mClinicTiming').innerText = doc.clinic_timing;
+            document.getElementById('mRoom').innerText = doc.room;
+            
+            var phoneLink = document.getElementById('mApptPhoneLink');
+            phoneLink.innerText = doc.appt_numbers;
+            phoneLink.href = 'tel:' + doc.appt_numbers.split(',')[0].trim();
+            
+            document.getElementById('mHospName').innerText = doc.hospital_name;
+            document.getElementById('mHospAddress').innerText = doc.hospital_address;
+            
             document.getElementById('doctorModal').classList.remove('hidden');
         }
 
@@ -837,200 +840,102 @@ def business_detail(b_id):
     return render_template_string(html)
 
 @app.route('/register', methods=['GET', 'POST'])
-def register_business():
+def register():
+    error_msg = ""
     if request.method == 'POST':
         name = request.form.get('name', '').strip()
         category = request.form.get('category', '').strip()
+        subcategory = request.form.get('subcategory', '').strip()
         address = request.form.get('address', '').strip()
-        phones = request.form.getlist('phone[]')
-        phones = [p.strip() for p in phones if p.strip()]
+        phone = request.form.get('phone', '').strip()
+        client_email = request.form.get('client_email', '').strip().lower()
+        client_password = request.form.get('client_password', '').strip()
         
-        image_url = request.form.get('image_url', '').strip()
-        image = image_url if image_url else 'https://images.unsplash.com/photo-1557804506-669a67965ba0?auto=format&fit=crop&w=800&q=80'
-        
-        doc_names = request.form.getlist('doc_name[]')
-        doc_specs = request.form.getlist('doc_spec[]')
-        doc_quals = request.form.getlist('doc_quals[]')
-        doc_app_times = request.form.getlist('doc_app_time[]')
-        doc_clinic_times = request.form.getlist('doc_clinic_time[]')
-        doc_clinics = request.form.getlist('doc_clinic[]')
-        
-        doctors = []
-        for i in range(len(doc_names)):
-            if doc_names[i].strip():
-                doctors.append({
-                    'name': doc_names[i].strip(),
-                    'specialty': doc_specs[i].strip() if i < len(doc_specs) else '',
-                    'qualifications': doc_quals[i].strip() if i < len(doc_quals) else '',
-                    'appt_timing': doc_app_times[i].strip() if i < len(doc_app_times) else '',
-                    'clinic_timing': doc_clinic_times[i].strip() if i < len(doc_clinic_times) else '',
-                    'room': doc_clinics[i].strip() if i < len(doc_clinics) else '',
-                    'appt_numbers': ", ".join(phones)
-                })
+        if name and category and client_email and client_password:
+            new_id = str(len(BUSINESSES) + 1)
+            BUSINESSES[new_id] = {
+                'id': new_id,
+                'category': category,
+                'subcategory': subcategory,
+                'name': name,
+                'address': address,
+                'phones': [phone] if phone else ['+92 300 0000000'],
+                'image': 'https://images.unsplash.com/photo-1557804506-669a67965ba0?auto=format&fit=crop&w=800&q=80',
+                'images': ['https://images.unsplash.com/photo-1557804506-669a67965ba0?auto=format&fit=crop&w=800&q=80'],
+                'status': 'pending',
+                'payment_method': 'Free Trial',
+                'payment_ref': 'TRIAL-FREE',
+                'payment_status': 'paid',
+                'joining_date': datetime.now(),
+                'expiry_date': datetime.now() + timedelta(days=30),
+                'doctors': [],
+                'special_info': 'Newly registered business.',
+                'tests_dishes': 'Services available.',
+                'client_email': client_email,
+                'client_password': client_password
+            }
+            # Automatically log in the user after first registration
+            session['client_logged_email'] = client_email
+            return redirect(url_for('client_dashboard'))
+        else:
+            error_msg = "Please fill in all required fields including Email and Password."
 
-        item_names = request.form.getlist('item_name[]')
-        item_prices = request.form.getlist('item_price[]')
-        item_offers = request.form.getlist('item_offer[]')
-        
-        tests_list = []
-        for i in range(len(item_names)):
-            if item_names[i].strip():
-                part = item_names[i].strip()
-                if i < len(item_prices) and item_prices[i].strip():
-                    part += f" (Rs. {item_prices[i].strip()})"
-                if i < len(item_offers) and item_offers[i].strip():
-                    part += f" - {item_offers[i].strip()}"
-                tests_list.append(part)
-        
-        tests_dishes = ", ".join(tests_list) if tests_list else "General Services Available"
-        
-        new_id = str(len(BUSINESSES) + 1)
-        BUSINESSES[new_id] = {
-            'id': new_id,
-            'category': category,
-            'subcategory': 'General',
-            'name': name,
-            'address': address,
-            'phones': phones if phones else ['+92 946 0000000'],
-            'image': image,
-            'images': [image],
-            'status': 'pending',
-            'payment_method': 'Free Trial',
-            'payment_ref': 'TRIAL-FREE',
-            'payment_status': 'paid',
-            'joining_date': datetime.now(),
-            'expiry_date': datetime.now() + timedelta(days=30),
-            'doctors': doctors,
-            'special_info': ", ".join([d['name'] + " (" + d['specialty'] + ")" for d in doctors]) if doctors else '',
-            'tests_dishes': tests_dishes,
-            'client_password': 'client123'
-        }
-        
-        session['client_logged_in_id'] = new_id
-        return redirect(url_for('client_dashboard'))
+    cats_options = "".join([f'<option value="{k}">{v["title"]}</option>' for k, v in CATEGORIES.items()])
 
     html = get_base_head(back_url="/", back_text="Back to Home") + '''
-    <main class="max-w-3xl mx-auto px-4 py-12 animate-fade-in">
-        <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-8 md:p-10 shadow-2xl space-y-6">
-            <div class="text-center">
-                <h1 class="text-3xl font-black text-gray-900 dark:text-white">Register Your Business</h1>
-                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Get listed instantly with a 30-day free trial!</p>
+    <main class="max-w-xl mx-auto px-4 py-12 animate-fade-in">
+        <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-8 shadow-2xl space-y-6">
+            <div class="text-center space-y-2">
+                <span class="text-5xl inline-block">🚀</span>
+                <h1 class="text-2xl font-black text-gray-900 dark:text-white">Register Your Business</h1>
+                <p class="text-xs text-gray-500 dark:text-gray-400">Create an account with Email & Password to manage your listings.</p>
             </div>
 
-            <form method="POST" class="space-y-6">
+            <form method="POST" class="space-y-4">
                 <div>
-                    <label class="block text-xs font-bold mb-1 text-gray-700 dark:text-gray-300">Business Name</label>
-                    <input type="text" name="name" required placeholder="e.g. Al-Shifa Hospital or City Mart" class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-sm outline-none focus:border-blue-500">
+                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Business Name *</label>
+                    <input type="text" name="name" required placeholder="e.g. Swat Best Store" class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white input-hover-effect outline-none text-sm">
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Category *</label>
+                        <select name="category" required class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white outline-none text-sm">
+                            ''' + cats_options + '''
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Subcategory / Type</label>
+                        <input type="text" name="subcategory" placeholder="e.g. General Store" class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white input-hover-effect outline-none text-sm">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Address / Location *</label>
+                    <input type="text" name="address" required placeholder="e.g. Mingora Bazaar, Swat" class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white input-hover-effect outline-none text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Phone Number *</label>
+                    <input type="text" name="phone" required placeholder="e.g. +92 300 1234567" class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white input-hover-effect outline-none text-sm">
+                </div>
+                
+                <div class="pt-2 border-t border-gray-100 dark:border-gray-800 space-y-4">
+                    <p class="text-xs font-extrabold text-blue-600 dark:text-blue-400">🔒 Account Credentials for Future Login</p>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Owner Email *</label>
+                        <input type="email" name="client_email" required placeholder="owner@gmail.com" class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white input-hover-effect outline-none text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Owner Password *</label>
+                        <input type="password" name="client_password" required placeholder="Choose a secure password" class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white input-hover-effect outline-none text-sm">
+                    </div>
                 </div>
 
-                <div>
-                    <label class="block text-xs font-bold mb-1 text-gray-700 dark:text-gray-300">Category</label>
-                    <select name="category" class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-sm outline-none focus:border-blue-500 cursor-pointer">
-                        ''' + "".join([f'<option value="{slug}">{cat["icon"]} {cat["title"]}</option>' for slug, cat in CATEGORIES.items()]) + '''
-                    </select>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-bold mb-1 text-gray-700 dark:text-gray-300">Address / Location</label>
-                    <input type="text" name="address" required placeholder="e.g. Mingora, Swat" class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-sm outline-none focus:border-blue-500">
-                </div>
-
-                <div>
-                    <label class="block text-xs font-bold mb-1 text-gray-700 dark:text-gray-300">Phone Number</label>
-                    <input type="text" name="phone[]" required placeholder="+92 946 XXXXXXX" class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-sm outline-none focus:border-blue-500">
-                </div>
-
-                <div>
-                    <label class="block text-xs font-bold mb-1 text-gray-700 dark:text-gray-300">Image URL</label>
-                    <input type="url" name="image_url" placeholder="https://images.unsplash.com/..." class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-sm outline-none focus:border-blue-500">
-                </div>
-
-                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-2xl text-base btn-hover-effect shadow-xl">Submit & Activate Free Listing</button>
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-3.5 rounded-xl font-bold btn-hover-effect text-sm shadow-lg">Register & Open Dashboard</button>
             </form>
+
+            ''' + (f'<div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-3 rounded-xl text-red-600 dark:text-red-400 text-xs text-center font-semibold">{error_msg}</div>' if error_msg else '') + '''
         </div>
     </main>
     ''' + FOOTER
-    return render_template_string(html)
-
-@app.route('/admin', methods=['GET', 'POST'])
-def admin_panel():
-    if request.method == 'POST':
-        if request.form.get('password') == ADMIN_PASSWORD:
-            session['admin_logged_in'] = True
-        return redirect(url_for('admin_panel'))
-    
-    if not session.get('admin_logged_in'):
-        html = get_base_head(back_url="/", back_text="Back to Home") + '''
-        <main class="max-w-md mx-auto px-4 py-20 animate-fade-in">
-            <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-8 shadow-2xl space-y-6 text-center">
-                <span class="text-5xl inline-block">🛡️</span>
-                <h1 class="text-2xl font-black text-gray-900 dark:text-white">Admin Login</h1>
-                <form method="POST" class="space-y-4">
-                    <input type="password" name="password" required placeholder="Enter Admin Password" class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-sm text-center outline-none focus:border-blue-500">
-                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl text-sm shadow-md">Login to Admin</button>
-                </form>
-            </div>
-        </main>
-        ''' + FOOTER
-        return render_template_string(html)
-
-    rows = ""
-    for b_id, biz in BUSINESSES.items():
-        rows += f'''
-        <tr class="border-b border-gray-100 dark:border-gray-800">
-            <td class="py-4 px-4 font-semibold flex items-center space-x-3">
-                <img src="{biz.get('image', '')}" class="w-10 h-10 rounded-lg object-cover">
-                <a href="/business/{biz['id']}" class="hover:text-blue-500">{biz['name']}</a>
-            </td>
-            <td class="py-4 px-4 uppercase text-xs font-bold text-gray-500">{biz.get('category', '')}</td>
-            <td class="py-4 px-4">
-                <span class="px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300">{biz.get('status', 'active').capitalize()}</span>
-            </td>
-            <td class="py-4 px-4 text-gray-600 dark:text-gray-400">''' + (biz.get('phones', [''])[0]) + '''</td>
-        </tr>
-        '''
-
-    html = '''
-    <!DOCTYPE html>
-    <html lang="en" id="html-root" class="dark">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Admin Panel - ''' + SITE_NAME + '''</title>
-        <script src="https://cdn.tailwindcss.com"></script>
-        <script>tailwind.config = { darkMode: 'class' }</script>
-    </head>
-    <body class="bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 min-h-screen">
-        <header class="bg-gradient-to-r from-slate-900 via-blue-950 to-indigo-950 text-white shadow-xl">
-            <div class="max-w-7xl mx-auto px-4 py-6 flex justify-between items-center">
-                <h1 class="text-2xl font-extrabold"><a href="/">🛡️ Admin Panel</a></h1>
-                <a href="/" class="bg-white/10 hover:bg-white/20 px-4 py-2 rounded-xl text-sm font-semibold transition">← View Website</a>
-            </div>
-        </header>
-
-        <main class="max-w-6xl mx-auto px-4 py-10 space-y-10">
-            <div class="bg-white dark:bg-gray-900 p-8 rounded-3xl shadow-xl border border-gray-100 dark:border-gray-800">
-                <h2 class="text-2xl font-bold mb-6">All Registered Businesses</h2>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse">
-                        <thead>
-                            <tr class="border-b border-gray-200 dark:border-gray-800 text-gray-400 text-sm">
-                                <th class="py-3 px-4">Business Name</th>
-                                <th class="py-3 px-4">Category</th>
-                                <th class="py-3 px-4">Status</th>
-                                <th class="py-3 px-4">Phone</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
-                            ''' + rows + '''
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </main>
-    </body>
-    </html>
-    '''
     return render_template_string(html)
 
 if __name__ == '__main__':
