@@ -119,6 +119,7 @@ CATEGORIES = {
     'hospitals': {
         'title': 'Hospitals & Healthcare', 'icon': '🏥', 'search_hint': 'Search name, doctor or location (e.g. Saidu)...', 'info_title': '👨‍⚕️ Doctors, Clinic & Timings', 'extra_title': '🔬 Available Tests & Medical Services',
         'subcategories': ['General Hospital', 'Dental Clinic', 'Eye Specialist', 'Cardiology Clinic', 'Laboratory & Diagnostics'],
+        'biz_ph': 'e.g. Saidu Teaching Hospital',
         'staff_heading': '🩺 Doctors, Clinic & Timings',
         'btn_text': '+ Add New Doctor',
         'extra_label': '🧪 Tests & Medical Services (Optional)',
@@ -134,6 +135,7 @@ CATEGORIES = {
     'pharmacies': {
         'title': 'Pharmacies & Medical Stores', 'icon': '💊', 'search_hint': 'Search medicine, store or place...', 'info_title': '🧑‍⚕️ Qualified Pharmacists & Staff', 'extra_title': '💊 Available Medicines & Supplies',
         'subcategories': ['Medical Store', 'Homeopathic Store', 'Herbal & Organic', 'Surgical Equipment'],
+        'biz_ph': 'e.g. Swat City Pharmacy',
         'staff_heading': '🧑‍⚕️ Pharmacists & Key Staff',
         'btn_text': '+ Add New Pharmacist',
         'extra_label': '💊 Available Medicines & Medical Supplies (Optional)',
@@ -149,6 +151,7 @@ CATEGORIES = {
     'restaurants': {
         'title': 'Restaurants & Cafes', 'icon': '🍽️', 'search_hint': 'Search restaurant, dish or location (e.g. Fizagat)...', 'info_title': '👨‍🍳 Chefs & Dining Features', 'extra_title': '🍲 Menu, Special Dishes & Prices',
         'subcategories': ['Traditional / Shinwari', 'Fast Food & Burgers', 'BBQ & Grill', 'Coffee Shop & Cafe', 'Desi Restaurant'],
+        'biz_ph': 'e.g. Khyber Shinwari Restaurant',
         'staff_heading': '👨‍🍳 Chefs, Staff & Dining Features',
         'btn_text': '+ Add New Staff / Chef',
         'extra_label': '🍲 Menu, Special Dishes & Prices (Optional)',
@@ -164,6 +167,7 @@ CATEGORIES = {
     'supermarts': {
         'title': 'Supermarts & Grocery', 'icon': '🛒', 'search_hint': 'Search store, item or area...', 'info_title': '🏬 Store Facilities & Staff', 'extra_title': '🛍️ Available Groceries & Products',
         'subcategories': ['General Store', 'Supermarket', 'Vegetables & Fruits', 'Bakery & Sweets'],
+        'biz_ph': 'e.g. Swat Supermart',
         'staff_heading': '🏬 Store Management & Contacts',
         'btn_text': '+ Add New Contact / Staff',
         'extra_label': '🛍️ Featured Items & Groceries (Optional)',
@@ -179,6 +183,7 @@ CATEGORIES = {
     'property': {
         'title': 'Property Dealers', 'icon': '🏠', 'search_hint': 'Search plot, house or dealer...', 'info_title': '🧑‍💼 Agents & Dealers', 'extra_title': '🏡 Featured Plots & Properties',
         'subcategories': ['Plot & Land Dealer', 'House & Villa Rentals', 'Commercial Plaza', 'Real Estate Agency'],
+        'biz_ph': 'e.g. Swat Real Estate Agency',
         'staff_heading': '🧑‍💼 Real Estate Agents & Consultants',
         'btn_text': '+ Add New Agent',
         'extra_label': '🏡 Available Plots & Property Deals (Optional)',
@@ -194,6 +199,7 @@ CATEGORIES = {
     'hotels': {
         'title': 'Hotels & Guest Houses', 'icon': '🏨', 'search_hint': 'Search hotel or area...', 'info_title': '🛎️ Management & Reception', 'extra_title': '🛏️ Rooms, Rates & Facilities',
         'subcategories': ['Luxury Hotel', 'Guest House', 'Resort', 'Budget Inn'],
+        'biz_ph': 'e.g. Swat Serena Hotel',
         'staff_heading': '🛎️ Front Desk & Reception Contacts',
         'btn_text': '+ Add Receptionist / Manager',
         'extra_label': '🛏️ Room Types, Rates & Amenities (Optional)',
@@ -209,6 +215,7 @@ CATEGORIES = {
     'education': {
         'title': 'Educational Institutes', 'icon': '🎓', 'search_hint': 'Search school, college, university or place (e.g. Saidu)...', 'info_title': '👨‍🏫 Faculty & Teachers Info', 'extra_title': '📚 Offered Courses & Programs',
         'subcategories': ['School', 'School & College', 'College', 'University', 'Academy & Tuition', 'Language & Computer Center'],
+        'biz_ph': 'e.g. Swat Public School & College',
         'staff_heading': '👨‍🏫 Principal, Faculty & Admin Staff',
         'btn_text': '+ Add New Faculty / Staff',
         'extra_label': '📚 Offered Courses & Facilities (Optional)',
@@ -838,7 +845,7 @@ def register():
             <form method="POST" class="space-y-6">
                 <div>
                     <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Business Name *</label>
-                    <input type="text" name="name" required placeholder="e.g. Swat Best Store" class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white input-hover-effect outline-none text-sm">
+                    <input type="text" id="bizNameInput" name="name" required placeholder="e.g. Saidu Teaching Hospital" class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white input-hover-effect outline-none text-sm">
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -876,7 +883,7 @@ def register():
 
                     <div id="doctorsContainer" class="space-y-4">
                         <div class="doc-entry animate-modal bg-gray-50 dark:bg-gray-950 p-4 rounded-2xl border border-gray-200 dark:border-gray-800 space-y-3 relative">
-                            <button type="button" onclick="requestDeleteDoctor(this)" class="absolute top-3 right-3 text-red-500 bg-red-100 dark:bg-red-900/40 w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs hover:bg-red-200 dark:hover:bg-red-800/60 transition">✕</button>
+                            <button type="button" onclick="requestDeleteDoctor(this)" title="Delete Entry" class="absolute top-3 right-3 bg-red-600 hover:bg-red-700 text-white w-8 h-8 rounded-full flex items-center justify-center font-black text-sm shadow-md transition transform hover:scale-110 z-10 border border-red-400">✕</button>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                                 <input type="text" name="doc_name" placeholder="Doctor Name (Dr. Ahmad)" class="doc-input-name p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
                                 <input type="text" name="doc_spec" placeholder="Specialty (Cardiologist)" class="doc-input-spec p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
@@ -935,12 +942,18 @@ def register():
         function updateCategoryFields() {
             var catSelect = document.getElementById('categorySelect');
             var subcatSelect = document.getElementById('subcategorySelect');
+            var bizNameInput = document.getElementById('bizNameInput');
             var selectedCatKey = catSelect.value;
             var catObj = categoriesMeta[selectedCatKey];
 
             if (!catObj) return;
 
-            // 1. Update Subcategories
+            // 1. Update Business Name Placeholder
+            if (catObj.biz_ph) {
+                bizNameInput.placeholder = catObj.biz_ph;
+            }
+
+            // 2. Update Subcategories
             subcatSelect.innerHTML = '';
             var optNone = document.createElement('option');
             optNone.value = '';
@@ -956,13 +969,13 @@ def register():
                 });
             }
 
-            // 2. Update Dynamic Section Headings & Buttons
+            // 3. Update Dynamic Section Headings & Buttons
             document.getElementById('staffSectionHeading').innerText = catObj.staff_heading;
             document.getElementById('addStaffBtn').innerText = catObj.btn_text;
             document.getElementById('extraSectionLabel').innerText = catObj.extra_label;
             document.getElementById('extraSectionTextarea').placeholder = catObj.extra_ph;
 
-            // 3. Update Existing Inputs Placeholders
+            // 4. Update Existing Inputs Placeholders
             document.querySelectorAll('.doc-entry').forEach(function(row) {
                 applyPlaceholdersToRow(row, catObj);
             });
@@ -986,7 +999,7 @@ def register():
             var div = document.createElement('div');
             div.className = 'doc-entry animate-modal bg-gray-50 dark:bg-gray-950 p-4 rounded-2xl border border-gray-200 dark:border-gray-800 space-y-3 relative mt-3';
             div.innerHTML = `
-                <button type="button" onclick="requestDeleteDoctor(this)" class="absolute top-3 right-3 text-red-500 bg-red-100 dark:bg-red-900/40 w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs hover:bg-red-200 dark:hover:bg-red-800/60 transition">✕</button>
+                <button type="button" onclick="requestDeleteDoctor(this)" title="Delete Entry" class="absolute top-3 right-3 bg-red-600 hover:bg-red-700 text-white w-8 h-8 rounded-full flex items-center justify-center font-black text-sm shadow-md transition transform hover:scale-110 z-10 border border-red-400">✕</button>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <input type="text" name="doc_name" placeholder="" class="doc-input-name p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
                     <input type="text" name="doc_spec" placeholder="" class="doc-input-spec p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
