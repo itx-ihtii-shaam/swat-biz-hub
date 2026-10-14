@@ -1,4 +1,4 @@
-"""SwatBiz Hub - Qualifications Field & Smart Admin Navigation Fix."""
+"""SwatBiz Hub - Qualifications Field & Smart Admin Navigation Fix with Dynamic Registration Form."""
 from datetime import datetime, timedelta
 import os
 import json
@@ -675,6 +675,29 @@ def register():
         phone = request.form.get('phone', '').strip()
         client_email = request.form.get('client_email', '').strip().lower()
         client_password = request.form.get('client_password', '').strip()
+        tests_dishes = request.form.get('tests_dishes', '').strip()
+        
+        # Collect dynamic doctors / staff
+        doc_names = request.form.getlist('doc_name')
+        doc_specs = request.form.getlist('doc_spec')
+        doc_quals = request.form.getlist('doc_qual')
+        doc_appts = request.form.getlist('doc_appt')
+        doc_clinics = request.form.getlist('doc_clinic')
+        doc_rooms = request.form.getlist('doc_room')
+        doc_phones = request.form.getlist('doc_phone')
+        
+        doctors_list = []
+        for i in range(len(doc_names)):
+            if doc_names[i].strip():
+                doctors_list.append({
+                    'name': doc_names[i].strip(),
+                    'specialty': doc_specs[i].strip() if i < len(doc_specs) else '',
+                    'qualifications': doc_quals[i].strip() if i < len(doc_quals) else '',
+                    'appt_timing': doc_appts[i].strip() if i < len(doc_appts) else '',
+                    'clinic_timing': doc_clinics[i].strip() if i < len(doc_clinics) else '',
+                    'room': doc_rooms[i].strip() if i < len(doc_rooms) else '',
+                    'appt_numbers': doc_phones[i].strip() if i < len(doc_phones) else phone
+                })
         
         if name and category and client_email and client_password:
             new_id = str(len(BUSINESSES) + 1)
@@ -687,15 +710,15 @@ def register():
                 'phones': [phone] if phone else ['+92 300 0000000'],
                 'image': 'https://images.unsplash.com/photo-1557804506-669a67965ba0?auto=format&fit=crop&w=800&q=80',
                 'images': ['https://images.unsplash.com/photo-1557804506-669a67965ba0?auto=format&fit=crop&w=800&q=80'],
-                'status': 'pending',
+                'status': 'approved',
                 'payment_method': 'Free Trial',
                 'payment_ref': 'TRIAL-FREE',
                 'payment_status': 'paid',
                 'joining_date': datetime.now(),
                 'expiry_date': datetime.now() + timedelta(days=30),
-                'doctors': [],
-                'special_info': 'Newly registered business.',
-                'tests_dishes': 'Services available.',
+                'doctors': doctors_list,
+                'special_info': f"{len(doctors_list)} Staff / Specialist(s) Registered",
+                'tests_dishes': tests_dishes if tests_dishes else 'Services available.',
                 'client_email': client_email,
                 'client_password': client_password
             }
@@ -705,9 +728,10 @@ def register():
             error_msg = "Please fill in all required fields."
 
     cats_options = "".join([f'<option value="{k}">{v["title"]}</option>' for k, v in CATEGORIES.items()])
+    categories_json = json.dumps({k: v['subcategories'] for k, v in CATEGORIES.items()})
 
     html = get_base_head(back_url="/", back_text="Back to Home") + '''
-    <main class="max-w-xl mx-auto px-4 py-12 animate-fade-in">
+    <main class="max-w-2xl mx-auto px-4 py-12 animate-fade-in">
         <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-8 shadow-2xl space-y-6">
             <div class="text-center space-y-2">
                 <span class="text-5xl inline-block">🚀</span>
@@ -715,41 +739,86 @@ def register():
                 <p class="text-xs text-gray-500 dark:text-gray-400">Create an account with Email & Password to manage your listings.</p>
             </div>
 
-            <form method="POST" class="space-y-4">
+            <form method="POST" class="space-y-6">
                 <div>
                     <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Business Name *</label>
                     <input type="text" name="name" required placeholder="e.g. Swat Best Store" class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white input-hover-effect outline-none text-sm">
                 </div>
+
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Category *</label>
-                        <select name="category" required class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white outline-none text-sm">
+                        <select id="categorySelect" name="category" required onchange="updateSubcategories()" class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white outline-none text-sm">
                             ''' + cats_options + '''
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Subcategory / Type</label>
-                        <input type="text" name="subcategory" placeholder="e.g. General Store" class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white input-hover-effect outline-none text-sm">
+                        <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Subcategory / Type *</label>
+                        <select id="subcategorySelect" name="subcategory" required class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white outline-none text-sm">
+                        </select>
                     </div>
                 </div>
+
                 <div>
                     <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Address / Location *</label>
                     <input type="text" name="address" required placeholder="e.g. Mingora Bazaar, Swat" class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white input-hover-effect outline-none text-sm">
                 </div>
+
                 <div>
                     <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Phone Number *</label>
                     <input type="text" name="phone" required placeholder="e.g. +92 300 1234567" class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white input-hover-effect outline-none text-sm">
                 </div>
-                
-                <div class="pt-2 border-t border-gray-100 dark:border-gray-800 space-y-4">
-                    <p class="text-xs font-extrabold text-blue-600 dark:text-blue-400">🔒 Account Credentials for Future Login</p>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Owner Email *</label>
-                        <input type="email" name="client_email" required placeholder="owner@gmail.com" class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white input-hover-effect outline-none text-sm">
+
+                <!-- Dynamic Doctors / Staff Section -->
+                <div class="pt-4 border-t border-gray-100 dark:border-gray-800 space-y-4">
+                    <div class="flex justify-between items-center">
+                        <label class="block text-sm font-extrabold text-blue-600 dark:text-blue-400">🩺 Doctors, Clinic & Timings</label>
                     </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Owner Password *</label>
-                        <input type="password" name="client_password" required placeholder="Choose a secure password" class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white input-hover-effect outline-none text-sm">
+
+                    <div id="doctorsContainer" class="space-y-4">
+                        <div class="doc-entry bg-gray-50 dark:bg-gray-950 p-4 rounded-2xl border border-gray-200 dark:border-gray-800 space-y-3 relative">
+                            <button type="button" onclick="removeDoctor(this)" class="absolute top-3 right-3 text-red-500 bg-red-100 dark:bg-red-900/40 w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs">✕</button>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <input type="text" name="doc_name" placeholder="Doctor Name (Dr. Ahmad)" class="p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none">
+                                <input type="text" name="doc_spec" placeholder="Specialty (Cardiologist)" class="p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none">
+                            </div>
+                            <div>
+                                <input type="text" name="doc_qual" placeholder="Qualifications (MBBS, FCPS)" class="w-full p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none">
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <input type="text" name="doc_appt" placeholder="Appointment Timing (9 AM - 2 PM)" class="p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none">
+                                <input type="text" name="doc_clinic" placeholder="Clinic Timing (Mon-Sat, 9 AM - 5 PM)" class="p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none">
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                <input type="text" name="doc_room" placeholder="Clinic / Room (Room 12, OPD Block)" class="p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none">
+                                <input type="text" name="doc_phone" placeholder="Appointment Phone Number(s)" class="p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none">
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="button" onclick="addDoctorRow()" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2.5 rounded-xl text-xs font-bold btn-hover-effect flex items-center gap-2 shadow-md">
+                        + Add New Doctor
+                    </button>
+                </div>
+
+                <!-- Tests & Services Section -->
+                <div class="pt-4 border-t border-gray-100 dark:border-gray-800 space-y-2">
+                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300">🧪 Tests & Medical Services (Optional)</label>
+                    <textarea name="tests_dishes" rows="3" placeholder="e.g. MRI, CT Scan, Blood Tests, Ultrasound, OPD Services..." class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white input-hover-effect outline-none text-sm"></textarea>
+                </div>
+
+                <!-- Account Credentials Section -->
+                <div class="pt-4 border-t border-gray-100 dark:border-gray-800 space-y-4">
+                    <p class="text-xs font-extrabold text-blue-600 dark:text-blue-400">🔒 Account Credentials for Future Login</p>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Owner Email *</label>
+                            <input type="email" name="client_email" required placeholder="owner@gmail.com" class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white input-hover-effect outline-none text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Owner Password *</label>
+                            <input type="password" name="client_password" required placeholder="Choose a secure password" class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white input-hover-effect outline-none text-sm">
+                        </div>
                     </div>
                 </div>
 
@@ -759,11 +828,69 @@ def register():
             ''' + (f'<div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-3 rounded-xl text-red-600 dark:text-red-400 text-xs text-center font-semibold">{error_msg}</div>' if error_msg else '') + '''
         </div>
     </main>
+
+    <script>
+        var categoriesData = ''' + categories_json + ''';
+
+        function updateSubcategories() {
+            var catSelect = document.getElementById('categorySelect');
+            var subcatSelect = document.getElementById('subcategorySelect');
+            var selectedCat = catSelect.value;
+            
+            subcatSelect.innerHTML = '';
+            if (categoriesData[selectedCat]) {
+                categoriesData[selectedCat].forEach(function(sub) {
+                    var option = document.createElement('option');
+                    option.value = sub;
+                    option.text = sub;
+                    subcatSelect.appendChild(option);
+                });
+            }
+        }
+
+        function addDoctorRow() {
+            var container = document.getElementById('doctorsContainer');
+            var div = document.createElement('div');
+            div.className = 'doc-entry bg-gray-50 dark:bg-gray-950 p-4 rounded-2xl border border-gray-200 dark:border-gray-800 space-y-3 relative mt-3';
+            div.innerHTML = `
+                <button type="button" onclick="removeDoctor(this)" class="absolute top-3 right-3 text-red-500 bg-red-100 dark:bg-red-900/40 w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs">✕</button>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <input type="text" name="doc_name" placeholder="Doctor Name (Dr. Ahmad)" class="p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none">
+                    <input type="text" name="doc_spec" placeholder="Specialty (Cardiologist)" class="p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none">
+                </div>
+                <div>
+                    <input type="text" name="doc_qual" placeholder="Qualifications (MBBS, FCPS)" class="w-full p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none">
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <input type="text" name="doc_appt" placeholder="Appointment Timing (9 AM - 2 PM)" class="p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none">
+                    <input type="text" name="doc_clinic" placeholder="Clinic Timing (Mon-Sat, 9 AM - 5 PM)" class="p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none">
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <input type="text" name="doc_room" placeholder="Clinic / Room (Room 12, OPD Block)" class="p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none">
+                    <input type="text" name="doc_phone" placeholder="Appointment Phone Number(s)" class="p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none">
+                </div>
+            `;
+            container.appendChild(div);
+        }
+
+        function removeDoctor(btn) {
+            var row = btn.closest('.doc-entry');
+            if (document.querySelectorAll('.doc-entry').length > 1) {
+                row.remove();
+            } else {
+                row.querySelectorAll('input').forEach(input => input.value = '');
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', function() {
+            updateSubcategories();
+        });
+    </script>
     ''' + FOOTER
     return render_template_string(html)
 
 # ==========================================
-# CLIENT LOGIN & DASHBOARD ROUTES (NEW ADDED)
+# CLIENT LOGIN & DASHBOARD ROUTES
 # ==========================================
 
 @app.route('/client/login', methods=['GET', 'POST'])
