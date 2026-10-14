@@ -1,4 +1,4 @@
-"""SwatBiz Hub - Gallery Upload & Category Specific Placeholders."""
+"""SwatBiz Hub - Category Specific Service Image Labels & Animations."""
 from datetime import datetime, timedelta
 import os
 import json
@@ -125,8 +125,9 @@ CATEGORIES = {
         'biz_ph': 'e.g. Saidu Teaching Hospital',
         'staff_heading': '🩺 Doctors, Clinic & Timings',
         'btn_text': '+ Add New Doctor',
-        'extra_label': '🧪 Tests & Medical Services (Optional Text & Image)',
+        'extra_label': '🔬 Tests & Medical Services',
         'extra_ph': 'e.g. MRI, CT Scan, Blood Tests, Ultrasound, OPD Services...',
+        'img_label': '🖼️ Hospital Services / Charges Banner Image (Optional)',
         'ph_name': 'Doctor Name (e.g. Dr. Ahmad)',
         'ph_spec': 'Specialty (e.g. Cardiologist)',
         'ph_qual': 'Qualifications (e.g. MBBS, FCPS)',
@@ -141,8 +142,9 @@ CATEGORIES = {
         'biz_ph': 'e.g. Swat City Pharmacy',
         'staff_heading': '🧑‍⚕️ Pharmacists & Key Staff',
         'btn_text': '+ Add New Pharmacist',
-        'extra_label': '💊 Available Medicines & Supplies (Optional Text & Image)',
+        'extra_label': '💊 Available Medicines & Supplies',
         'extra_ph': 'e.g. Life-saving drugs, Surgical tools, Vaccines, Homeopathic remedies...',
+        'img_label': '🖼️ Medicines Price List / Store Image (Optional)',
         'ph_name': 'Pharmacist Name (e.g. Ali Khan)',
         'ph_spec': 'Role / Specialty (e.g. Senior Pharmacist)',
         'ph_qual': 'Qualifications (e.g. Pharm-D, B-Pharm)',
@@ -157,8 +159,9 @@ CATEGORIES = {
         'biz_ph': 'e.g. Khyber Shinwari Restaurant',
         'staff_heading': '👨‍🍳 Chefs, Staff & Dining Features',
         'btn_text': '+ Add New Staff / Chef',
-        'extra_label': '🍲 Menu, Special Dishes & Prices (Optional Text & Image)',
+        'extra_label': '🍲 Menu, Special Dishes & Prices',
         'extra_ph': 'e.g. Dumba Karahi (Rs. 2400/kg), Shinwari Tikka (Rs. 1800/kg), Zinger Burger...',
+        'img_label': '🖼️ Menu / Rate Card Image (Optional)',
         'ph_name': 'Chef / Manager Name (e.g. Chef Rashid)',
         'ph_spec': 'Specialty (e.g. Master Grill & BBQ)',
         'ph_qual': 'Experience (e.g. 15+ Years Culinary Exp)',
@@ -173,8 +176,9 @@ CATEGORIES = {
         'biz_ph': 'e.g. Swat Supermart',
         'staff_heading': '🏬 Store Management & Contacts',
         'btn_text': '+ Add New Contact / Staff',
-        'extra_label': '🛍️ Featured Items & Groceries (Optional Text & Image)',
+        'extra_label': '🛍️ Featured Items & Groceries',
         'extra_ph': 'e.g. Fresh Fruits, Imported Chocolates, Bakery Items, Household Groceries...',
+        'img_label': '🖼️ Products Rate List / Supermart Image (Optional)',
         'ph_name': 'Contact Person / Manager Name',
         'ph_spec': 'Designation / Role (e.g. Store Manager)',
         'ph_qual': 'Services (e.g. Home Delivery Specialist)',
@@ -189,8 +193,9 @@ CATEGORIES = {
         'biz_ph': 'e.g. Swat Real Estate Agency',
         'staff_heading': '🧑‍💼 Real Estate Agents & Consultants',
         'btn_text': '+ Add New Agent',
-        'extra_label': '🏡 Available Plots & Property Deals (Optional Text & Image)',
+        'extra_label': '🏡 Available Plots & Property Deals',
         'extra_ph': 'e.g. 5 Marla Plot in Saidu Sharif, Commercial Shops on Canal Road...',
+        'img_label': '🖼️ Property Brochure / Map Image (Optional)',
         'ph_name': 'Agent / Dealer Name (e.g. Usman Khan)',
         'ph_spec': 'Specialty (e.g. Residential Plots Specialist)',
         'ph_qual': 'Experience / Certification',
@@ -205,8 +210,9 @@ CATEGORIES = {
         'biz_ph': 'e.g. Swat Serena Hotel',
         'staff_heading': '🛎️ Front Desk & Reception Contacts',
         'btn_text': '+ Add Receptionist / Manager',
-        'extra_label': '🛏️ Room Types, Rates & Amenities (Optional Text & Image)',
+        'extra_label': '🛏️ Room Types, Rates & Amenities',
         'extra_ph': 'e.g. Deluxe Family Room (Rs. 6000/night), Executive Suite, Free Wi-Fi, Hot Water...',
+        'img_label': '🖼️ Room Tariffs / Hotel Banner Image (Optional)',
         'ph_name': 'Manager / Receptionist Name',
         'ph_spec': 'Role (e.g. Front Desk Manager)',
         'ph_qual': 'Services Provided',
@@ -221,8 +227,9 @@ CATEGORIES = {
         'biz_ph': 'e.g. Swat Public School & College',
         'staff_heading': '👨‍🏫 Principal, Faculty & Admin Staff',
         'btn_text': '+ Add New Faculty / Staff',
-        'extra_label': '📚 Offered Courses & Facilities (Optional Text & Image)',
+        'extra_label': '📚 Offered Courses & Facilities',
         'extra_ph': 'e.g. Metric Science, FSc Pre-Medical, Computer Science Labs, Library, Transport...',
+        'img_label': '🖼️ Fee Structure / Prospectus Image (Optional)',
         'ph_name': 'Faculty / Principal Name (e.g. Prof. Shah Zarin)',
         'ph_spec': 'Designation / Subject (e.g. Principal / Physics)',
         'ph_qual': 'Qualifications (e.g. M.Phil, PhD)',
@@ -641,7 +648,7 @@ def business_detail(b_id):
 
     tests_dishes = b.get('tests_dishes', 'Not specified')
     extra_img = b.get('extra_img', '')
-    extra_img_html = f'<div class="mt-4"><p class="text-xs font-bold text-gray-500 mb-2">📸 Attached Rate Card / Service Image:</p><img src="{extra_img}" class="max-h-80 w-full object-contain rounded-2xl border border-gray-200 dark:border-gray-800 shadow-lg"></div>' if extra_img else ''
+    extra_img_html = f'<div class="mt-4"><p class="text-xs font-bold text-gray-500 mb-2">📸 Attached Service / Charges Banner:</p><img src="{extra_img}" class="max-h-80 w-full object-contain rounded-2xl border border-gray-200 dark:border-gray-800 shadow-lg"></div>' if extra_img else ''
 
     phones_list = b.get('phones', ['N/A'])
     phones_html = ", ".join([f'<a href="tel:{p}" class="text-blue-600 dark:text-white hover:underline font-bold">{p}</a>' for p in phones_list])
@@ -664,7 +671,7 @@ def business_detail(b_id):
                         <p id="mDocQuals" class="text-[11px] text-gray-500 dark:text-gray-400 italic">Qualifications</p>
                     </div>
                 </div>
-                <button type="button" onclick="closeDoctorModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-white text-xl font-bold bg-gray-100 dark:bg-gray-800 w-8 h-8 rounded-full flex items-center justify-center">×`</button>
+                <button type="button" onclick="closeDoctorModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-white text-xl font-bold bg-gray-100 dark:bg-gray-800 w-8 h-8 rounded-full flex items-center justify-center">×</button>
             </div>
             <div class="space-y-2 text-xs text-gray-700 dark:text-gray-300 pt-2 border-t border-gray-100 dark:border-gray-800">
                 <p>🕒 <strong>Timing / Hours:</strong> <span id="mApptTiming" class="font-semibold text-gray-900 dark:text-white"></span></p>
@@ -875,19 +882,19 @@ def register():
                         <div class="doc-entry animate-modal bg-gray-50 dark:bg-gray-950 p-4 rounded-2xl border border-gray-200 dark:border-gray-800 space-y-3 relative">
                             <button type="button" onclick="requestDeleteDoctor(this)" title="Delete Entry" class="absolute top-3 right-3 bg-red-600 hover:bg-red-700 text-white w-8 h-8 rounded-full flex items-center justify-center font-black text-sm shadow-md transition transform hover:scale-110 z-10 border border-red-400">✕</button>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                <input type="text" name="doc_name" placeholder="Doctor Name (e.g. Dr. Ahmad)" class="doc-input-name p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
+                                <input type="text" name="doc_name" placeholder="Name (e.g. Dr. Ahmad)" class="doc-input-name p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
                                 <input type="text" name="doc_spec" placeholder="Specialty (e.g. Cardiologist)" class="doc-input-spec p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
                             </div>
                             <div>
                                 <input type="text" name="doc_qual" placeholder="Qualifications (e.g. MBBS, FCPS)" class="doc-input-qual w-full p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
                             </div>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                <input type="text" name="doc_appt" placeholder="Appointment Timing (e.g. 9 AM - 2 PM)" class="doc-input-appt p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
-                                <input type="text" name="doc_clinic" placeholder="Clinic Timing (e.g. Mon-Sat, 9 AM - 5 PM)" class="doc-input-clinic p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
+                                <input type="text" name="doc_appt" placeholder="Timing (e.g. 9 AM - 2 PM)" class="doc-input-appt p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
+                                <input type="text" name="doc_clinic" placeholder="Days (e.g. Mon-Sat, 9 AM - 5 PM)" class="doc-input-clinic p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
                             </div>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                <input type="text" name="doc_room" placeholder="Clinic / Room (e.g. Room 12, OPD Block)" class="doc-input-room p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
-                                <input type="text" name="doc_phone" placeholder="Appointment Phone Number(s) (comma separated)" class="doc-input-phone p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
+                                <input type="text" name="doc_room" placeholder="Location / Room (e.g. Room 12)" class="doc-input-room p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
+                                <input type="text" name="doc_phone" placeholder="Direct Phone (comma separated)" class="doc-input-phone p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
                             </div>
                         </div>
                     </div>
@@ -897,13 +904,13 @@ def register():
                     </button>
                 </div>
 
-                <!-- Extra Services Section (With Optional Text & Gallery File Upload) -->
+                <!-- Extra Services Section (With Category-Specific Image Label) -->
                 <div class="pt-4 border-t border-gray-100 dark:border-gray-800 space-y-3">
-                    <label id="extraSectionLabel" class="block text-xs font-bold text-gray-700 dark:text-gray-300">🧪 Tests & Medical Services (Optional Text & Image)</label>
-                    <textarea id="extraSectionTextarea" name="tests_dishes" rows="3" placeholder="e.g. MRI, CT Scan, Blood Tests, Ultrasound, OPD Services..." class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white input-hover-effect outline-none text-sm"></textarea>
+                    <label id="extraSectionLabel" class="block text-xs font-bold text-gray-700 dark:text-gray-300">🔬 Available Tests & Medical Services</label>
+                    <textarea id="extraSectionTextarea" name="tests_dishes" rows="3" placeholder="e.g. MRI, CT Scan, Blood Tests, Ultrasound..." class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white input-hover-effect outline-none text-sm"></textarea>
                     
                     <div class="space-y-2">
-                        <label class="block text-[11px] font-bold text-gray-500 dark:text-gray-400">🖼️ Rate Card / Menu / Services Image (Upload from Phone Gallery or Paste Link)</label>
+                        <label id="extraImgLabel" class="block text-[11px] font-bold text-gray-500 dark:text-gray-400">🖼️ Hospital Services / Charges Banner Image (Optional)</label>
                         
                         <div class="flex flex-col sm:flex-row gap-3 items-center">
                             <label class="w-full sm:w-auto bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 px-4 py-2.5 rounded-xl text-xs font-bold cursor-pointer transition flex items-center justify-center gap-2 border border-gray-300 dark:border-gray-700">
@@ -996,6 +1003,7 @@ def register():
             document.getElementById('addStaffBtn').innerText = catObj.btn_text;
             document.getElementById('extraSectionLabel').innerText = catObj.extra_label;
             document.getElementById('extraSectionTextarea').placeholder = catObj.extra_ph;
+            document.getElementById('extraImgLabel').innerText = catObj.img_label;
 
             document.querySelectorAll('.doc-entry').forEach(function(row) {
                 applyPlaceholdersToRow(row, catObj);
