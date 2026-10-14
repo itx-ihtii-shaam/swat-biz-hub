@@ -264,7 +264,7 @@ HOME_HEAD = '''
             <a href="/" class="text-2xl font-extrabold tracking-tight text-blue-600 dark:text-blue-400 hover:opacity-80 transition transform hover:scale-105">🏙️ ''' + SITE_NAME + '''</a>
             <div class="flex items-center space-x-3">
                 ''' + HEADER_THEME_BTN + '''
-                <a href="/client/login" class="bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 px-4 py-2.5 rounded-xl text-sm font-bold transition">Login / My Dashboard</a>
+                <a href="/client/login" class="bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 px-4 py-2.5 rounded-xl text-sm font-bold transition">🔑 Login / Dashboard</a>
                 <a href="/register" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2.5 rounded-xl text-sm font-bold shadow-lg btn-hover-effect">＋ Register Business</a>
             </div>
         </div>
@@ -300,7 +300,7 @@ def get_base_head(back_url="/", back_text="Back to Home"):
             </a>
             <div class="flex items-center space-x-3">
                 ''' + HEADER_THEME_BTN + '''
-                <a href="/client/login" class="bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 px-4 py-2.5 rounded-xl text-sm font-bold transition">Login / My Dashboard</a>
+                <a href="/client/login" class="bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 px-4 py-2.5 rounded-xl text-sm font-bold transition">🔑 Login / Dashboard</a>
                 <a href="/register" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2.5 rounded-xl text-sm font-bold shadow-lg btn-hover-effect">＋ Register Business</a>
             </div>
         </div>
@@ -761,6 +761,10 @@ def register():
     </main>
     ''' + FOOTER
     return render_template_string(html)
+
+# ==========================================
+# CLIENT LOGIN & DASHBOARD ROUTES (NEW ADDED)
+# ==========================================
 
 @app.route('/client/login', methods=['GET', 'POST'])
 def client_login():
