@@ -1,4 +1,4 @@
-"""SwatBiz Hub - Category Specific Service Image Labels & Animations."""
+"""SwatBiz Hub - Clickable Admin Stats Cards & Category Specific Labels."""
 from datetime import datetime, timedelta
 import os
 import json
@@ -1085,7 +1085,7 @@ def register():
     return render_template_string(html)
 
 # ==========================================
-# ADMIN SYSTEM ROUTES (SPLIT TABS SYSTEM)
+# ADMIN SYSTEM ROUTES (CLICKABLE STATS CARDS)
 # ==========================================
 
 @app.route('/admin', methods=['GET', 'POST'])
@@ -1131,19 +1131,24 @@ def admin_dashboard():
         return redirect(url_for('admin_login'))
         
     active_tab = request.args.get('tab', 'businesses')
+    filter_status = request.args.get('filter', 'all')
     now = datetime.now()
 
     total_listings = len(BUSINESSES)
-    approved_count = len([b for b in BUSINESSES.values() if b.get('status') == 'approved'])
     pending_biz_count = len([b for b in BUSINESSES.values() if b.get('status') == 'pending'])
-    
     paid_pay_count = len([b for b in BUSINESSES.values() if b.get('payment_status') == 'paid'])
     pending_pay_count = len([b for b in BUSINESSES.values() if b.get('payment_status') == 'pending'])
 
-    # 1. Business Table Rows
+    # 1. Business Table Rows (with filter support)
     biz_rows = ""
     for b in BUSINESSES.values():
-        status_color = 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' if b.get('status') == 'approved' else 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+        status = b.get('status', 'pending')
+        if filter_status == 'pending_biz' and status != 'pending':
+            continue
+        if filter_status == 'approved_biz' and status != 'approved':
+            continue
+
+        status_color = 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' if status == 'approved' else 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
         expiry_str = b.get('expiry_date').strftime('%d %b %Y') if b.get('expiry_date') else 'N/A'
         
         biz_rows += f'''
@@ -1155,7 +1160,7 @@ def admin_dashboard():
             </td>
             <td class="p-4 uppercase font-semibold text-[11px]">{b['category']}</td>
             <td class="p-4">
-                <span class="px-2.5 py-1 rounded-md text-[10px] font-extrabold uppercase {status_color}">{b.get('status', 'pending')}</span>
+                <span class="px-2.5 py-1 rounded-md text-[10px] font-extrabold uppercase {status_color}">{status}</span>
             </td>
             <td class="p-4">{expiry_str}</td>
             <td class="p-4 space-x-2 flex items-center">
@@ -1167,10 +1172,15 @@ def admin_dashboard():
         </tr>
         '''
 
-    # 2. Payment Table Rows
+    # 2. Payment Table Rows (with filter support)
     pay_rows = ""
     for b in BUSINESSES.values():
         pay_status = b.get('payment_status', 'pending')
+        if filter_status == 'pending_pay' and pay_status != 'pending':
+            continue
+        if filter_status == 'paid_pay' and pay_status != 'paid':
+            continue
+
         pay_color = 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' if pay_status == 'paid' else 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
         
         pay_rows += f'''
@@ -1198,7 +1208,11 @@ def admin_dashboard():
         <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl overflow-hidden shadow-xl animate-modal">
             <div class="p-6 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center">
                 <h3 class="text-lg font-bold text-gray-900 dark:text-white">💳 Payment Requests & Verification</h3>
-                <span class="text-xs bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400 px-3 py-1 rounded-full font-bold">Pending: {pending_pay_count}</span>
+                <div class="flex items-center gap-2">
+                    <a href="/admin/dashboard?tab=payments&filter=all" class="text-xs px-3 py-1 rounded-lg font-bold ''' + ('bg-blue-600 text-white' if filter_status == 'all' else 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400') + '''">All</a>
+                    <a href="/admin/dashboard?tab=payments&filter=pending_pay" class="text-xs px-3 py-1 rounded-lg font-bold ''' + ('bg-blue-600 text-white' if filter_status == 'pending_pay' else 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400') + '''">Pending ({pending_pay_count})</a>
+                    <a href="/admin/dashboard?tab=payments&filter=paid_pay" class="text-xs px-3 py-1 rounded-lg font-bold ''' + ('bg-blue-600 text-white' if filter_status == 'paid_pay' else 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400') + '''">Paid ({paid_pay_count})</a>
+                </div>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse">
@@ -1224,7 +1238,10 @@ def admin_dashboard():
         <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl overflow-hidden shadow-xl animate-modal">
             <div class="p-6 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center">
                 <h3 class="text-lg font-bold text-gray-900 dark:text-white">🏢 Business Registrations & Approvals</h3>
-                <span class="text-xs bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400 px-3 py-1 rounded-full font-bold">Pending: {pending_biz_count}</span>
+                <div class="flex items-center gap-2">
+                    <a href="/admin/dashboard?tab=businesses&filter=all" class="text-xs px-3 py-1 rounded-lg font-bold ''' + ('bg-blue-600 text-white' if filter_status == 'all' else 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400') + '''">All</a>
+                    <a href="/admin/dashboard?tab=businesses&filter=pending_biz" class="text-xs px-3 py-1 rounded-lg font-bold ''' + ('bg-blue-600 text-white' if filter_status == 'pending_biz' else 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400') + '''">Pending ({pending_biz_count})</a>
+                </div>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse">
@@ -1256,23 +1273,24 @@ def admin_dashboard():
             <a href="/admin/logout" class="bg-red-600 hover:bg-red-500 text-white px-5 py-2.5 rounded-xl text-xs font-bold transition shadow-md">Admin Logout</a>
         </div>
 
+        <!-- Clickable Stats Cards -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div class="bg-white dark:bg-gray-900 p-5 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm text-center card-hover-effect">
+            <a href="/admin/dashboard?tab=businesses&filter=all" class="bg-white dark:bg-gray-900 p-5 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm text-center card-hover-effect block">
                 <p class="text-xs text-gray-500 font-bold uppercase">Total Listings</p>
                 <p class="text-2xl font-black text-blue-600 dark:text-blue-400 mt-1">''' + str(total_listings) + '''</p>
-            </div>
-            <div class="bg-white dark:bg-gray-900 p-5 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm text-center card-hover-effect">
+            </a>
+            <a href="/admin/dashboard?tab=businesses&filter=pending_biz" class="bg-white dark:bg-gray-900 p-5 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm text-center card-hover-effect block">
                 <p class="text-xs text-gray-500 font-bold uppercase">Pending Business Approvals</p>
                 <p class="text-2xl font-black text-yellow-500 mt-1">''' + str(pending_biz_count) + '''</p>
-            </div>
-            <div class="bg-white dark:bg-gray-900 p-5 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm text-center card-hover-effect">
+            </a>
+            <a href="/admin/dashboard?tab=payments&filter=paid_pay" class="bg-white dark:bg-gray-900 p-5 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm text-center card-hover-effect block">
                 <p class="text-xs text-gray-500 font-bold uppercase">Paid Payments</p>
                 <p class="text-2xl font-black text-green-500 mt-1">''' + str(paid_pay_count) + '''</p>
-            </div>
-            <div class="bg-white dark:bg-gray-900 p-5 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm text-center card-hover-effect">
+            </a>
+            <a href="/admin/dashboard?tab=payments&filter=pending_pay" class="bg-white dark:bg-gray-900 p-5 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm text-center card-hover-effect block">
                 <p class="text-xs text-gray-500 font-bold uppercase">Pending Payments</p>
                 <p class="text-2xl font-black text-yellow-500 mt-1">''' + str(pending_pay_count) + '''</p>
-            </div>
+            </a>
         </div>
 
         <div class="flex gap-3">
