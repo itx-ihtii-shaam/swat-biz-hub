@@ -1,4 +1,4 @@
-"""SwatBiz Hub - Clickable Admin Stats Cards & Category Specific Labels."""
+"""SwatBiz Hub - Complete & Detailed Single File Flask App."""
 from datetime import datetime, timedelta
 import os
 import json
@@ -120,7 +120,7 @@ BUSINESSES = {
 
 CATEGORIES = {
     'hospitals': {
-        'title': 'Hospitals & Healthcare', 'icon': '🏥', 'search_hint': 'Search hospital name, doctor or location (e.g. Saidu)...', 'info_title': '👨‍⚕️ Doctors, Clinic & Timings', 'extra_title': '🔬 Available Tests & Medical Services',
+        'title': 'Hospitals & Healthcare', 'icon': '🏥', 'search_hint': 'Search hospital name, doctor or location...', 'info_title': '👨‍⚕️ Doctors, Clinic & Timings', 'extra_title': '🔬 Available Tests & Medical Services',
         'subcategories': ['General Hospital', 'Dental Clinic', 'Eye Specialist', 'Cardiology Clinic', 'Laboratory & Diagnostics'],
         'biz_ph': 'e.g. Saidu Teaching Hospital',
         'staff_heading': '🩺 Doctors, Clinic & Timings',
@@ -154,21 +154,15 @@ CATEGORIES = {
         'ph_phone': 'Direct Phone / WhatsApp (comma separated)'
     },
     'restaurants': {
-        'title': 'Restaurants & Cafes', 'icon': '🍽️', 'search_hint': 'Search restaurant, dish or location (e.g. Fizagat)...', 'info_title': '👨‍🍳 Chefs & Dining Features', 'extra_title': '🍲 Menu, Special Dishes & Prices',
+        'title': 'Restaurants & Cafes', 'icon': '🍽️', 'search_hint': 'Search restaurant, dish or location...', 'info_title': '👨‍🍳 Chefs & Dining Features', 'extra_title': '🍲 Menu, Special Dishes & Prices',
         'subcategories': ['Traditional / Shinwari', 'Fast Food & Burgers', 'BBQ & Grill', 'Coffee Shop & Cafe', 'Desi Restaurant'],
         'biz_ph': 'e.g. Khyber Shinwari Restaurant',
         'staff_heading': '👨‍🍳 Chefs, Staff & Dining Features',
         'btn_text': '+ Add New Staff / Chef',
         'extra_label': '🍲 Menu, Special Dishes & Prices',
-        'extra_ph': 'e.g. Dumba Karahi (Rs. 2400/kg), Shinwari Tikka (Rs. 1800/kg), Zinger Burger...',
+        'extra_ph': 'e.g. Dumba Karahi (Rs. 2400/kg), Shinwari Tikka (Rs. 1800/kg)...',
         'img_label': '🖼️ Menu / Rate Card Image (Optional)',
-        'ph_name': 'Chef / Manager Name (e.g. Chef Rashid)',
-        'ph_spec': 'Specialty (e.g. Master Grill & BBQ)',
-        'ph_qual': 'Experience (e.g. 15+ Years Culinary Exp)',
-        'ph_appt': 'Serving Hours (e.g. 12 PM - 11 PM)',
-        'ph_clinic': 'Operating Days (e.g. Daily Open)',
-        'ph_room': 'Dining Section (e.g. Family Cabin / Main Hall)',
-        'ph_phone': 'Order / Booking Phone Number(s)'
+        'ph_name': 'Chef / Manager Name', 'ph_spec': 'Specialty', 'ph_qual': 'Experience', 'ph_appt': 'Hours', 'ph_clinic': 'Days', 'ph_room': 'Section', 'ph_phone': 'Phone'
     },
     'supermarts': {
         'title': 'Supermarts & Grocery', 'icon': '🛒', 'search_hint': 'Search store, item or area...', 'info_title': '🏬 Store Facilities & Staff', 'extra_title': '🛍️ Available Groceries & Products',
@@ -177,15 +171,9 @@ CATEGORIES = {
         'staff_heading': '🏬 Store Management & Contacts',
         'btn_text': '+ Add New Contact / Staff',
         'extra_label': '🛍️ Featured Items & Groceries',
-        'extra_ph': 'e.g. Fresh Fruits, Imported Chocolates, Bakery Items, Household Groceries...',
+        'extra_ph': 'e.g. Fresh Fruits, Imported Chocolates...',
         'img_label': '🖼️ Products Rate List / Supermart Image (Optional)',
-        'ph_name': 'Contact Person / Manager Name',
-        'ph_spec': 'Designation / Role (e.g. Store Manager)',
-        'ph_qual': 'Services (e.g. Home Delivery Specialist)',
-        'ph_appt': 'Delivery Hours (e.g. 9 AM - 9 PM)',
-        'ph_clinic': 'Store Timings (e.g. Mon-Sun, 8 AM - 11 PM)',
-        'ph_room': 'Branch / Counter Name',
-        'ph_phone': 'Home Delivery Phone Number(s)'
+        'ph_name': 'Manager Name', 'ph_spec': 'Role', 'ph_qual': 'Services', 'ph_appt': 'Hours', 'ph_clinic': 'Days', 'ph_room': 'Branch', 'ph_phone': 'Phone'
     },
     'property': {
         'title': 'Property Dealers', 'icon': '🏠', 'search_hint': 'Search plot, house or dealer...', 'info_title': '🧑‍💼 Agents & Dealers', 'extra_title': '🏡 Featured Plots & Properties',
@@ -194,15 +182,9 @@ CATEGORIES = {
         'staff_heading': '🧑‍💼 Real Estate Agents & Consultants',
         'btn_text': '+ Add New Agent',
         'extra_label': '🏡 Available Plots & Property Deals',
-        'extra_ph': 'e.g. 5 Marla Plot in Saidu Sharif, Commercial Shops on Canal Road...',
+        'extra_ph': 'e.g. 5 Marla Plot in Saidu Sharif...',
         'img_label': '🖼️ Property Brochure / Map Image (Optional)',
-        'ph_name': 'Agent / Dealer Name (e.g. Usman Khan)',
-        'ph_spec': 'Specialty (e.g. Residential Plots Specialist)',
-        'ph_qual': 'Experience / Certification',
-        'ph_appt': 'Meeting Hours (e.g. 10 AM - 6 PM)',
-        'ph_clinic': 'Office Days (e.g. Mon - Sat)',
-        'ph_room': 'Office Address / Desk',
-        'ph_phone': 'Agent Direct Phone / WhatsApp'
+        'ph_name': 'Agent Name', 'ph_spec': 'Specialty', 'ph_qual': 'Experience', 'ph_appt': 'Hours', 'ph_clinic': 'Days', 'ph_room': 'Office', 'ph_phone': 'Phone'
     },
     'hotels': {
         'title': 'Hotels & Guest Houses', 'icon': '🏨', 'search_hint': 'Search hotel or area...', 'info_title': '🛎️ Management & Reception', 'extra_title': '🛏️ Rooms, Rates & Facilities',
@@ -211,32 +193,20 @@ CATEGORIES = {
         'staff_heading': '🛎️ Front Desk & Reception Contacts',
         'btn_text': '+ Add Receptionist / Manager',
         'extra_label': '🛏️ Room Types, Rates & Amenities',
-        'extra_ph': 'e.g. Deluxe Family Room (Rs. 6000/night), Executive Suite, Free Wi-Fi, Hot Water...',
+        'extra_ph': 'e.g. Deluxe Family Room, Executive Suite...',
         'img_label': '🖼️ Room Tariffs / Hotel Banner Image (Optional)',
-        'ph_name': 'Manager / Receptionist Name',
-        'ph_spec': 'Role (e.g. Front Desk Manager)',
-        'ph_qual': 'Services Provided',
-        'ph_appt': 'Check-in / Check-out Hours',
-        'ph_clinic': 'Reception Availability (e.g. 24/7)',
-        'ph_room': 'Reception Desk / Block',
-        'ph_phone': 'Booking Phone / WhatsApp Number(s)'
+        'ph_name': 'Manager Name', 'ph_spec': 'Role', 'ph_qual': 'Services', 'ph_appt': 'Hours', 'ph_clinic': 'Days', 'ph_room': 'Desk', 'ph_phone': 'Phone'
     },
     'education': {
-        'title': 'Educational Institutes', 'icon': '🎓', 'search_hint': 'Search school, college, university or place (e.g. Saidu)...', 'info_title': '👨‍🏫 Faculty & Teachers Info', 'extra_title': '📚 Offered Courses & Programs',
+        'title': 'Educational Institutes', 'icon': '🎓', 'search_hint': 'Search school, college, university...', 'info_title': '👨‍🏫 Faculty & Teachers Info', 'extra_title': '📚 Offered Courses & Programs',
         'subcategories': ['School', 'School & College', 'College', 'University', 'Academy & Tuition', 'Language & Computer Center'],
         'biz_ph': 'e.g. Swat Public School & College',
         'staff_heading': '👨‍🏫 Principal, Faculty & Admin Staff',
         'btn_text': '+ Add New Faculty / Staff',
         'extra_label': '📚 Offered Courses & Facilities',
-        'extra_ph': 'e.g. Metric Science, FSc Pre-Medical, Computer Science Labs, Library, Transport...',
+        'extra_ph': 'e.g. Metric Science, FSc Pre-Medical...',
         'img_label': '🖼️ Fee Structure / Prospectus Image (Optional)',
-        'ph_name': 'Faculty / Principal Name (e.g. Prof. Shah Zarin)',
-        'ph_spec': 'Designation / Subject (e.g. Principal / Physics)',
-        'ph_qual': 'Qualifications (e.g. M.Phil, PhD)',
-        'ph_appt': 'Visiting Hours (e.g. 8 AM - 2 PM)',
-        'ph_clinic': 'Working Days (e.g. Mon - Sat)',
-        'ph_room': 'Office / Department Room',
-        'ph_phone': 'Admission Office Phone Number(s)'
+        'ph_name': 'Faculty Name', 'ph_spec': 'Designation', 'ph_qual': 'Qualifications', 'ph_appt': 'Hours', 'ph_clinic': 'Days', 'ph_room': 'Room', 'ph_phone': 'Phone'
     }
 }
 
@@ -763,7 +733,6 @@ def register():
         tests_dishes = request.form.get('tests_dishes', '').strip()
         extra_img = request.form.get('extra_img', '').strip()
         
-        # Collect dynamic doctors / staff
         doc_names = request.form.getlist('doc_name')
         doc_specs = request.form.getlist('doc_spec')
         doc_quals = request.form.getlist('doc_qual')
@@ -818,7 +787,6 @@ def register():
     categories_json = json.dumps(CATEGORIES)
 
     html = get_base_head(back_url="/", back_text="Back to Home") + '''
-    <!-- Delete Confirmation Modal -->
     <div id="deleteConfirmModal" class="fixed inset-0 bg-black/60 dark:bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
         <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-6 max-w-sm w-full shadow-2xl animate-modal text-center space-y-4">
             <span class="text-4xl inline-block">🗑️</span>
@@ -872,7 +840,6 @@ def register():
                     <input type="text" name="phone" required placeholder="e.g. +92 300 1234567, +92 946 9240125" class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white input-hover-effect outline-none text-sm">
                 </div>
 
-                <!-- Dynamic Staff Section -->
                 <div class="pt-4 border-t border-gray-100 dark:border-gray-800 space-y-4">
                     <div class="flex justify-between items-center">
                         <label id="staffSectionHeading" class="block text-sm font-extrabold text-blue-600 dark:text-blue-400">🩺 Doctors, Clinic & Timings</label>
@@ -904,7 +871,6 @@ def register():
                     </button>
                 </div>
 
-                <!-- Extra Services Section (With Category-Specific Image Label) -->
                 <div class="pt-4 border-t border-gray-100 dark:border-gray-800 space-y-3">
                     <label id="extraSectionLabel" class="block text-xs font-bold text-gray-700 dark:text-gray-300">🔬 Available Tests & Medical Services</label>
                     <textarea id="extraSectionTextarea" name="tests_dishes" rows="3" placeholder="e.g. MRI, CT Scan, Blood Tests, Ultrasound..." class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white input-hover-effect outline-none text-sm"></textarea>
@@ -931,7 +897,6 @@ def register():
                     </div>
                 </div>
 
-                <!-- Account Credentials Section -->
                 <div class="pt-4 border-t border-gray-100 dark:border-gray-800 space-y-4">
                     <p class="text-xs font-extrabold text-blue-600 dark:text-blue-400">🔒 Account Credentials for Future Login</p>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1084,10 +1049,6 @@ def register():
     ''' + FOOTER
     return render_template_string(html)
 
-# ==========================================
-# ADMIN SYSTEM ROUTES (CLICKABLE STATS CARDS)
-# ==========================================
-
 @app.route('/admin', methods=['GET', 'POST'])
 @app.route('/admin/login', methods=['GET', 'POST'])
 def admin_login():
@@ -1139,7 +1100,6 @@ def admin_dashboard():
     paid_pay_count = len([b for b in BUSINESSES.values() if b.get('payment_status') == 'paid'])
     pending_pay_count = len([b for b in BUSINESSES.values() if b.get('payment_status') == 'pending'])
 
-    # 1. Business Table Rows (with filter support)
     biz_rows = ""
     for b in BUSINESSES.values():
         status = b.get('status', 'pending')
@@ -1172,7 +1132,6 @@ def admin_dashboard():
         </tr>
         '''
 
-    # 2. Payment Table Rows (with filter support)
     pay_rows = ""
     for b in BUSINESSES.values():
         pay_status = b.get('payment_status', 'pending')
@@ -1273,7 +1232,6 @@ def admin_dashboard():
             <a href="/admin/logout" class="bg-red-600 hover:bg-red-500 text-white px-5 py-2.5 rounded-xl text-xs font-bold transition shadow-md">Admin Logout</a>
         </div>
 
-        <!-- Clickable Stats Cards -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <a href="/admin/dashboard?tab=businesses&filter=all" class="bg-white dark:bg-gray-900 p-5 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm text-center card-hover-effect block">
                 <p class="text-xs text-gray-500 font-bold uppercase">Total Listings</p>
@@ -1340,10 +1298,6 @@ def admin_delete_business(b_id):
 def admin_logout():
     session.pop('admin_logged_in', None)
     return redirect(url_for('home'))
-
-# ==========================================
-# CLIENT LOGIN & DASHBOARD ROUTES
-# ==========================================
 
 @app.route('/client/login', methods=['GET', 'POST'])
 def client_login():
