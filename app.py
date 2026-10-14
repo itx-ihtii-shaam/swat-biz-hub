@@ -1,4 +1,4 @@
-"""SwatBiz Hub - Qualifications Field, Smart Admin Navigation Fix & Client Login Dashboard System."""
+"""SwatBiz Hub - Qualifications Field & Smart Admin Navigation Fix."""
 from datetime import datetime, timedelta
 import os
 import json
@@ -264,7 +264,7 @@ HOME_HEAD = '''
             <a href="/" class="text-2xl font-extrabold tracking-tight text-blue-600 dark:text-blue-400 hover:opacity-80 transition transform hover:scale-105">🏙️ ''' + SITE_NAME + '''</a>
             <div class="flex items-center space-x-3">
                 ''' + HEADER_THEME_BTN + '''
-                <a href="/client/login" class="bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 px-4 py-2.5 rounded-xl text-sm font-bold transition">🔑 Login / Dashboard</a>
+                <a href="/client/login" class="bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 px-4 py-2.5 rounded-xl text-sm font-bold transition">Login / My Dashboard</a>
                 <a href="/register" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2.5 rounded-xl text-sm font-bold shadow-lg btn-hover-effect">＋ Register Business</a>
             </div>
         </div>
@@ -300,7 +300,7 @@ def get_base_head(back_url="/", back_text="Back to Home"):
             </a>
             <div class="flex items-center space-x-3">
                 ''' + HEADER_THEME_BTN + '''
-                <a href="/client/login" class="bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 px-4 py-2.5 rounded-xl text-sm font-bold transition">🔑 Login / Dashboard</a>
+                <a href="/client/login" class="bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 px-4 py-2.5 rounded-xl text-sm font-bold transition">Login / My Dashboard</a>
                 <a href="/register" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2.5 rounded-xl text-sm font-bold shadow-lg btn-hover-effect">＋ Register Business</a>
             </div>
         </div>
@@ -477,181 +477,6 @@ def category_page(cat_slug):
     </script>
     ''' + FOOTER
     return render_template_string(html)
-
-# ==========================================
-# CLIENT LOGIN & DASHBOARD SYSTEM (NEW)
-# ==========================================
-
-@app.route('/client/login', methods=['GET', 'POST'])
-def client_login():
-    error_msg = ""
-    if request.method == 'POST':
-        email = request.form.get('email', '').strip().lower()
-        password = request.form.get('password', '')
-        
-        # Check if any business matches this client email & password
-        matched_biz_id = None
-        for b_id, b in BUSINESSES.items():
-            if b.get('client_email', '').lower() == email and b.get('client_password') == password:
-                matched_biz_id = b_id
-                break
-                
-        if matched_biz_id:
-            session['client_logged_email'] = email
-            return redirect(url_for('client_dashboard'))
-        else:
-            error_msg = "Invalid Email or Password! Please check your credentials."
-
-    html = get_base_head(back_url="/", back_text="Back to Home") + '''
-    <main class="max-w-md mx-auto px-4 py-20 animate-fade-in">
-        <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-8 shadow-2xl space-y-6">
-            <div class="text-center space-y-2">
-                <span class="text-5xl inline-block">🔑</span>
-                <h1 class="text-2xl font-black text-gray-900 dark:text-white">Business Owner Login</h1>
-                <p class="text-xs text-gray-500 dark:text-gray-400">Access your business dashboard to edit or manage your listings.</p>
-            </div>
-
-            <form method="POST" class="space-y-4">
-                <div>
-                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Email Address</label>
-                    <input type="email" name="email" required placeholder="e.g. owner@swatbiz.com" class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white input-hover-effect outline-none text-sm">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Password</label>
-                    <input type="password" name="password" required placeholder="••••••••" class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white input-hover-effect outline-none text-sm">
-                </div>
-                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-3.5 rounded-xl font-bold btn-hover-effect text-sm shadow-lg">Login to Dashboard</button>
-            </form>
-
-            ''' + (f'<div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-3 rounded-xl text-red-600 dark:text-red-400 text-xs text-center font-semibold">{error_msg}</div>' if error_msg else '') + '''
-
-            <div class="text-center pt-2 border-t border-gray-100 dark:border-gray-800">
-                <p class="text-xs text-gray-500">Don't have an account yet?</p>
-                <a href="/register" class="text-blue-600 dark:text-blue-400 font-bold text-xs hover:underline mt-1 inline-block">Register your business →</a>
-            </div>
-        </div>
-    </main>
-    ''' + FOOTER
-    return render_template_string(html)
-
-@app.route('/client/dashboard')
-def client_dashboard():
-    client_email = session.get('client_logged_email')
-    if not client_email:
-        return redirect(url_for('client_login'))
-        
-    # Find all businesses owned by this email
-    owner_businesses = [b for b in BUSINESSES.values() if b.get('client_email', '').lower() == client_email.lower()]
-    
-    cards_html = ""
-    for b in owner_businesses:
-        status_color = 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' if b.get('status') == 'approved' else 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-        cards_html += f'''
-        <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6 shadow-md flex flex-col justify-between space-y-4">
-            <div class="flex items-start gap-4">
-                <img src="{b.get('image', '')}" class="w-20 h-20 object-cover rounded-xl border border-gray-200 dark:border-gray-800">
-                <div class="space-y-1">
-                    <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-md {status_color}">{b.get('status', 'pending')}</span>
-                    <h3 class="text-lg font-bold text-gray-900 dark:text-white">{b['name']}</h3>
-                    <p class="text-xs text-gray-500 dark:text-gray-400">📍 {b['address']}</p>
-                    <p class="text-xs text-blue-600 dark:text-blue-400 font-semibold">🏷️ Category: {b['category'].capitalize()} ({b.get('subcategory', 'General')})</p>
-                </div>
-            </div>
-            <div class="flex items-center justify-between pt-3 border-t border-gray-100 dark:border-gray-800">
-                <a href="/business/{b['id']}" class="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline">View Public Page →</a>
-                <div class="flex items-center gap-2">
-                    <a href="/client/edit/{b['id']}" class="bg-blue-50 dark:bg-blue-600/20 text-blue-600 dark:text-blue-400 px-3 py-1.5 rounded-xl text-xs font-bold transition hover:bg-blue-600 hover:text-white flex items-center gap-1">Edit ✏️</a>
-                    <a href="/client/delete/{b['id']}" onclick="return confirm('Are you sure you want to delete this business?');" class="bg-red-50 dark:bg-red-600/20 text-red-600 dark:text-red-400 px-3 py-1.5 rounded-xl text-xs font-bold transition hover:bg-red-600 hover:text-white flex items-center gap-1">Delete 🗑️</a>
-                </div>
-            </div>
-        </div>
-        '''
-
-    if not cards_html:
-        cards_html = '<div class="col-span-2 text-center py-12 text-gray-500"><p>No businesses found registered under your email account.</p></div>'
-
-    html = get_base_head(back_url="/", back_text="Back to Home") + '''
-    <main class="max-w-5xl mx-auto px-4 py-12 animate-fade-in space-y-8">
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white dark:bg-gray-900 p-6 rounded-3xl border border-gray-200 dark:border-gray-800 shadow-xl">
-            <div>
-                <h1 class="text-2xl font-black text-gray-900 dark:text-white">Client Dashboard</h1>
-                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Logged in as: <strong class="text-blue-600 dark:text-blue-400">''' + client_email + '''</strong></p>
-            </div>
-            <div class="flex items-center gap-3">
-                <a href="/register" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow-md btn-hover-effect">＋ Add Another Business</a>
-                <a href="/client/logout" class="bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-600 hover:text-white px-4 py-2.5 rounded-xl text-xs font-bold transition">Logout</a>
-            </div>
-        </div>
-
-        <h2 class="text-lg font-bold text-gray-800 dark:text-white">Your Registered Businesses</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            ''' + cards_html + '''
-        </div>
-    </main>
-    ''' + FOOTER
-    return render_template_string(html)
-
-@app.route('/client/logout')
-def client_logout():
-    session.pop('client_logged_email', None)
-    return redirect(url_for('home'))
-
-@app.route('/client/edit/<b_id>', methods=['GET', 'POST'])
-def client_edit_business(b_id):
-    client_email = session.get('client_logged_email')
-    if not client_email or b_id not in BUSINESSES:
-        return redirect(url_for('client_login'))
-        
-    b = BUSINESSES[b_id]
-    if b.get('client_email', '').lower() != client_email.lower():
-        abort(403)
-
-    if request.method == 'POST':
-        b['name'] = request.form.get('name', b['name'])
-        b['address'] = request.form.get('address', b['address'])
-        b['phones'] = [p.strip() for p in request.form.get('phones', '').split(',') if p.strip()]
-        return redirect(url_for('client_dashboard'))
-
-    html = get_base_head(back_url="/client/dashboard", back_text="Back to Dashboard") + '''
-    <main class="max-w-xl mx-auto px-4 py-12 animate-fade-in">
-        <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-8 shadow-2xl space-y-6">
-            <h1 class="text-2xl font-black text-gray-900 dark:text-white">Edit Business: ''' + b['name'] + '''</h1>
-
-            <form method="POST" class="space-y-4">
-                <div>
-                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Business Name</label>
-                    <input type="text" name="name" value="''' + b['name'] + '''" required class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white input-hover-effect outline-none text-sm">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Address / Location</label>
-                    <input type="text" name="address" value="''' + b['address'] + '''" required class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white input-hover-effect outline-none text-sm">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Phone Numbers (comma separated)</label>
-                    <input type="text" name="phones" value="''' + ", ".join(b.get('phones', [])) + '''" required class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white input-hover-effect outline-none text-sm">
-                </div>
-                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-3.5 rounded-xl font-bold btn-hover-effect text-sm shadow-lg">Save Changes</button>
-            </form>
-        </div>
-    </main>
-    ''' + FOOTER
-    return render_template_string(html)
-
-@app.route('/client/delete/<b_id>')
-def client_delete_business(b_id):
-    client_email = session.get('client_logged_email')
-    if not client_email or b_id not in BUSINESSES:
-        return redirect(url_for('client_login'))
-        
-    b = BUSINESSES[b_id]
-    if b.get('client_email', '').lower() == client_email.lower():
-        del BUSINESSES[b_id]
-        
-    return redirect(url_for('client_dashboard'))
-
-# ==========================================
-# EXISTING BUSINESS DETAIL & REGISTRATION
-# ==========================================
 
 @app.route('/business/<b_id>', methods=['GET', 'POST'])
 def business_detail(b_id):
@@ -874,11 +699,10 @@ def register():
                 'client_email': client_email,
                 'client_password': client_password
             }
-            # Automatically log in the user after first registration
             session['client_logged_email'] = client_email
             return redirect(url_for('client_dashboard'))
         else:
-            error_msg = "Please fill in all required fields including Email and Password."
+            error_msg = "Please fill in all required fields."
 
     cats_options = "".join([f'<option value="{k}">{v["title"]}</option>' for k, v in CATEGORIES.items()])
 
@@ -937,6 +761,162 @@ def register():
     </main>
     ''' + FOOTER
     return render_template_string(html)
+
+@app.route('/client/login', methods=['GET', 'POST'])
+def client_login():
+    error_msg = ""
+    if request.method == 'POST':
+        email = request.form.get('email', '').strip().lower()
+        password = request.form.get('password', '')
+        
+        matched_biz = None
+        for b in BUSINESSES.values():
+            if b.get('client_email', '').lower() == email and b.get('client_password') == password:
+                matched_biz = b
+                break
+                
+        if matched_biz:
+            session['client_logged_email'] = email
+            return redirect(url_for('client_dashboard'))
+        else:
+            error_msg = "Invalid Email or Password!"
+
+    html = get_base_head(back_url="/", back_text="Back to Home") + '''
+    <main class="max-w-md mx-auto px-4 py-20 animate-fade-in">
+        <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-8 shadow-2xl space-y-6">
+            <div class="text-center space-y-2">
+                <span class="text-5xl inline-block">🔑</span>
+                <h1 class="text-2xl font-black text-gray-900 dark:text-white">Owner Login</h1>
+                <p class="text-xs text-gray-500 dark:text-gray-400">Access your business dashboard.</p>
+            </div>
+
+            <form method="POST" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Email Address</label>
+                    <input type="email" name="email" required placeholder="owner@gmail.com" class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white input-hover-effect outline-none text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Password</label>
+                    <input type="password" name="password" required placeholder="••••••••" class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white input-hover-effect outline-none text-sm">
+                </div>
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-3.5 rounded-xl font-bold btn-hover-effect text-sm shadow-lg">Login to Dashboard</button>
+            </form>
+            ''' + (f'<p class="text-red-500 text-xs text-center font-semibold">{error_msg}</p>' if error_msg else '') + '''
+        </div>
+    </main>
+    ''' + FOOTER
+    return render_template_string(html)
+
+@app.route('/client/dashboard')
+def client_dashboard():
+    client_email = session.get('client_logged_email')
+    if not client_email:
+        return redirect(url_for('client_login'))
+        
+    owner_businesses = [b for b in BUSINESSES.values() if b.get('client_email', '').lower() == client_email.lower()]
+    
+    cards_html = ""
+    for b in owner_businesses:
+        cards_html += f'''
+        <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6 shadow-md flex flex-col justify-between space-y-4">
+            <div class="flex items-start gap-4">
+                <img src="{b.get('image', '')}" class="w-20 h-20 object-cover rounded-xl border border-gray-200 dark:border-gray-800">
+                <div class="space-y-1">
+                    <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-md bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">{b.get('status', 'pending')}</span>
+                    <h3 class="text-lg font-bold text-gray-900 dark:text-white">{b['name']}</h3>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">📍 {b['address']}</p>
+                </div>
+            </div>
+            <div class="flex items-center justify-between pt-3 border-t border-gray-100 dark:border-gray-800">
+                <a href="/business/{b['id']}" class="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline">View Listing →</a>
+                <div class="flex items-center gap-2">
+                    <a href="/client/edit/{b['id']}" class="bg-blue-50 dark:bg-blue-600/20 text-blue-600 dark:text-blue-400 px-3 py-1.5 rounded-xl text-xs font-bold transition hover:bg-blue-600 hover:text-white">Edit ✏️</a>
+                    <a href="/client/delete/{b['id']}" onclick="return confirm('Delete this business?');" class="bg-red-50 dark:bg-red-600/20 text-red-600 dark:text-red-400 px-3 py-1.5 rounded-xl text-xs font-bold transition hover:bg-red-600 hover:text-white">Delete 🗑️</a>
+                </div>
+            </div>
+        </div>
+        '''
+
+    if not cards_html:
+        cards_html = '<div class="col-span-2 text-center py-12 text-gray-500"><p>No businesses found under this email.</p></div>'
+
+    html = get_base_head(back_url="/", back_text="Back to Home") + '''
+    <main class="max-w-5xl mx-auto px-4 py-12 animate-fade-in space-y-8">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white dark:bg-gray-900 p-6 rounded-3xl border border-gray-200 dark:border-gray-800 shadow-xl">
+            <div>
+                <h1 class="text-2xl font-black text-gray-900 dark:text-white">Client Dashboard</h1>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Logged in as: <strong class="text-blue-600 dark:text-blue-400">''' + client_email + '''</strong></p>
+            </div>
+            <div class="flex items-center gap-3">
+                <a href="/register" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow-md btn-hover-effect">＋ Register Business</a>
+                <a href="/client/logout" class="bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-600 hover:text-white px-4 py-2.5 rounded-xl text-xs font-bold transition">Logout</a>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            ''' + cards_html + '''
+        </div>
+    </main>
+    ''' + FOOTER
+    return render_template_string(html)
+
+@app.route('/client/logout')
+def client_logout():
+    session.pop('client_logged_email', None)
+    return redirect(url_for('home'))
+
+@app.route('/client/edit/<b_id>', methods=['GET', 'POST'])
+def client_edit_business(b_id):
+    client_email = session.get('client_logged_email')
+    if not client_email or b_id not in BUSINESSES:
+        return redirect(url_for('client_login'))
+        
+    b = BUSINESSES[b_id]
+    if b.get('client_email', '').lower() != client_email.lower():
+        abort(403)
+
+    if request.method == 'POST':
+        b['name'] = request.form.get('name', b['name'])
+        b['address'] = request.form.get('address', b['address'])
+        b['phones'] = [p.strip() for p in request.form.get('phones', '').split(',') if p.strip()]
+        return redirect(url_for('client_dashboard'))
+
+    html = get_base_head(back_url="/client/dashboard", back_text="Back to Dashboard") + '''
+    <main class="max-w-xl mx-auto px-4 py-12 animate-fade-in">
+        <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-8 shadow-2xl space-y-6">
+            <h1 class="text-2xl font-black text-gray-900 dark:text-white">Edit Business: ''' + b['name'] + '''</h1>
+
+            <form method="POST" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Business Name</label>
+                    <input type="text" name="name" value="''' + b['name'] + '''" required class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white input-hover-effect outline-none text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Address / Location</label>
+                    <input type="text" name="address" value="''' + b['address'] + '''" required class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white input-hover-effect outline-none text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Phone Numbers</label>
+                    <input type="text" name="phones" value="''' + ", ".join(b.get('phones', [])) + '''" required class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white input-hover-effect outline-none text-sm">
+                </div>
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-3.5 rounded-xl font-bold btn-hover-effect text-sm shadow-lg">Save Changes</button>
+            </form>
+        </div>
+    </main>
+    ''' + FOOTER
+    return render_template_string(html)
+
+@app.route('/client/delete/<b_id>')
+def client_delete_business(b_id):
+    client_email = session.get('client_logged_email')
+    if not client_email or b_id not in BUSINESSES:
+        return redirect(url_for('client_login'))
+        
+    b = BUSINESSES[b_id]
+    if b.get('client_email', '').lower() == client_email.lower():
+        del BUSINESSES[b_id]
+        
+    return redirect(url_for('client_dashboard'))
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
