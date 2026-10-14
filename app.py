@@ -1,4 +1,4 @@
-"""SwatBiz Hub - Qualifications Field & Dynamic Category-Based Registration Form."""
+"""SwatBiz Hub - Full Code with Restored Admin Panel & Dynamic Registration System."""
 from datetime import datetime, timedelta
 import os
 import json
@@ -248,36 +248,15 @@ ANIMATION_STYLES = '''
     .animate-modal { animation: modalPop 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
     .animate-fade-out { animation: fadeOut 0.25s ease-out forwards; }
     
-    .input-hover-effect {
-        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    .input-hover-effect:hover {
-        border-color: #3b82f6;
-        box-shadow: 0 0 12px rgba(59, 130, 246, 0.25);
-        transform: translateY(-1px);
-    }
-    .input-hover-effect:focus {
-        border-color: #60a5fa;
-        box-shadow: 0 0 18px rgba(59, 130, 246, 0.45);
-        transform: translateY(-1px);
-    }
+    .input-hover-effect { transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); }
+    .input-hover-effect:hover { border-color: #3b82f6; box-shadow: 0 0 12px rgba(59, 130, 246, 0.25); transform: translateY(-1px); }
+    .input-hover-effect:focus { border-color: #60a5fa; box-shadow: 0 0 18px rgba(59, 130, 246, 0.45); transform: translateY(-1px); }
 
-    .btn-hover-effect {
-        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    .btn-hover-effect:hover {
-        transform: translateY(-2px) scale(1.02);
-        box-shadow: 0 8px 20px -4px rgba(59, 130, 246, 0.4);
-    }
+    .btn-hover-effect { transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); }
+    .btn-hover-effect:hover { transform: translateY(-2px) scale(1.02); box-shadow: 0 8px 20px -4px rgba(59, 130, 246, 0.4); }
 
-    .card-hover-effect {
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    .card-hover-effect:hover {
-        transform: translateY(-4px);
-        border-color: #3b82f6;
-        box-shadow: 0 12px 28px -6px rgba(0, 0, 0, 0.15), 0 0 15px rgba(59, 130, 246, 0.2);
-    }
+    .card-hover-effect { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+    .card-hover-effect:hover { transform: translateY(-4px); border-color: #3b82f6; box-shadow: 0 12px 28px -6px rgba(0, 0, 0, 0.15), 0 0 15px rgba(59, 130, 246, 0.2); }
 </style>
 '''
 
@@ -353,7 +332,8 @@ HOME_HEAD = '''
             <a href="/" class="text-2xl font-extrabold tracking-tight text-blue-600 dark:text-blue-400 hover:opacity-80 transition transform hover:scale-105">🏙️ ''' + SITE_NAME + '''</a>
             <div class="flex items-center space-x-3">
                 ''' + HEADER_THEME_BTN + '''
-                <a href="/client/login" class="bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 px-4 py-2.5 rounded-xl text-sm font-bold transition">🔑 Login / Dashboard</a>
+                <a href="/admin" class="bg-red-500/10 hover:bg-red-500 text-red-600 dark:text-red-400 hover:text-white px-3 py-2 rounded-xl text-xs font-bold border border-red-500/30 transition">🛡️ Admin</a>
+                <a href="/client/login" class="bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 px-4 py-2.5 rounded-xl text-sm font-bold transition">🔑 Login</a>
                 <a href="/register" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2.5 rounded-xl text-sm font-bold shadow-lg btn-hover-effect">＋ Register Business</a>
             </div>
         </div>
@@ -389,7 +369,8 @@ def get_base_head(back_url="/", back_text="Back to Home"):
             </a>
             <div class="flex items-center space-x-3">
                 ''' + HEADER_THEME_BTN + '''
-                <a href="/client/login" class="bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 px-4 py-2.5 rounded-xl text-sm font-bold transition">🔑 Login / Dashboard</a>
+                <a href="/admin" class="bg-red-500/10 hover:bg-red-500 text-red-600 dark:text-red-400 hover:text-white px-3 py-2 rounded-xl text-xs font-bold border border-red-500/30 transition">🛡️ Admin</a>
+                <a href="/client/login" class="bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 px-4 py-2.5 rounded-xl text-sm font-bold transition">🔑 Login</a>
                 <a href="/register" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2.5 rounded-xl text-sm font-bold shadow-lg btn-hover-effect">＋ Register Business</a>
             </div>
         </div>
@@ -1054,6 +1035,161 @@ def register():
     </script>
     ''' + FOOTER
     return render_template_string(html)
+
+# ==========================================
+# ADMIN SYSTEM ROUTES (RESTORED & FIXED)
+# ==========================================
+
+@app.route('/admin', methods=['GET', 'POST'])
+@app.route('/admin/login', methods=['GET', 'POST'])
+def admin_login():
+    if session.get('admin_logged_in'):
+        return redirect(url_for('admin_dashboard'))
+        
+    error_msg = ""
+    if request.method == 'POST':
+        password = request.form.get('password', '')
+        if password == ADMIN_PASSWORD:
+            session['admin_logged_in'] = True
+            return redirect(url_for('admin_dashboard'))
+        else:
+            error_msg = "Incorrect Admin Password!"
+
+    html = get_base_head(back_url="/", back_text="Back to Home") + '''
+    <main class="max-w-md mx-auto px-4 py-20 animate-fade-in">
+        <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-8 shadow-2xl space-y-6">
+            <div class="text-center space-y-2">
+                <span class="text-5xl inline-block">🛡️</span>
+                <h1 class="text-2xl font-black text-gray-900 dark:text-white">Admin Login</h1>
+                <p class="text-xs text-gray-500 dark:text-gray-400">Enter master password to access system control.</p>
+            </div>
+
+            <form method="POST" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Admin Password</label>
+                    <input type="password" name="password" required placeholder="••••••••" class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white input-hover-effect outline-none text-sm">
+                </div>
+                <button type="submit" class="w-full bg-red-600 hover:bg-red-500 text-white py-3.5 rounded-xl font-bold btn-hover-effect text-sm shadow-lg">Access Admin Dashboard</button>
+            </form>
+            ''' + (f'<p class="text-red-500 text-xs text-center font-semibold">{error_msg}</p>' if error_msg else '') + '''
+        </div>
+    </main>
+    ''' + FOOTER
+    return render_template_string(html)
+
+@app.route('/admin/dashboard')
+def admin_dashboard():
+    if not session.get('admin_logged_in'):
+        return redirect(url_for('admin_login'))
+        
+    now = datetime.now()
+    total_listings = len(BUSINESSES)
+    approved_count = len([b for b in BUSINESSES.values() if b.get('status') == 'approved'])
+    pending_count = len([b for b in BUSINESSES.values() if b.get('status') == 'pending'])
+
+    table_rows = ""
+    for b in BUSINESSES.values():
+        status_color = 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' if b.get('status') == 'approved' else 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+        expiry_str = b.get('expiry_date').strftime('%d %b %Y') if b.get('expiry_date') else 'N/A'
+        
+        table_rows += f'''
+        <tr class="border-b border-gray-100 dark:border-gray-800 text-xs text-gray-800 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800/50">
+            <td class="p-4 font-bold">{b['id']}</td>
+            <td class="p-4">
+                <p class="font-bold text-sm text-gray-900 dark:text-white">{b['name']}</p>
+                <p class="text-[11px] text-gray-500">📧 {b.get('client_email', 'N/A')}</p>
+            </td>
+            <td class="p-4 uppercase font-semibold text-[11px]">{b['category']}</td>
+            <td class="p-4">
+                <span class="px-2.5 py-1 rounded-md text-[10px] font-extrabold uppercase {status_color}">{b.get('status', 'pending')}</span>
+            </td>
+            <td class="p-4">{expiry_str}</td>
+            <td class="p-4 space-x-2 flex items-center">
+                <a href="/admin/status/{b['id']}/approved" class="bg-green-600 hover:bg-green-500 text-white px-2.5 py-1 rounded-lg text-[11px] font-bold">Approve</a>
+                <a href="/admin/status/{b['id']}/pending" class="bg-yellow-600 hover:bg-yellow-500 text-white px-2.5 py-1 rounded-lg text-[11px] font-bold">Pending</a>
+                <a href="/admin/extend/{b['id']}" class="bg-blue-600 hover:bg-blue-500 text-white px-2.5 py-1 rounded-lg text-[11px] font-bold">+30 Days</a>
+                <a href="/admin/delete/{b['id']}" onclick="return confirm('Delete listing?');" class="bg-red-600 hover:bg-red-500 text-white px-2.5 py-1 rounded-lg text-[11px] font-bold">Delete</a>
+            </td>
+        </tr>
+        '''
+
+    html = get_base_head(back_url="/", back_text="Back to Home") + '''
+    <main class="max-w-7xl mx-auto px-4 py-12 animate-fade-in space-y-8">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white dark:bg-gray-900 p-6 rounded-3xl border border-gray-200 dark:border-gray-800 shadow-xl">
+            <div>
+                <h1 class="text-3xl font-black text-gray-900 dark:text-white">🛡️ Master Admin Control Panel</h1>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Manage listings approval, expiry & system settings.</p>
+            </div>
+            <a href="/admin/logout" class="bg-red-600 hover:bg-red-500 text-white px-5 py-2.5 rounded-xl text-xs font-bold transition shadow-md">Admin Logout</a>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="bg-white dark:bg-gray-900 p-6 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm text-center">
+                <p class="text-xs text-gray-500 font-bold uppercase">Total Listings</p>
+                <p class="text-3xl font-black text-blue-600 dark:text-blue-400 mt-1">''' + str(total_listings) + '''</p>
+            </div>
+            <div class="bg-white dark:bg-gray-900 p-6 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm text-center">
+                <p class="text-xs text-gray-500 font-bold uppercase">Active / Approved</p>
+                <p class="text-3xl font-black text-green-500 mt-1">''' + str(approved_count) + '''</p>
+            </div>
+            <div class="bg-white dark:bg-gray-900 p-6 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm text-center">
+                <p class="text-xs text-gray-500 font-bold uppercase">Pending Approval</p>
+                <p class="text-3xl font-black text-yellow-500 mt-1">''' + str(pending_count) + '''</p>
+            </div>
+        </div>
+
+        <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl overflow-hidden shadow-xl">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-gray-50 dark:bg-gray-800/80 text-[11px] font-extrabold uppercase text-gray-500 border-b border-gray-200 dark:border-gray-800">
+                            <th class="p-4">ID</th>
+                            <th class="p-4">Business Name & Owner</th>
+                            <th class="p-4">Category</th>
+                            <th class="p-4">Status</th>
+                            <th class="p-4">Expiry Date</th>
+                            <th class="p-4">Admin Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ''' + table_rows + '''
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+    ''' + FOOTER
+    return render_template_string(html)
+
+@app.route('/admin/status/<b_id>/<new_status>')
+def admin_change_status(b_id, new_status):
+    if not session.get('admin_logged_in'):
+        return redirect(url_for('admin_login'))
+    if b_id in BUSINESSES:
+        BUSINESSES[b_id]['status'] = new_status
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/extend/<b_id>')
+def admin_extend_expiry(b_id):
+    if not session.get('admin_logged_in'):
+        return redirect(url_for('admin_login'))
+    if b_id in BUSINESSES:
+        curr_exp = BUSINESSES[b_id].get('expiry_date', datetime.now())
+        BUSINESSES[b_id]['expiry_date'] = curr_exp + timedelta(days=30)
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/delete/<b_id>')
+def admin_delete_business(b_id):
+    if not session.get('admin_logged_in'):
+        return redirect(url_for('admin_login'))
+    if b_id in BUSINESSES:
+        del BUSINESSES[b_id]
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/logout')
+def admin_logout():
+    session.pop('admin_logged_in', None)
+    return redirect(url_for('home'))
 
 # ==========================================
 # CLIENT LOGIN & DASHBOARD ROUTES
