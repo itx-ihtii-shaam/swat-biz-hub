@@ -999,7 +999,6 @@ def admin_panel():
         <title>Admin Panel - ''' + SITE_NAME + '''</title>
         <script src="https://cdn.tailwindcss.com"></script>
         <script>tailwind.config = { darkMode: 'class' }</script>
-    </main>
     </head>
     <body class="bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 min-h-screen">
         <header class="bg-gradient-to-r from-slate-900 via-blue-950 to-indigo-950 text-white shadow-xl">
