@@ -1,4 +1,4 @@
-"""SwatBiz Hub - Qualifications Field & Smart Admin Navigation Fix."""
+"""SwatBiz Hub - Qualifications Field, Smart Admin Navigation & Client Dashboard Integration."""
 from datetime import datetime, timedelta
 import os
 import json
@@ -243,6 +243,26 @@ THEME_JS = '''
 </script>
 '''
 
+def get_header_nav(extra_link=""):
+    client_logged_in = session.get('client_logged_in_id')
+    client_nav = f'<a href="/client/dashboard" class="bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 px-3.5 py-2 rounded-xl text-xs font-bold hover:bg-emerald-600 hover:text-white transition">📂 My Dashboard</a>' if client_logged_in else f'<a href="/client/login" class="bg-white/10 hover:bg-white/20 px-3.5 py-2 rounded-xl text-xs font-semibold transition">🔐 Client Login</a>'
+    
+    return f'''
+    <header class="bg-white dark:bg-slate-900/90 border-b border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white shadow-md sticky top-0 z-40 backdrop-blur-md">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                {extra_link}
+                <a href="/" class="text-2xl font-extrabold tracking-tight text-blue-600 dark:text-blue-400 hover:opacity-80 transition transform hover:scale-105">🏙️ {SITE_NAME}</a>
+            </div>
+            <div class="flex items-center space-x-3">
+                {client_nav}
+                {HEADER_THEME_BTN}
+                <a href="/register" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2.5 rounded-xl text-sm font-bold shadow-lg btn-hover-effect">＋ Register Business</a>
+            </div>
+        </div>
+    </header>
+    '''
+
 HOME_HEAD = '''
 <!DOCTYPE html>
 <html lang="en" id="html-root" class="dark">
@@ -256,16 +276,7 @@ HOME_HEAD = '''
     ''' + ANIMATION_STYLES + THEME_JS + '''
 </head>
 <body class="bg-gray-100 dark:bg-gray-950 text-gray-900 dark:text-gray-100 min-h-screen transition-colors duration-300">
-    <header class="bg-white dark:bg-slate-900/90 border-b border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white shadow-md sticky top-0 z-40 backdrop-blur-md">
-        <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-            <a href="/" class="text-2xl font-extrabold tracking-tight text-blue-600 dark:text-blue-400 hover:opacity-80 transition transform hover:scale-105">🏙️ ''' + SITE_NAME + '''</a>
-            <div class="flex items-center space-x-3">
-                ''' + HEADER_THEME_BTN + '''
-                <a href="/register" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2.5 rounded-xl text-sm font-bold shadow-lg btn-hover-effect">＋ Register Business</a>
-            </div>
-        </div>
-    </header>
-'''
+    ''' + get_header_nav()
 
 FOOTER = '''
     <footer class="text-center py-8 text-sm text-gray-500 border-t border-gray-200 dark:border-gray-800/80 mt-20 animate-fade-in">
@@ -276,6 +287,7 @@ FOOTER = '''
 '''
 
 def get_base_head(back_url="/", back_text="Back to Home"):
+    extra = f'<a href="{back_url}" class="text-sm font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-600/10 border border-blue-200 dark:border-blue-500/20 px-3.5 py-2 rounded-xl hover:bg-blue-600 hover:text-white transition flex items-center gap-2 shadow-sm">← {back_text}</a>'
     return '''
 <!DOCTYPE html>
 <html lang="en" id="html-root" class="dark">
@@ -289,18 +301,7 @@ def get_base_head(back_url="/", back_text="Back to Home"):
     ''' + ANIMATION_STYLES + THEME_JS + '''
 </head>
 <body class="bg-gray-100 dark:bg-gray-950 text-gray-900 dark:text-gray-100 min-h-screen transition-colors duration-300">
-    <header class="bg-white dark:bg-slate-900/90 border-b border-gray-200 dark:border-gray-800 text-gray-900 dark:text-white shadow-md sticky top-0 z-40 backdrop-blur-md">
-        <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-            <a href="''' + back_url + '''" class="text-sm font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-600/10 border border-blue-200 dark:border-blue-500/20 px-4 py-2 rounded-xl hover:bg-blue-600 hover:text-white transition flex items-center gap-2 shadow-sm">
-                ← ''' + back_text + '''
-            </a>
-            <div class="flex items-center space-x-3">
-                ''' + HEADER_THEME_BTN + '''
-                <a href="/register" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2.5 rounded-xl text-sm font-bold shadow-lg btn-hover-effect">＋ Register Business</a>
-            </div>
-        </div>
-    </header>
-'''
+    ''' + get_header_nav(extra_link=extra)
 
 @app.route('/')
 def home():
@@ -473,6 +474,164 @@ def category_page(cat_slug):
     ''' + FOOTER
     return render_template_string(html)
 
+@app.route('/client/login', methods=['GET', 'POST'])
+def client_login():
+    error = ""
+    if request.method == 'POST':
+        biz_id = request.form.get('biz_id', '').strip()
+        password = request.form.get('password', '').strip()
+        
+        if biz_id in BUSINESSES and BUSINESSES[biz_id].get('client_password', 'client123') == password:
+            session['client_logged_in_id'] = biz_id
+            return redirect(url_for('client_dashboard'))
+        else:
+            error = "Invalid Business ID or Client Password!"
+
+    html = get_base_head(back_url="/", back_text="Back to Home") + '''
+    <main class="max-w-md mx-auto px-4 py-20 animate-fade-in">
+        <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-8 shadow-2xl space-y-6">
+            <div class="text-center">
+                <span class="text-5xl inline-block mb-2">🔐</span>
+                <h1 class="text-2xl font-black text-gray-900 dark:text-white">Client Portal Login</h1>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Manage your business listing, edit details or update menu/doctors.</p>
+            </div>
+
+            <form method="POST" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold mb-1 text-gray-700 dark:text-gray-300">Business ID number</label>
+                    <input type="text" name="biz_id" required placeholder="e.g. 1, 2, 3..." class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-sm focus:border-blue-500 outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold mb-1 text-gray-700 dark:text-gray-300">Client Password</label>
+                    <input type="password" name="password" required placeholder="Enter your password" class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-sm focus:border-blue-500 outline-none">
+                </div>
+                ''' + (f'<p class="text-red-500 text-xs font-bold text-center">{error}</p>' if error else '') + '''
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3.5 rounded-xl text-sm btn-hover-effect shadow-md">Login to Dashboard</button>
+            </form>
+        </div>
+    </main>
+    ''' + FOOTER
+    return render_template_string(html)
+
+@app.route('/client/logout')
+def client_logout():
+    session.pop('client_logged_in_id', None)
+    return redirect(url_for('home'))
+
+@app.route('/client/dashboard')
+def client_dashboard():
+    biz_id = session.get('client_logged_in_id')
+    if not biz_id or biz_id not in BUSINESSES:
+        return redirect(url_for('client_login'))
+    
+    b = BUSINESSES[biz_id]
+    
+    html = get_base_head(back_url="/", back_text="Back to Home") + '''
+    <main class="max-w-4xl mx-auto px-4 py-12 animate-fade-in space-y-8">
+        <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-8 shadow-xl flex flex-col md:flex-row justify-between items-center gap-6">
+            <div class="flex items-center gap-4">
+                <img src="''' + b.get('image', '') + '''" class="w-20 h-20 rounded-2xl object-cover border border-gray-200 dark:border-gray-700">
+                <div>
+                    <span class="text-xs uppercase font-bold tracking-widest text-blue-500">''' + b.get('category', '') + '''</span>
+                    <h1 class="text-2xl font-black text-gray-900 dark:text-white">''' + b['name'] + '''</h1>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">📍 ''' + b['address'] + '''</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <a href="/client/edit/''' + biz_id + '''" class="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2.5 rounded-xl text-xs font-bold shadow-md btn-hover-effect">✏️ Edit Details</a>
+                <a href="/client/logout" class="bg-red-500/10 text-red-500 border border-red-500/30 px-4 py-2.5 rounded-xl text-xs font-bold hover:bg-red-500 hover:text-white transition">Logout</a>
+            </div>
+        </div>
+
+        <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-8 shadow-xl space-y-6">
+            <h2 class="text-xl font-bold text-gray-900 dark:text-white">Listing Status & Info</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                <div class="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-gray-200 dark:border-gray-700/50">
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Status</p>
+                    <p class="font-bold text-base mt-1 uppercase text-emerald-500">''' + b.get('status', 'pending') + '''</p>
+                </div>
+                <div class="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-gray-200 dark:border-gray-700/50">
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Contact Phones</p>
+                    <p class="font-bold text-sm mt-1">''' + ", ".join(b.get('phones', [])) + '''</p>
+                </div>
+                <div class="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-gray-200 dark:border-gray-700/50">
+                    <p class="text-xs text-gray-500 dark:text-gray-400">Listing ID</p>
+                    <p class="font-bold text-base mt-1"># ''' + biz_id + '''</p>
+                </div>
+            </div>
+            <div class="pt-4 flex items-center justify-between border-t border-gray-100 dark:border-gray-800">
+                <a href="/business/''' + biz_id + '''" target="_blank" class="text-xs font-bold text-blue-500 hover:underline">👁️ View Public Page as Visitor →</a>
+                <a href="/client/delete/''' + biz_id + '''" onclick="return confirm('Are you sure you want to delete your business listing?');" class="text-xs font-bold text-red-500 hover:underline">🗑️ Delete Listing</a>
+            </div>
+        </div>
+    </main>
+    ''' + FOOTER
+    return render_template_string(html)
+
+@app.route('/client/edit/<biz_id>', methods=['GET', 'POST'])
+def client_edit(biz_id):
+    logged_id = session.get('client_logged_in_id')
+    if not logged_id or logged_id != biz_id or biz_id not in BUSINESSES:
+        return redirect(url_for('client_login'))
+    
+    b = BUSINESSES[biz_id]
+    
+    if request.method == 'POST':
+        b['name'] = request.form.get('name', b['name'])
+        b['address'] = request.form.get('address', b['address'])
+        phones = request.form.getlist('phone[]')
+        if phones:
+            b['phones'] = [p.strip() for p in phones if p.strip()]
+        
+        img_url = request.form.get('image_url', '').strip()
+        if img_url:
+            b['image'] = img_url
+            b['images'] = [img_url]
+        
+        return redirect(url_for('client_dashboard'))
+
+    html = get_base_head(back_url="/client/dashboard", back_text="Back to Dashboard") + '''
+    <main class="max-w-2xl mx-auto px-4 py-12 animate-fade-in">
+        <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-8 shadow-2xl space-y-6">
+            <h1 class="text-2xl font-black text-gray-900 dark:text-white">Edit Business Details</h1>
+            
+            <form method="POST" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold mb-1 text-gray-700 dark:text-gray-300">Business Name</label>
+                    <input type="text" name="name" value="''' + b['name'] + '''" required class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-sm outline-none focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold mb-1 text-gray-700 dark:text-gray-300">Address Location</label>
+                    <input type="text" name="address" value="''' + b['address'] + '''" required class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-sm outline-none focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold mb-1 text-gray-700 dark:text-gray-300">Phone Numbers</label>
+                    <input type="text" name="phone[]" value="''' + (b['phones'][0] if b.get('phones') else '') + '''" required class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-sm outline-none focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold mb-1 text-gray-700 dark:text-gray-300">Image URL</label>
+                    <input type="url" name="image_url" value="''' + b.get('image', '') + '''" class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-sm outline-none focus:border-blue-500">
+                </div>
+                <div class="flex gap-3 pt-4">
+                    <a href="/client/dashboard" class="w-1/2 bg-gray-200 dark:bg-gray-800 text-center py-3 rounded-xl text-sm font-bold hover:bg-gray-300 dark:hover:bg-gray-700 transition">Cancel</a>
+                    <button type="submit" class="w-1/2 bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl text-sm shadow-md">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </main>
+    ''' + FOOTER
+    return render_template_string(html)
+
+@app.route('/client/delete/<biz_id>')
+def client_delete(biz_id):
+    logged_id = session.get('client_logged_in_id')
+    if not logged_id or logged_id != biz_id or biz_id not in BUSINESSES:
+        return redirect(url_for('client_login'))
+    
+    BUSINESSES.pop(biz_id, None)
+    session.pop('client_logged_in_id', None)
+    return redirect(url_for('home'))
+
 @app.route('/business/<b_id>', methods=['GET', 'POST'])
 def business_detail(b_id):
     if b_id not in BUSINESSES:
@@ -594,131 +753,85 @@ def business_detail(b_id):
                     <p id="mDocHospital" class="font-extrabold text-sm text-gray-900 dark:text-white">Hospital Name</p>
                     <p id="mDocAddress" class="text-gray-600 dark:text-gray-400">Address Location</p>
                 </div>
-
                 <div class="grid grid-cols-2 gap-2">
                     <div class="bg-gray-50 dark:bg-gray-800/50 p-3 rounded-xl border border-gray-200 dark:border-gray-700/50">
-                        <p class="font-bold text-gray-500 dark:text-gray-400 mb-0.5">🕒 Appt Timing:</p>
-                        <p id="mDocAppt" class="font-semibold text-gray-900 dark:text-white">9 AM - 2 PM</p>
+                        <p class="font-bold text-gray-500 dark:text-gray-400 mb-1">🕒 Appt Timing:</p>
+                        <p id="mDocAppt" class="font-bold text-gray-900 dark:text-white">9 AM - 2 PM</p>
                     </div>
                     <div class="bg-gray-50 dark:bg-gray-800/50 p-3 rounded-xl border border-gray-200 dark:border-gray-700/50">
-                        <p class="font-bold text-gray-500 dark:text-gray-400 mb-0.5">📅 Clinic Days:</p>
-                        <p id="mDocDays" class="font-semibold text-gray-900 dark:text-white">Mon - Sat</p>
+                        <p class="font-bold text-gray-500 dark:text-gray-400 mb-1">📅 Clinic Days:</p>
+                        <p id="mDocClinic" class="font-bold text-gray-900 dark:text-white">Mon-Sat</p>
                     </div>
                 </div>
-
                 <div class="bg-gray-50 dark:bg-gray-800/50 p-3 rounded-xl border border-gray-200 dark:border-gray-700/50">
-                    <p class="font-bold text-gray-500 dark:text-gray-400 mb-0.5">🚪 Room / Location:</p>
-                    <p id="mDocRoom" class="font-semibold text-gray-900 dark:text-white">Room 12, OPD Block</p>
+                    <p class="font-bold text-gray-500 dark:text-gray-400 mb-1">🚪 Room / OPD Block:</p>
+                    <p id="mDocRoom" class="font-bold text-gray-900 dark:text-white">Room 12</p>
                 </div>
-
-                <div class="bg-blue-50 dark:bg-blue-600/10 p-3 rounded-xl border border-blue-200 dark:border-blue-500/20 flex flex-col gap-1">
-                    <span class="font-bold text-blue-600 dark:text-blue-400">📞 Doctor / Appointment Number(s):</span>
-                    <span id="mDocApptNums" class="font-bold text-gray-900 dark:text-white text-sm">Numbers</span>
+                <div class="bg-blue-50 dark:bg-blue-600/10 p-3 rounded-xl border border-blue-200 dark:border-blue-500/20">
+                    <p class="font-bold text-blue-600 dark:text-blue-400 mb-1">📞 Appointment Phone(s):</p>
+                    <p id="mDocPhones" class="font-extrabold text-sm text-gray-900 dark:text-white">+92 300...</p>
                 </div>
             </div>
-
-            <button type="button" onclick="closeDoctorModal()" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-3 rounded-xl font-bold btn-hover-effect text-xs shadow-lg">Close Details</button>
+            <button type="button" onclick="closeDoctorModal()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl text-xs shadow-md">Close Window</button>
         </div>
     </div>
 
-    <main class="max-w-4xl mx-auto px-4 py-12 animate-fade-in">
-        <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl overflow-hidden shadow-xl space-y-6 p-8">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                ''' + gallery_html + '''
+    <main class="max-w-5xl mx-auto px-4 py-10 animate-fade-in space-y-8">
+        <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-8 shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+            <div class="space-y-2">
+                <span class="bg-blue-100 dark:bg-blue-600/20 text-blue-700 dark:text-blue-400 text-xs px-3 py-1 rounded-full font-bold uppercase tracking-wider">''' + b.get('subcategory', 'General') + '''</span>
+                <h1 class="text-3xl font-black text-gray-900 dark:text-white">''' + b['name'] + '''</h1>
+                <p class="text-sm text-gray-600 dark:text-gray-400">📍 ''' + b['address'] + '''</p>
             </div>
-
-            <div>
-                <div class="flex items-center gap-3 mb-2">
-                    <span class="bg-blue-100 dark:bg-blue-600/20 text-blue-700 dark:text-blue-400 text-xs px-3 py-1 rounded-full font-bold uppercase tracking-wider">Verified Listing</span>
-                    <span class="bg-indigo-100 dark:bg-indigo-600/20 text-indigo-700 dark:text-indigo-400 text-xs px-3 py-1 rounded-full font-semibold">''' + b.get('subcategory', 'General') + '''</span>
-                </div>
-                <h1 class="text-3xl md:text-4xl font-black mt-3 text-gray-900 dark:text-white">''' + b['name'] + '''</h1>
-                <p class="text-gray-600 dark:text-gray-400 mt-1 text-base">📍 ''' + b['address'] + '''</p>
-                <div class="mt-4 inline-flex items-center gap-2 bg-blue-50 dark:bg-blue-600/10 border border-blue-200 dark:border-blue-500/20 px-4 py-2.5 rounded-xl">
-                    <span class="text-blue-600 dark:text-blue-400 text-sm font-bold">📞 Hospital Landline / Main Numbers:</span>
-                    <span class="text-sm">''' + phones_html + '''</span>
-                </div>
+            <div class="bg-gray-50 dark:bg-gray-800/50 p-4 rounded-2xl border border-gray-200 dark:border-gray-700/50 text-right space-y-1">
+                <p class="text-xs text-gray-500 dark:text-gray-400">Direct Phone(s)</p>
+                <p class="text-sm font-black text-blue-600 dark:text-blue-400">''' + phones_html + '''</p>
             </div>
+        </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-gray-200 dark:border-gray-800">
-                <div class="bg-gray-50 dark:bg-gray-800/50 p-6 rounded-2xl border border-gray-200 dark:border-gray-700/50 card-hover-effect space-y-3">
-                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
-                        <h3 class="text-lg font-bold text-blue-600 dark:text-blue-400">''' + cat_meta['info_title'] + '''</h3>
-                        <input type="text" id="docSearchInput" placeholder="🔍 Search Doctor..." class="px-3 py-1.5 rounded-xl bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect w-full sm:w-40">
-                    </div>
-
-                    <div id="doctorsContainer" class="space-y-3">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div class="lg:col-span-2 space-y-8">
+                <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-6 md:p-8 shadow-xl space-y-4">
+                    <h3 class="text-xl font-black text-gray-900 dark:text-white border-b border-gray-100 dark:border-gray-800 pb-3">''' + cat_meta['info_title'] + '''</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         ''' + doctors_cards_html + '''
                     </div>
                 </div>
-                
-                <div class="bg-gray-50 dark:bg-gray-800/50 p-6 rounded-2xl border border-gray-200 dark:border-gray-700/50 card-hover-effect">
-                    <h3 class="text-lg font-bold text-emerald-600 dark:text-emerald-400 mb-2">''' + cat_meta['extra_title'] + '''</h3>
+
+                <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-6 md:p-8 shadow-xl space-y-4">
+                    <h3 class="text-xl font-black text-gray-900 dark:text-white border-b border-gray-100 dark:border-gray-800 pb-3">''' + cat_meta['extra_title'] + '''</h3>
                     <p class="text-gray-700 dark:text-gray-300 text-sm leading-relaxed whitespace-pre-line">''' + tests_dishes + '''</p>
                 </div>
             </div>
 
-            <div class="pt-4 border-t border-gray-200 dark:border-gray-800 flex justify-between items-center">
-                <span class="text-xs text-gray-500">🔒 Secure Client Access Active</span>
-                <a href="''' + category_back_url + '''" class="bg-blue-600 text-white hover:bg-blue-500 px-5 py-2.5 rounded-xl text-sm font-semibold transition transform hover:-translate-x-1 shadow-md">← Back to Category</a>
+            <div class="space-y-6">
+                <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-6 shadow-xl space-y-4">
+                    <h3 class="text-lg font-bold text-gray-900 dark:text-white">Photo Gallery</h3>
+                    <div class="space-y-3">
+                        ''' + gallery_html + '''
+                    </div>
+                </div>
             </div>
         </div>
     </main>
 
     <script>
         function openDoctorModal(doc) {
-            document.getElementById('mDocName').innerText = doc.name || 'N/A';
-            document.getElementById('mDocSpec').innerText = doc.specialty || 'Specialist';
-            
-            var qualsEl = document.getElementById('mDocQuals');
-            if (doc.qualifications) {
-                qualsEl.innerText = '🎓 ' + doc.qualifications;
-                qualsEl.style.display = 'block';
-            } else {
-                qualsEl.style.display = 'none';
-            }
-
-            document.getElementById('mDocHospital').innerText = doc.hospital_name || 'N/A';
-            document.getElementById('mDocAddress').innerText = '📍 ' + (doc.hospital_address || 'N/A');
+            document.getElementById('mDocName').innerText = doc.name;
+            document.getElementById('mDocSpec').innerText = doc.specialty;
+            document.getElementById('mDocQuals').innerText = doc.qualifications || '';
+            document.getElementById('mDocHospital').innerText = doc.hospital_name;
+            document.getElementById('mDocAddress').innerText = doc.hospital_address;
             document.getElementById('mDocAppt').innerText = doc.appt_timing || 'N/A';
-            document.getElementById('mDocDays').innerText = doc.clinic_timing || 'N/A';
+            document.getElementById('mDocClinic').innerText = doc.clinic_timing || 'N/A';
             document.getElementById('mDocRoom').innerText = doc.room || 'N/A';
-            
-            var rawApptNums = doc.appt_numbers || doc.hospital_phones || 'N/A';
-            var numArr = rawApptNums.split(',');
-            var linksHtml = numArr.map(function(num) {
-                var clean = num.trim();
-                return '<a href="tel:' + clean + '" class="hover:underline text-blue-600 dark:text-blue-400 font-bold block">' + clean + '</a>';
-            }).join('');
-
-            document.getElementById('mDocApptNums').innerHTML = linksHtml;
-
-            var modal = document.getElementById('doctorModal');
-            if (modal) modal.classList.remove('hidden');
+            document.getElementById('mDocPhones').innerText = doc.appt_numbers || doc.hospital_phones;
+            document.getElementById('doctorModal').classList.remove('hidden');
         }
 
         function closeDoctorModal() {
-            var modal = document.getElementById('doctorModal');
-            if (modal) modal.classList.add('hidden');
+            document.getElementById('doctorModal').classList.add('hidden');
         }
-
-        window.addEventListener('DOMContentLoaded', function() {
-            var docInput = document.getElementById('docSearchInput');
-            if (docInput) {
-                docInput.addEventListener('input', function() {
-                    var val = this.value.toLowerCase().trim();
-                    var cards = document.querySelectorAll('.doc-card-item');
-                    cards.forEach(function(card) {
-                        var txt = card.innerText.toLowerCase();
-                        if (txt.includes(val)) {
-                            card.style.display = 'block';
-                        } else {
-                            card.style.display = 'none';
-                        }
-                    });
-                });
-            }
-        });
     </script>
     ''' + FOOTER
     return render_template_string(html)
@@ -726,388 +839,116 @@ def business_detail(b_id):
 @app.route('/register', methods=['GET', 'POST'])
 def register_business():
     if request.method == 'POST':
-        b_id = str(len(BUSINESSES) + 1)
+        name = request.form.get('name', '').strip()
+        category = request.form.get('category', '').strip()
+        address = request.form.get('address', '').strip()
+        phones = request.form.getlist('phone[]')
+        phones = [p.strip() for p in phones if p.strip()]
         
-        phones = request.form.getlist('phones[]')
-        clean_phones = [p.strip() for p in phones if p.strip()]
-
-        names = request.form.getlist('repeater_col1[]')
-        col2_vals = request.form.getlist('repeater_col2[]')
-        col3_vals = request.form.getlist('repeater_col3[]')
-        col4_vals = request.form.getlist('repeater_col4[]')
-        col5_vals = request.form.getlist('repeater_col5[]')
-        col6_vals = request.form.getlist('repeater_col6[]')
-        col7_vals = request.form.getlist('repeater_col7[]')
-
-        doctors_list = []
-        formatted_repeater_list = []
-        for i in range(len(names)):
-            if names[i].strip():
-                doc_obj = {
-                    'name': names[i].strip(),
-                    'specialty': col2_vals[i].strip() if i < len(col2_vals) else 'N/A',
-                    'qualifications': col3_vals[i].strip() if i < len(col3_vals) else '',
-                    'appt_timing': col4_vals[i].strip() if i < len(col4_vals) else 'N/A',
-                    'clinic_timing': col5_vals[i].strip() if i < len(col5_vals) else 'N/A',
-                    'room': col6_vals[i].strip() if i < len(col6_vals) else 'N/A',
-                    'appt_numbers': col7_vals[i].strip() if i < len(col7_vals) else ', '.join(clean_phones)
-                }
-                doctors_list.append(doc_obj)
-                
-                entry_str = "• " + names[i].strip()
-                if i < len(col2_vals) and col2_vals[i].strip(): entry_str += " (" + col2_vals[i].strip() + ")"
-                formatted_repeater_list.append(entry_str)
-
-        combined_repeater_text = "\n".join(formatted_repeater_list) if formatted_repeater_list else request.form.get('special_info', 'N/A')
+        image_url = request.form.get('image_url', '').strip()
+        image = image_url if image_url else 'https://images.unsplash.com/photo-1557804506-669a67965ba0?auto=format&fit=crop&w=800&q=80'
         
-        subcat = request.form.get('subcategory', '').strip()
-        if not subcat:
-            subcat = 'General'
+        doc_names = request.form.getlist('doc_name[]')
+        doc_specs = request.form.getlist('doc_spec[]')
+        doc_quals = request.form.getlist('doc_quals[]')
+        doc_app_times = request.form.getlist('doc_app_time[]')
+        doc_clinic_times = request.form.getlist('doc_clinic_time[]')
+        doc_clinics = request.form.getlist('doc_clinic[]')
+        
+        doctors = []
+        for i in range(len(doc_names)):
+            if doc_names[i].strip():
+                doctors.append({
+                    'name': doc_names[i].strip(),
+                    'specialty': doc_specs[i].strip() if i < len(doc_specs) else '',
+                    'qualifications': doc_quals[i].strip() if i < len(doc_quals) else '',
+                    'appt_timing': doc_app_times[i].strip() if i < len(doc_app_times) else '',
+                    'clinic_timing': doc_clinic_times[i].strip() if i < len(doc_clinic_times) else '',
+                    'room': doc_clinics[i].strip() if i < len(doc_clinics) else '',
+                    'appt_numbers': ", ".join(phones)
+                })
 
-        img_urls = [url.strip() for url in request.form.getlist('image_urls[]') if url.strip()]
-        primary_img = img_urls[0] if img_urls else 'https://images.unsplash.com/photo-1557804506-669a67965ba0?auto=format&fit=crop&w=800&q=80'
-
-        BUSINESSES[b_id] = {
-            'id': b_id,
-            'category': request.form.get('category'),
-            'subcategory': subcat,
-            'name': request.form.get('name'),
-            'address': request.form.get('address'),
-            'phones': clean_phones if clean_phones else ['N/A'],
-            'image': primary_img,
-            'images': img_urls if img_urls else [primary_img],
-            'doctors': doctors_list,
-            'special_info': combined_repeater_text,
-            'tests_dishes': request.form.get('tests_dishes', 'N/A'),
+        item_names = request.form.getlist('item_name[]')
+        item_prices = request.form.getlist('item_price[]')
+        item_offers = request.form.getlist('item_offer[]')
+        
+        tests_list = []
+        for i in range(len(item_names)):
+            if item_names[i].strip():
+                part = item_names[i].strip()
+                if i < len(item_prices) and item_prices[i].strip():
+                    part += f" (Rs. {item_prices[i].strip()})"
+                if i < len(item_offers) and item_offers[i].strip():
+                    part += f" - {item_offers[i].strip()}"
+                tests_list.append(part)
+        
+        tests_dishes = ", ".join(tests_list) if tests_list else "General Services Available"
+        
+        new_id = str(len(BUSINESSES) + 1)
+        BUSINESSES[new_id] = {
+            'id': new_id,
+            'category': category,
+            'subcategory': 'General',
+            'name': name,
+            'address': address,
+            'phones': phones if phones else ['+92 946 0000000'],
+            'image': image,
+            'images': [image],
             'status': 'pending',
-            'payment_method': request.form.get('payment_method', 'Free Trial'),
-            'payment_ref': request.form.get('payment_ref', 'TRIAL-60DAYS'),
+            'payment_method': 'Free Trial',
+            'payment_ref': 'TRIAL-FREE',
             'payment_status': 'paid',
             'joining_date': datetime.now(),
-            'expiry_date': datetime.now() + timedelta(days=60),
-            'client_password': request.form.get('client_password', 'client123')
+            'expiry_date': datetime.now() + timedelta(days=30),
+            'doctors': doctors,
+            'special_info': ", ".join([d['name'] + " (" + d['specialty'] + ")" for d in doctors]) if doctors else '',
+            'tests_dishes': tests_dishes,
+            'client_password': 'client123'
         }
-        return redirect('/')
-
-    opts = ""
-    for k, v in CATEGORIES.items():
-        opts += '<option value="' + k + '">' + v["title"] + '</option>'
-
-    subcat_json_data = json.dumps({k: v['subcategories'] for k, v in CATEGORIES.items()})
+        
+        session['client_logged_in_id'] = new_id
+        return redirect(url_for('client_dashboard'))
 
     html = get_base_head(back_url="/", back_text="Back to Home") + '''
-    <div id="confirmModal" class="fixed inset-0 bg-black/60 dark:bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center hidden">
-        <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-6 md:p-8 max-w-sm w-full mx-4 shadow-2xl animate-modal text-center space-y-4">
-            <div class="w-14 h-14 bg-red-100 dark:bg-red-500/10 text-red-600 dark:text-red-500 rounded-2xl flex items-center justify-center mx-auto text-2xl font-bold">⚠️</div>
-            <div>
-                <h3 class="text-xl font-bold text-gray-900 dark:text-white">Delete Entry?</h3>
-                <p class="text-xs text-gray-600 dark:text-gray-400 mt-1">Are you sure you want to remove this entry? This action cannot be undone.</p>
-            </div>
-            <div class="flex gap-3 pt-2">
-                <button type="button" id="cancelDeleteBtn" class="w-1/2 bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700 py-3 rounded-xl font-bold text-xs transition btn-hover-effect">Cancel</button>
-                <button type="button" id="confirmDeleteBtn" class="w-1/2 bg-red-600 hover:bg-red-500 text-white py-3 rounded-xl font-bold text-xs transition btn-hover-effect shadow-lg">Yes, Delete</button>
-            </div>
-        </div>
-    </div>
-
     <main class="max-w-3xl mx-auto px-4 py-12 animate-fade-in">
-        <div class="text-center mb-8">
-            <h2 class="text-3xl font-black tracking-tight text-gray-900 dark:text-white">Register Business</h2>
-            <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">Enjoy 2 Months Free Trial upon registration!</p>
+        <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-8 md:p-10 shadow-2xl space-y-6">
+            <div class="text-center">
+                <h1 class="text-3xl font-black text-gray-900 dark:text-white">Register Your Business</h1>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Get listed instantly with a 30-day free trial!</p>
+            </div>
+
+            <form method="POST" class="space-y-6">
+                <div>
+                    <label class="block text-xs font-bold mb-1 text-gray-700 dark:text-gray-300">Business Name</label>
+                    <input type="text" name="name" required placeholder="e.g. Al-Shifa Hospital or City Mart" class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-sm outline-none focus:border-blue-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold mb-1 text-gray-700 dark:text-gray-300">Category</label>
+                    <select name="category" class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-sm outline-none focus:border-blue-500 cursor-pointer">
+                        ''' + "".join([f'<option value="{slug}">{cat["icon"]} {cat["title"]}</option>' for slug, cat in CATEGORIES.items()]) + '''
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold mb-1 text-gray-700 dark:text-gray-300">Address / Location</label>
+                    <input type="text" name="address" required placeholder="e.g. Mingora, Swat" class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-sm outline-none focus:border-blue-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold mb-1 text-gray-700 dark:text-gray-300">Phone Number</label>
+                    <input type="text" name="phone[]" required placeholder="+92 946 XXXXXXX" class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-sm outline-none focus:border-blue-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold mb-1 text-gray-700 dark:text-gray-300">Image URL</label>
+                    <input type="url" name="image_url" placeholder="https://images.unsplash.com/..." class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-sm outline-none focus:border-blue-500">
+                </div>
+
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-2xl text-base btn-hover-effect shadow-xl">Submit & Activate Free Listing</button>
+            </form>
         </div>
-
-        <form method="POST" class="space-y-5 bg-white dark:bg-gray-900/90 p-8 rounded-3xl border border-gray-200 dark:border-gray-800 shadow-xl">
-            <div>
-                <label class="block text-xs font-bold text-gray-700 dark:text-gray-400 mb-1">Business / Entity Name *</label>
-                <input type="text" name="name" required placeholder="Name (e.g. Saidu Hospital / Khyber Restaurant)" class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-950 border border-gray-300 dark:border-gray-800 text-gray-900 dark:text-white input-hover-effect outline-none text-sm">
-            </div>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-400 mb-1">Category *</label>
-                    <select name="category" id="categorySelect" class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-950 border border-gray-300 dark:border-gray-800 text-gray-900 dark:text-white input-hover-effect outline-none text-sm">''' + opts + '''</select>
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-400 mb-1">Subcategory (Optional)</label>
-                    <select name="subcategory" id="subcategorySelect" class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-950 border border-gray-300 dark:border-gray-800 text-gray-900 dark:text-white input-hover-effect outline-none text-sm"></select>
-                </div>
-            </div>
-
-            <div>
-                <label class="block text-xs font-bold text-gray-700 dark:text-gray-400 mb-1">Address *</label>
-                <input type="text" name="address" required placeholder="Address (e.g. Saidu Sharif, Mingora Swat)" class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-950 border border-gray-300 dark:border-gray-800 text-gray-900 dark:text-white input-hover-effect outline-none text-sm">
-            </div>
-
-            <div>
-                <label class="block text-xs font-bold text-gray-700 dark:text-gray-400 mb-1">Main Phone Number(s) *</label>
-                <div id="phonesContainer" class="space-y-2">
-                    <div class="flex gap-2">
-                        <input type="text" name="phones[]" required placeholder="e.g. +92 946 9240123" class="w-full p-3 bg-gray-50 dark:bg-gray-950 border border-gray-300 dark:border-gray-800 text-gray-900 dark:text-white rounded-xl text-xs input-hover-effect outline-none">
-                    </div>
-                </div>
-                <button type="button" id="addPhoneBtn" class="mt-2 text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline">+ Add Another Phone Number</button>
-            </div>
-            
-            <div class="border-t border-gray-200 dark:border-gray-800 pt-4">
-                <label class="block text-xs font-bold text-gray-700 dark:text-gray-400 mb-1">🔒 Client Password * (For editing and secure access)</label>
-                <input type="password" name="client_password" required placeholder="Enter secret password" class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-950 border border-gray-300 dark:border-gray-800 text-gray-900 dark:text-white input-hover-effect outline-none text-sm">
-            </div>
-
-            <div class="border-t border-gray-200 dark:border-gray-800 pt-4">
-                <label class="block text-sm font-bold text-blue-600 dark:text-blue-400 mb-3" id="repeaterTitle">🩺 Doctors, Clinic & Timings</label>
-                <div id="repeaterContainer" class="space-y-3"></div>
-                <button type="button" id="addRowBtn" class="mt-3 bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs px-5 py-3 rounded-xl btn-hover-effect inline-flex items-center shadow-lg">
-                    + Add New Entry
-                </button>
-            </div>
-
-            <div class="border-t border-gray-200 dark:border-gray-800 pt-4">
-                <label class="block text-xs font-bold text-gray-700 dark:text-gray-400 mb-1" id="extraTitle">Tests & Medical Services (Optional)</label>
-                <textarea name="tests_dishes" id="dishesField" placeholder="Enter details..." class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-950 border border-gray-300 dark:border-gray-800 text-gray-900 dark:text-white input-hover-effect outline-none text-sm" rows="2"></textarea>
-            </div>
-
-            <div class="border-t border-gray-200 dark:border-gray-800 pt-4">
-                <label class="block text-xs font-bold text-gray-700 dark:text-gray-400 mb-1">Business Images (Optional - Enter URLs)</label>
-                <div id="imagesContainer" class="space-y-2">
-                    <input type="url" name="image_urls[]" placeholder="Image URL (e.g. https://images.unsplash.com/...)" class="w-full p-3 bg-gray-50 dark:bg-gray-950 border border-gray-300 dark:border-gray-800 text-gray-900 dark:text-white rounded-xl text-xs input-hover-effect outline-none">
-                </div>
-                <button type="button" id="addImageBtn" class="mt-2 text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline">+ Add Another Image URL</button>
-            </div>
-
-            <div class="border-t border-gray-200 dark:border-gray-800 pt-4">
-                <label class="block text-xs font-bold text-gray-700 dark:text-gray-400 mb-1">Payment Plan (Free 2 Months Active)</label>
-                <select name="payment_method" class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-950 border border-gray-300 dark:border-gray-800 text-gray-900 dark:text-white input-hover-effect outline-none text-sm">
-                    <option value="Free Trial">2 Months Free Trial (Active)</option>
-                    <option value="EasyPaisa">EasyPaisa</option>
-                    <option value="JazzCash">JazzCash</option>
-                    <option value="Bank Transfer">Bank Transfer</option>
-                </select>
-            </div>
-
-            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-3.5 rounded-xl font-bold btn-hover-effect shadow-xl text-sm">Submit Business Listing</button>
-        </form>
     </main>
-
-    <script>
-        var subcategoriesData = ''' + subcat_json_data + ''';
-
-        var categoryRowConfigs = {
-            'hospitals': {
-                title: '🩺 Doctors, Clinic & Timings',
-                addBtnText: '+ Add New Doctor',
-                extraTitle: '🔬 Tests & Medical Services (Optional)',
-                extraPlaceholder: 'e.g. MRI, CT Scan, Blood Tests, Ultrasound, OPD Services...',
-                c1: 'Doctor Name (Dr. Ahmad)', c2: 'Specialty (Cardiologist / Urologist)',
-                c3: 'Qualifications / Info (Optional: MBBS, FCPS, Head of Dept)',
-                c4: 'Appointment Timing (9 AM - 2 PM)', c5: 'Clinic Timing (Mon-Sat, 9 AM - 5 PM)',
-                c6: 'Clinic / Room (Room 12, OPD Block)',
-                c7: 'Appointment Phone Number(s) (e.g. +92 300 1234567, +92 946 9240125)'
-            },
-            'restaurants': {
-                title: '👨‍🍳 Chefs, Special Dishes & Menu Items',
-                addBtnText: '+ Add New Dish / Menu Item',
-                extraTitle: '🍲 Special Dishes & Menu Highlights (Optional)',
-                extraPlaceholder: 'e.g. Dumba Karahi (Rs. 2400/kg), Shinwari Tikka, Kabab...',
-                c1: 'Item / Dish Name (Dumba Karahi)', c2: 'Category (BBQ / Main Course)',
-                c3: 'Special Serving / Tag (Optional: Chef Special, Fresh)',
-                c4: 'Price (Rs. 2400)', c5: 'Availability (Daily)',
-                c6: 'Description / Special Serving Notes',
-                c7: 'Order / Reservation Contact Number(s)'
-            },
-            'education': {
-                title: '🎓 Faculty, Teachers & Courses',
-                addBtnText: '+ Add New Teacher / Course',
-                extraTitle: '📚 Offered Courses & Academic Programs (Optional)',
-                extraPlaceholder: 'e.g. FSc Pre-Medical, ICS, English Language Diploma...',
-                c1: 'Teacher / Course Name (Prof. Ali)', c2: 'Department / Course (Computer Science)',
-                c3: 'Qualifications / Title (Optional: M.Phil, Gold Medalist)',
-                c4: 'Timing (Morning / Evening)', c5: 'Days (Mon-Fri)',
-                c6: 'Fee / Room No (Lab 2)',
-                c7: 'Direct Contact / Helpline Number(s)'
-            },
-            'pharmacies': {
-                title: '💊 Pharmacists & Staff Info',
-                addBtnText: '+ Add New Pharmacist / Staff',
-                extraTitle: '💊 Available Medicines & Healthcare Products (Optional)',
-                extraPlaceholder: 'e.g. BP Checking, Sugar Testing Kits, Surgical Items...',
-                c1: 'Staff Name (Dr. Bilal)', c2: 'Qualification (Pharm-D)',
-                c3: 'Experience / Role (Optional: Senior Pharmacist)',
-                c4: 'Shift Timing (8 AM - 4 PM)', c5: 'Available Days (Mon-Sat)',
-                c6: 'Counter / Section',
-                c7: 'Direct Contact / Order Number(s)'
-            },
-            'supermarts': {
-                title: '🏬 Store Sections & Managers',
-                addBtnText: '+ Add New Section / Manager',
-                extraTitle: '🛍️ Featured Groceries & Products (Optional)',
-                extraPlaceholder: 'e.g. Fresh Vegetables, Bakery Items, Household Goods...',
-                c1: 'Manager / Section (Tariq - Grocery)', c2: 'Department',
-                c3: 'Role / Designation (Optional: Incharge)',
-                c4: 'Timing', c5: 'Days', c6: 'Floor / Location',
-                c7: 'Section Contact Number(s)'
-            },
-            'property': {
-                title: '🏡 Real Estate Agents & Deals',
-                addBtnText: '+ Add New Agent / Property',
-                extraTitle: '🏡 Featured Plots & Real Estate Deals (Optional)',
-                extraPlaceholder: 'e.g. 5 Marla Plot in Kanju Township, Commercial Shops...',
-                c1: 'Agent / Property Title (Malik Zubair)', c2: 'Type (5 Marla Plot)',
-                c3: 'Tag / Status (Optional: Urgent Sale, Prime Location)',
-                c4: 'Price / Contact', c5: 'Area / Location', c6: 'Details',
-                c7: 'Agent Contact Number(s)'
-            },
-            'hotels': {
-                title: '🛏️ Rooms, Suites & Rates',
-                addBtnText: '+ Add New Room Type',
-                extraTitle: '🛏️ Hotel Services & Room Amenities (Optional)',
-                extraPlaceholder: 'e.g. Deluxe Family Rooms, Mountain View, Free Breakfast...',
-                c1: 'Room Type (Deluxe Family Suite)', c2: 'Capacity (4 Persons)',
-                c3: 'Special Feature (Optional: River View, Balcony)',
-                c4: 'Rate per Night (Rs. 8000)', c5: 'Facilities (AC, WiFi)', c6: 'Floor / Block',
-                c7: 'Booking / Reception Contact Number(s)'
-            }
-        };
-
-        (function() {
-            var targetRowToDelete = null;
-
-            function showConfirmModal(elementToRemove) {
-                targetRowToDelete = elementToRemove;
-                var modal = document.getElementById('confirmModal');
-                if(modal) modal.classList.remove('hidden');
-            }
-
-            function hideConfirmModal() {
-                var modal = document.getElementById('confirmModal');
-                if(modal) modal.classList.add('hidden');
-                targetRowToDelete = null;
-            }
-
-            function initForm() {
-                var catSelect = document.getElementById('categorySelect');
-                var subcatSelect = document.getElementById('subcategorySelect');
-                var repeaterTitle = document.getElementById('repeaterTitle');
-                var addRowBtn = document.getElementById('addRowBtn');
-                var repeaterContainer = document.getElementById('repeaterContainer');
-                var extraTitle = document.getElementById('extraTitle');
-                var dishesField = document.getElementById('dishesField');
-
-                var addPhoneBtn = document.getElementById('addPhoneBtn');
-                var addImageBtn = document.getElementById('addImageBtn');
-
-                var cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
-                var confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
-
-                if(cancelDeleteBtn) cancelDeleteBtn.addEventListener('click', hideConfirmModal);
-                if(confirmDeleteBtn) {
-                    confirmDeleteBtn.addEventListener('click', function() {
-                        if(targetRowToDelete) {
-                            targetRowToDelete.remove();
-                        }
-                        hideConfirmModal();
-                    });
-                }
-
-                if(!catSelect) return;
-
-                if(addPhoneBtn) {
-                    addPhoneBtn.addEventListener('click', function() {
-                        var container = document.getElementById('phonesContainer');
-                        var div = document.createElement('div');
-                        div.className = 'flex gap-2 animate-fade-in';
-                        div.innerHTML = '<input type="text" name="phones[]" placeholder="e.g. +92 300 1234567" class="w-full p-3 bg-gray-50 dark:bg-gray-950 border border-gray-300 dark:border-gray-800 text-gray-900 dark:text-white rounded-xl text-xs input-hover-effect outline-none">' +
-                                        '<button type="button" class="del-phone-btn bg-red-100 dark:bg-red-600/20 text-red-600 dark:text-red-400 hover:bg-red-600 hover:text-white px-3 rounded-xl text-xs font-bold btn-hover-effect">✕</button>';
-                        container.appendChild(div);
-                        div.querySelector('.del-phone-btn').addEventListener('click', function() {
-                            showConfirmModal(div);
-                        });
-                    });
-                }
-
-                if(addImageBtn) {
-                    addImageBtn.addEventListener('click', function() {
-                        var container = document.getElementById('imagesContainer');
-                        var div = document.createElement('div');
-                        div.className = 'flex gap-2 animate-fade-in';
-                        div.innerHTML = '<input type="url" name="image_urls[]" placeholder="Another Image URL..." class="w-full p-3 bg-gray-50 dark:bg-gray-950 border border-gray-300 dark:border-gray-800 text-gray-900 dark:text-white rounded-xl text-xs input-hover-effect outline-none">' +
-                                        '<button type="button" class="del-img-btn bg-red-100 dark:bg-red-600/20 text-red-600 dark:text-red-400 hover:bg-red-600 hover:text-white px-3 rounded-xl text-xs font-bold btn-hover-effect">✕</button>';
-                        container.appendChild(div);
-                        div.querySelector('.del-img-btn').addEventListener('click', function() {
-                            showConfirmModal(div);
-                        });
-                    });
-                }
-
-                function addNewRow() {
-                    var cat = catSelect.value;
-                    var cfg = categoryRowConfigs[cat] || categoryRowConfigs['hospitals'];
-
-                    var rowCard = document.createElement('div');
-                    rowCard.className = 'bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800/80 p-4 rounded-2xl space-y-3 relative group shadow-sm animate-fade-in card-hover-effect';
-
-                    rowCard.innerHTML = '<div class="grid grid-cols-1 md:grid-cols-2 gap-3">' +
-                        '<input type="text" name="repeater_col1[]" placeholder="' + cfg.c1 + '" class="p-3 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-800 text-gray-900 dark:text-white rounded-xl text-xs input-hover-effect outline-none">' +
-                        '<input type="text" name="repeater_col2[]" placeholder="' + cfg.c2 + '" class="p-3 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-800 text-gray-900 dark:text-white rounded-xl text-xs input-hover-effect outline-none">' +
-                        '</div>' +
-                        '<input type="text" name="repeater_col3[]" placeholder="' + cfg.c3 + '" class="w-full p-3 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-800 text-gray-900 dark:text-white rounded-xl text-xs input-hover-effect outline-none">' +
-                        '<div class="grid grid-cols-1 md:grid-cols-2 gap-3">' +
-                        '<input type="text" name="repeater_col4[]" placeholder="' + cfg.c4 + '" class="p-3 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-800 text-gray-900 dark:text-white rounded-xl text-xs input-hover-effect outline-none">' +
-                        '<input type="text" name="repeater_col5[]" placeholder="' + cfg.c5 + '" class="p-3 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-800 text-gray-900 dark:text-white rounded-xl text-xs input-hover-effect outline-none">' +
-                        '</div>' +
-                        '<input type="text" name="repeater_col6[]" placeholder="' + cfg.c6 + '" class="w-full p-3 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-800 text-gray-900 dark:text-white rounded-xl text-xs input-hover-effect outline-none">' +
-                        '<div class="flex gap-2">' +
-                        '<input type="text" name="repeater_col7[]" placeholder="' + cfg.c7 + '" class="w-full p-3 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-800 text-gray-900 dark:text-white rounded-xl text-xs input-hover-effect outline-none">' +
-                        '<button type="button" class="del-row-btn bg-red-100 dark:bg-red-600/20 text-red-600 dark:text-red-400 hover:bg-red-600 hover:text-white px-3 rounded-xl text-xs font-bold btn-hover-effect">✕</button>' +
-                        '</div>';
-                    
-                    repeaterContainer.appendChild(rowCard);
-
-                    rowCard.querySelector('.del-row-btn').addEventListener('click', function() {
-                        showConfirmModal(rowCard);
-                    });
-                }
-
-                function updateFormFields() {
-                    var val = catSelect.value;
-                    subcatSelect.innerHTML = '';
-                    
-                    var defaultOpt = document.createElement('option');
-                    defaultOpt.value = '';
-                    defaultOpt.textContent = '-- Select Subcategory (Optional) --';
-                    subcatSelect.appendChild(defaultOpt);
-
-                    if(subcategoriesData[val]) {
-                        for(var i=0; i<subcategoriesData[val].length; i++) {
-                            var opt = document.createElement('option');
-                            opt.value = subcategoriesData[val][i];
-                            opt.textContent = subcategoriesData[val][i];
-                            subcatSelect.appendChild(opt);
-                        }
-                    }
-
-                    var cfg = categoryRowConfigs[val] || categoryRowConfigs['hospitals'];
-                    repeaterTitle.innerText = cfg.title;
-                    addRowBtn.innerText = cfg.addBtnText;
-                    extraTitle.innerText = cfg.extraTitle;
-                    dishesField.placeholder = cfg.extraPlaceholder;
-
-                    repeaterContainer.innerHTML = '';
-                    addNewRow();
-                }
-
-                catSelect.addEventListener('change', updateFormFields);
-                addRowBtn.addEventListener('click', addNewRow);
-                
-                updateFormFields();
-            }
-
-            if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', initForm);
-            } else {
-                initForm();
-            }
-        })();
-    </script>
     ''' + FOOTER
     return render_template_string(html)
 
@@ -1116,219 +957,82 @@ def admin_panel():
     if request.method == 'POST':
         if request.form.get('password') == ADMIN_PASSWORD:
             session['admin_logged_in'] = True
-            return redirect('/admin')
-
+        return redirect(url_for('admin_panel'))
+    
     if not session.get('admin_logged_in'):
         html = get_base_head(back_url="/", back_text="Back to Home") + '''
-        <main class="max-w-md mx-auto px-4 py-20 text-center animate-fade-in">
-            <div class="bg-white dark:bg-gray-900 p-8 rounded-3xl border border-gray-200 dark:border-gray-800 shadow-xl">
-                <h2 class="text-2xl font-bold mb-4 text-gray-900 dark:text-white">🔒 Admin Portal Login</h2>
+        <main class="max-w-md mx-auto px-4 py-20 animate-fade-in">
+            <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-8 shadow-2xl space-y-6 text-center">
+                <span class="text-5xl inline-block">🛡️</span>
+                <h1 class="text-2xl font-black text-gray-900 dark:text-white">Admin Login</h1>
                 <form method="POST" class="space-y-4">
-                    <input type="password" name="password" required placeholder="Password" class="w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-center text-gray-900 dark:text-white input-hover-effect outline-none">
-                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-3 rounded-xl font-bold btn-hover-effect">Login</button>
+                    <input type="password" name="password" required placeholder="Enter Admin Password" class="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-sm text-center outline-none focus:border-blue-500">
+                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl text-sm shadow-md">Login to Admin</button>
                 </form>
             </div>
         </main>
         ''' + FOOTER
         return render_template_string(html)
 
-    module = request.args.get('module')
-    tab = request.args.get('tab', 'pending')
-    action = request.args.get('action')
-    biz_id = request.args.get('id')
+    rows = ""
+    for b_id, biz in BUSINESSES.items():
+        rows += f'''
+        <tr class="border-b border-gray-100 dark:border-gray-800">
+            <td class="py-4 px-4 font-semibold flex items-center space-x-3">
+                <img src="{biz.get('image', '')}" class="w-10 h-10 rounded-lg object-cover">
+                <a href="/business/{biz['id']}" class="hover:text-blue-500">{biz['name']}</a>
+            </td>
+            <td class="py-4 px-4 uppercase text-xs font-bold text-gray-500">{biz.get('category', '')}</td>
+            <td class="py-4 px-4">
+                <span class="px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300">{biz.get('status', 'active').capitalize()}</span>
+            </td>
+            <td class="py-4 px-4 text-gray-600 dark:text-gray-400">''' + (biz.get('phones', [''])[0]) + '''</td>
+        </tr>
+        '''
 
-    if action == 'logout':
-        session.pop('admin_logged_in', None)
-        return redirect('/')
-
-    if action and biz_id in BUSINESSES:
-        if action == 'approve':
-            BUSINESSES[biz_id]['status'] = 'approved'
-        elif action == 'approve_pay':
-            BUSINESSES[biz_id]['payment_status'] = 'paid'
-            BUSINESSES[biz_id]['expiry_date'] = datetime.now() + timedelta(days=60)
-        elif action == 'delete':
-            BUSINESSES[biz_id]['status'] = 'deleted'
-        return redirect('/admin?module=' + str(module) + '&tab=' + str(tab))
-
-    now = datetime.now()
-    pending_biz = {k: v for k, v in BUSINESSES.items() if v.get('status') == 'pending'}
-    approved_biz = {k: v for k, v in BUSINESSES.items() if v.get('status') == 'approved'}
-    pending_pay = {k: v for k, v in BUSINESSES.items() if v.get('payment_status') == 'unpaid'}
-    paid_pay = {k: v for k, v in BUSINESSES.items() if v.get('payment_status') == 'paid' and v.get('expiry_date', now) >= now}
-    
-    expiring_alerts = {}
-    for k, v in BUSINESSES.items():
-        if v.get('status') != 'deleted' and v.get('expiry_date'):
-            days_diff = (v.get('expiry_date') - now).days
-            if 0 <= days_diff <= 5:
-                expiring_alerts[k] = v
-
-    expired_subs = {}
-    for k, v in BUSINESSES.items():
-        if v.get('status') != 'deleted' and v.get('expiry_date'):
-            if (v.get('expiry_date') - now).days < 0:
-                expired_subs[k] = v
-
-    # Smart Navigation Header Fix
-    if not module:
-        admin_back_url = "/"
-        admin_back_text = "Back to Main Site"
-        
-        html = get_base_head(back_url=admin_back_url, back_text=admin_back_text) + '''
-        <main class="max-w-5xl mx-auto px-4 py-12 animate-fade-in">
-            <div class="flex justify-between items-center mb-10">
-                <h2 class="text-3xl font-extrabold text-gray-900 dark:text-white">🛠️ Admin Control Center</h2>
+    html = '''
+    <!DOCTYPE html>
+    <html lang="en" id="html-root" class="dark">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Admin Panel - ''' + SITE_NAME + '''</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+        <script>tailwind.config = { darkMode: 'class' }</script>
+    </main>
+    </head>
+    <body class="bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100 min-h-screen">
+        <header class="bg-gradient-to-r from-slate-900 via-blue-950 to-indigo-950 text-white shadow-xl">
+            <div class="max-w-7xl mx-auto px-4 py-6 flex justify-between items-center">
+                <h1 class="text-2xl font-extrabold"><a href="/">🛡️ Admin Panel</a></h1>
+                <a href="/" class="bg-white/10 hover:bg-white/20 px-4 py-2 rounded-xl text-sm font-semibold transition">← View Website</a>
             </div>
+        </header>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <a href="/admin?module=business&tab=pending" class="bg-white dark:bg-gray-900 p-8 rounded-3xl border border-gray-200 dark:border-gray-800 card-hover-effect flex flex-col justify-between group shadow-xl">
-                    <div>
-                        <div class="flex justify-between items-center mb-6">
-                            <span class="text-6xl group-hover:scale-110 transition-transform">🏢</span>
-                            <span class="bg-yellow-100 dark:bg-yellow-500/20 text-yellow-700 dark:text-yellow-400 text-xs px-3 py-1.5 rounded-full font-bold">''' + str(len(pending_biz)) + ''' Pending</span>
-                        </div>
-                        <h3 class="text-2xl font-black text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-500 transition-colors">1. Business Directory Module</h3>
-                        <p class="text-gray-600 dark:text-gray-400 text-sm mt-2">Manage new business registration approvals and live directory listings.</p>
-                    </div>
-                    <div class="mt-8 text-blue-600 dark:text-blue-500 font-bold text-sm flex justify-between items-center">
-                        <span>Open Business Portal →</span>
-                        <span class="text-xs text-gray-500">''' + str(len(approved_biz)) + ''' Live Listings</span>
-                    </div>
-                </a>
-
-                <a href="/admin?module=payment&tab=pending" class="bg-white dark:bg-gray-900 p-8 rounded-3xl border border-gray-200 dark:border-gray-800 card-hover-effect flex flex-col justify-between group shadow-xl">
-                    <div>
-                        <div class="flex justify-between items-center mb-6">
-                            <span class="text-6xl group-hover:scale-110 transition-transform">💳</span>
-                            <span class="bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-400 text-xs px-3 py-1.5 rounded-full font-bold">''' + str(len(expired_subs)) + ''' Expired</span>
-                        </div>
-                        <h3 class="text-2xl font-black text-gray-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-500 transition-colors">2. Payment & Subscription Module</h3>
-                        <p class="text-gray-600 dark:text-gray-400 text-sm mt-2">Verify payments, 5-day expiry alerts, and fully expired subscriptions.</p>
-                    </div>
-                    <div class="mt-8 text-indigo-600 dark:text-indigo-500 font-bold text-sm flex justify-between items-center">
-                        <span>Open Payment Portal →</span>
-                        <span class="text-xs text-red-600 dark:text-red-400 font-bold">''' + str(len(expired_subs)) + ''' Expired / ''' + str(len(expiring_alerts)) + ''' Alerts</span>
-                    </div>
-                </a>
+        <main class="max-w-6xl mx-auto px-4 py-10 space-y-10">
+            <div class="bg-white dark:bg-gray-900 p-8 rounded-3xl shadow-xl border border-gray-100 dark:border-gray-800">
+                <h2 class="text-2xl font-bold mb-6">All Registered Businesses</h2>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="border-b border-gray-200 dark:border-gray-800 text-gray-400 text-sm">
+                                <th class="py-3 px-4">Business Name</th>
+                                <th class="py-3 px-4">Category</th>
+                                <th class="py-3 px-4">Status</th>
+                                <th class="py-3 px-4">Phone</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
+                            ''' + rows + '''
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </main>
-        ''' + FOOTER
-        return render_template_string(html)
-
-    else:
-        admin_back_url = "/admin"
-        admin_back_text = "Admin Dashboard"
-
-        content = ""
-        if module == 'business':
-            if tab == 'pending':
-                for b_id, b in pending_biz.items():
-                    j_date = b.get('joining_date', datetime.now()).strftime('%Y-%m-%d')
-                    content += '''
-                    <div class="bg-gray-50 dark:bg-gray-800/60 p-4 rounded-2xl flex justify-between items-center hover:bg-gray-100 dark:hover:bg-gray-800 transition">
-                        <div>
-                            <h4 class="font-bold text-gray-900 dark:text-white">''' + b["name"] + ''' <span class="text-xs text-indigo-600 dark:text-indigo-400">(''' + b.get('subcategory', 'General') + ''')</span></h4>
-                            <p class="text-xs text-gray-500 dark:text-gray-400">📍 ''' + b["address"] + ''' | 📅 Joined: <span class="text-blue-600 dark:text-blue-400 font-semibold">''' + j_date + '''</span></p>
-                        </div>
-                        <div class="flex gap-2 items-center">
-                            <a href="/business/''' + b_id + '''" target="_blank" class="bg-blue-100 dark:bg-blue-600/20 text-blue-600 dark:text-blue-400 hover:bg-blue-600 hover:text-white px-3 py-2 rounded-xl text-xs font-bold btn-hover-effect">Preview</a>
-                            <a href="/admin?module=business&tab=pending&action=approve&id=''' + b_id + '''" class="bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded-xl text-xs font-bold btn-hover-effect">Approve</a>
-                            <a href="/admin?module=business&tab=pending&action=delete&id=''' + b_id + '''" class="bg-red-100 dark:bg-red-600/20 text-red-600 dark:text-red-400 hover:bg-red-600 hover:text-white px-3 py-2 rounded-xl text-xs font-bold btn-hover-effect">Delete</a>
-                        </div>
-                    </div>
-                    '''
-                if not content:
-                    content = '<p class="text-gray-500 text-center py-8">No pending business approvals.</p>'
-            else:
-                for b_id, b in approved_biz.items():
-                    j_date = b.get('joining_date', datetime.now()).strftime('%Y-%m-%d')
-                    content += '''
-                    <div class="bg-gray-50 dark:bg-gray-800/40 p-4 rounded-2xl flex justify-between items-center hover:bg-gray-100 dark:hover:bg-gray-800/70 transition">
-                        <div>
-                            <h4 class="font-bold text-gray-900 dark:text-white">''' + b["name"] + ''' <span class="text-xs text-indigo-600 dark:text-indigo-400">(''' + b.get('subcategory', 'General') + ''')</span></h4>
-                            <p class="text-xs text-gray-500 dark:text-gray-400">📍 ''' + b["address"] + ''' | 📅 Joined: <span class="text-blue-600 dark:text-blue-400 font-semibold">''' + j_date + '''</span></p>
-                        </div>
-                        <div class="flex gap-2 items-center">
-                            <a href="/business/''' + b_id + '''" target="_blank" class="bg-blue-100 dark:bg-blue-600/20 text-blue-600 dark:text-blue-400 hover:bg-blue-600 hover:text-white px-3 py-1.5 rounded-xl text-xs font-bold btn-hover-effect">View</a>
-                            <a href="/admin?module=business&tab=approved&action=delete&id=''' + b_id + '''" class="bg-red-100 dark:bg-red-600/20 text-red-600 dark:text-red-400 hover:bg-red-600 hover:text-white px-3 py-1.5 rounded-xl text-xs font-bold btn-hover-effect">Delete</a>
-                        </div>
-                    </div>
-                    '''
-                if not content:
-                    content = '<p class="text-gray-500 text-center py-8">No approved listings.</p>'
-
-            html = get_base_head(back_url=admin_back_url, back_text=admin_back_text) + '''
-            <main class="max-w-4xl mx-auto px-4 py-12 animate-fade-in">
-                <h2 class="text-2xl font-bold mb-6 text-gray-900 dark:text-white">🏢 Business Directory Management</h2>
-                <div class="flex space-x-3 mb-6">
-                    <a href="/admin?module=business&tab=pending" class="px-5 py-2.5 rounded-xl font-bold text-sm transition ''' + ('bg-blue-600 text-white shadow-lg' if tab=='pending' else 'bg-gray-200 dark:bg-gray-900 text-gray-700 dark:text-gray-400 hover:bg-gray-300 dark:hover:bg-gray-800') + '''">Pending (''' + str(len(pending_biz)) + ''')</a>
-                    <a href="/admin?module=business&tab=approved" class="px-5 py-2.5 rounded-xl font-bold text-sm transition ''' + ('bg-blue-600 text-white shadow-lg' if tab=='approved' else 'bg-gray-200 dark:bg-gray-900 text-gray-700 dark:text-gray-400 hover:bg-gray-300 dark:hover:bg-gray-800') + '''">Approved (''' + str(len(approved_biz)) + ''')</a>
-                </div>
-                <div class="bg-white dark:bg-gray-900 p-6 rounded-3xl border border-gray-200 dark:border-gray-800 space-y-4 shadow-lg">
-                    ''' + content + '''
-                </div>
-            </main>
-            ''' + FOOTER
-            return render_template_string(html)
-
-        elif module == 'payment':
-            if tab == 'pending':
-                for b_id, b in pending_pay.items():
-                    content += '''
-                    <div class="bg-gray-50 dark:bg-gray-800/60 p-4 rounded-2xl flex justify-between items-center">
-                        <div>
-                            <h4 class="font-bold text-gray-900 dark:text-white">''' + b["name"] + '''</h4>
-                            <p class="text-xs text-gray-500 dark:text-gray-400">Method: <span class="text-blue-600 dark:text-blue-400 font-bold">''' + b.get('payment_method', 'N/A') + '''</span> | Ref: <span class="text-indigo-600 dark:text-indigo-400 font-mono font-bold">''' + b.get('payment_ref', 'N/A') + '''</span></p>
-                        </div>
-                        <a href="/admin?module=payment&tab=pending&action=approve_pay&id=''' + b_id + '''" class="bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded-xl text-xs font-bold btn-hover-effect">Verify & Activate (60 Days)</a>
-                    </div>
-                    '''
-                if not content:
-                    content = '<p class="text-gray-500 text-center py-8">No pending payment verifications.</p>'
-            elif tab == 'alerts':
-                for b_id, b in expiring_alerts.items():
-                    ed = b.get('expiry_date').strftime('%Y-%m-%d')
-                    content += '''
-                    <div class="bg-yellow-50 dark:bg-yellow-500/10 border border-yellow-200 dark:border-yellow-500/30 p-4 rounded-2xl flex justify-between items-center">
-                        <div>
-                            <h4 class="font-bold text-gray-900 dark:text-white">''' + b["name"] + '''</h4>
-                            <p class="text-xs text-yellow-600 dark:text-yellow-400 font-semibold">⚠️ Expires on: ''' + ed + '''</p>
-                        </div>
-                        <a href="/admin?module=payment&tab=alerts&action=approve_pay&id=''' + b_id + '''" class="bg-yellow-500 hover:bg-yellow-400 text-gray-950 px-4 py-2 rounded-xl text-xs font-bold btn-hover-effect">Renew 60 Days</a>
-                    </div>
-                    '''
-                if not content:
-                    content = '<p class="text-gray-500 text-center py-8">No subscriptions expiring in the next 5 days.</p>'
-            else:
-                for b_id, b in expired_subs.items():
-                    ed = b.get('expiry_date').strftime('%Y-%m-%d')
-                    content += '''
-                    <div class="bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 p-4 rounded-2xl flex justify-between items-center">
-                        <div>
-                            <h4 class="font-bold text-gray-900 dark:text-white">''' + b["name"] + '''</h4>
-                            <p class="text-xs text-red-600 dark:text-red-400 font-semibold">❌ Expired on: ''' + ed + '''</p>
-                        </div>
-                        <a href="/admin?module=payment&tab=expired&action=approve_pay&id=''' + b_id + '''" class="bg-red-600 hover:bg-red-500 text-white px-4 py-2 rounded-xl text-xs font-bold btn-hover-effect">Restore & Renew</a>
-                    </div>
-                    '''
-                if not content:
-                    content = '<p class="text-gray-500 text-center py-8">No expired subscriptions found.</p>'
-
-            html = get_base_head(back_url=admin_back_url, back_text=admin_back_text) + '''
-            <main class="max-w-4xl mx-auto px-4 py-12 animate-fade-in">
-                <h2 class="text-2xl font-bold mb-6 text-gray-900 dark:text-white">💳 Payment & Subscription Hub</h2>
-                <div class="flex space-x-3 mb-6">
-                    <a href="/admin?module=payment&tab=pending" class="px-5 py-2.5 rounded-xl font-bold text-sm transition ''' + ('bg-indigo-600 text-white shadow-lg' if tab=='pending' else 'bg-gray-200 dark:bg-gray-900 text-gray-700 dark:text-gray-400 hover:bg-gray-300 dark:hover:bg-gray-800') + '''">Unpaid (''' + str(len(pending_pay)) + ''')</a>
-                    <a href="/admin?module=payment&tab=alerts" class="px-5 py-2.5 rounded-xl font-bold text-sm transition ''' + ('bg-yellow-500 text-gray-950 shadow-lg' if tab=='alerts' else 'bg-gray-200 dark:bg-gray-900 text-gray-700 dark:text-gray-400 hover:bg-gray-300 dark:hover:bg-gray-800') + '''">Expiry Alerts (''' + str(len(expiring_alerts)) + ''')</a>
-                    <a href="/admin?module=payment&tab=expired" class="px-5 py-2.5 rounded-xl font-bold text-sm transition ''' + ('bg-red-600 text-white shadow-lg' if tab=='expired' else 'bg-gray-200 dark:bg-gray-900 text-gray-700 dark:text-gray-400 hover:bg-gray-300 dark:hover:bg-gray-800') + '''">Expired (''' + str(len(expired_subs)) + ''')</a>
-                </div>
-                <div class="bg-white dark:bg-gray-900 p-6 rounded-3xl border border-gray-200 dark:border-gray-800 space-y-4 shadow-lg">
-                    ''' + content + '''
-                </div>
-            </main>
-            ''' + FOOTER
-            return render_template_string(html)
+    </body>
+    </html>
+    '''
+    return render_template_string(html)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, port=5000)
