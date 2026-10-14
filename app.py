@@ -1,4 +1,4 @@
-"""SwatBiz Hub - Full Code with Restored Admin Panel & Dynamic Registration System."""
+"""SwatBiz Hub - Split Admin Tabs (Business Listings & Payment Requests)."""
 from datetime import datetime, timedelta
 import os
 import json
@@ -21,8 +21,8 @@ BUSINESSES = {
         'image': 'https://images.unsplash.com/photo-1587351021759-3e566b6af7cc?auto=format&fit=crop&w=800&q=80',
         'images': ['https://images.unsplash.com/photo-1587351021759-3e566b6af7cc?auto=format&fit=crop&w=800&q=80'],
         'status': 'approved',
-        'payment_method': 'Free Trial',
-        'payment_ref': 'TRIAL-FREE',
+        'payment_method': 'Bank Transfer',
+        'payment_ref': 'TXN-9842103',
         'payment_status': 'paid',
         'joining_date': datetime.now() - timedelta(days=10),
         'expiry_date': datetime.now() + timedelta(days=50),
@@ -61,9 +61,9 @@ BUSINESSES = {
         'image': 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=800&q=80',
         'images': ['https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=800&q=80'],
         'status': 'pending',
-        'payment_method': 'Free Trial',
-        'payment_ref': 'TRIAL-FREE',
-        'payment_status': 'paid',
+        'payment_method': 'EasyPaisa',
+        'payment_ref': 'EP-8837261',
+        'payment_status': 'pending',
         'joining_date': datetime.now(),
         'expiry_date': datetime.now() + timedelta(days=60),
         'doctors': [
@@ -92,8 +92,8 @@ BUSINESSES = {
         'image': 'https://images.unsplash.com/photo-1562774053-701939374585?auto=format&fit=crop&w=800&q=80',
         'images': ['https://images.unsplash.com/photo-1562774053-701939374585?auto=format&fit=crop&w=800&q=80'],
         'status': 'approved',
-        'payment_method': 'Free Trial',
-        'payment_ref': 'TRIAL-FREE',
+        'payment_method': 'JazzCash',
+        'payment_ref': 'JC-5528190',
         'payment_status': 'paid',
         'joining_date': datetime.now() - timedelta(days=5),
         'expiry_date': datetime.now() + timedelta(days=55),
@@ -332,7 +332,6 @@ HOME_HEAD = '''
             <a href="/" class="text-2xl font-extrabold tracking-tight text-blue-600 dark:text-blue-400 hover:opacity-80 transition transform hover:scale-105">🏙️ ''' + SITE_NAME + '''</a>
             <div class="flex items-center space-x-3">
                 ''' + HEADER_THEME_BTN + '''
-                <a href="/admin" class="bg-red-500/10 hover:bg-red-500 text-red-600 dark:text-red-400 hover:text-white px-3 py-2 rounded-xl text-xs font-bold border border-red-500/30 transition">🛡️ Admin</a>
                 <a href="/client/login" class="bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 px-4 py-2.5 rounded-xl text-sm font-bold transition">🔑 Login</a>
                 <a href="/register" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2.5 rounded-xl text-sm font-bold shadow-lg btn-hover-effect">＋ Register Business</a>
             </div>
@@ -369,7 +368,6 @@ def get_base_head(back_url="/", back_text="Back to Home"):
             </a>
             <div class="flex items-center space-x-3">
                 ''' + HEADER_THEME_BTN + '''
-                <a href="/admin" class="bg-red-500/10 hover:bg-red-500 text-red-600 dark:text-red-400 hover:text-white px-3 py-2 rounded-xl text-xs font-bold border border-red-500/30 transition">🛡️ Admin</a>
                 <a href="/client/login" class="bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 px-4 py-2.5 rounded-xl text-sm font-bold transition">🔑 Login</a>
                 <a href="/register" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2.5 rounded-xl text-sm font-bold shadow-lg btn-hover-effect">＋ Register Business</a>
             </div>
@@ -781,10 +779,10 @@ def register():
                 'phones': phones_list if phones_list else ['+92 300 0000000'],
                 'image': 'https://images.unsplash.com/photo-1557804506-669a67965ba0?auto=format&fit=crop&w=800&q=80',
                 'images': ['https://images.unsplash.com/photo-1557804506-669a67965ba0?auto=format&fit=crop&w=800&q=80'],
-                'status': 'approved',
-                'payment_method': 'Free Trial',
-                'payment_ref': 'TRIAL-FREE',
-                'payment_status': 'paid',
+                'status': 'pending',
+                'payment_method': 'Bank Transfer / JazzCash',
+                'payment_ref': 'PENDING-VERIFY',
+                'payment_status': 'pending',
                 'joining_date': datetime.now(),
                 'expiry_date': datetime.now() + timedelta(days=30),
                 'doctors': doctors_list,
@@ -929,12 +927,10 @@ def register():
 
             if (!catObj) return;
 
-            // 1. Update Business Name Placeholder
             if (catObj.biz_ph) {
                 bizNameInput.placeholder = catObj.biz_ph;
             }
 
-            // 2. Update Subcategories
             subcatSelect.innerHTML = '';
             var optNone = document.createElement('option');
             optNone.value = '';
@@ -950,13 +946,11 @@ def register():
                 });
             }
 
-            // 3. Update Dynamic Section Headings & Buttons
             document.getElementById('staffSectionHeading').innerText = catObj.staff_heading;
             document.getElementById('addStaffBtn').innerText = catObj.btn_text;
             document.getElementById('extraSectionLabel').innerText = catObj.extra_label;
             document.getElementById('extraSectionTextarea').placeholder = catObj.extra_ph;
 
-            // 4. Update Existing Inputs Placeholders
             document.querySelectorAll('.doc-entry').forEach(function(row) {
                 applyPlaceholdersToRow(row, catObj);
             });
@@ -1037,7 +1031,7 @@ def register():
     return render_template_string(html)
 
 # ==========================================
-# ADMIN SYSTEM ROUTES (RESTORED & FIXED)
+# ADMIN SYSTEM ROUTES (SPLIT TABS SYSTEM)
 # ==========================================
 
 @app.route('/admin', methods=['GET', 'POST'])
@@ -1082,17 +1076,23 @@ def admin_dashboard():
     if not session.get('admin_logged_in'):
         return redirect(url_for('admin_login'))
         
+    active_tab = request.args.get('tab', 'businesses')
     now = datetime.now()
+
     total_listings = len(BUSINESSES)
     approved_count = len([b for b in BUSINESSES.values() if b.get('status') == 'approved'])
-    pending_count = len([b for b in BUSINESSES.values() if b.get('status') == 'pending'])
+    pending_biz_count = len([b for b in BUSINESSES.values() if b.get('status') == 'pending'])
+    
+    paid_pay_count = len([b for b in BUSINESSES.values() if b.get('payment_status') == 'paid'])
+    pending_pay_count = len([b for b in BUSINESSES.values() if b.get('payment_status') == 'pending'])
 
-    table_rows = ""
+    # 1. Business Table Rows
+    biz_rows = ""
     for b in BUSINESSES.values():
         status_color = 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' if b.get('status') == 'approved' else 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
         expiry_str = b.get('expiry_date').strftime('%d %b %Y') if b.get('expiry_date') else 'N/A'
         
-        table_rows += f'''
+        biz_rows += f'''
         <tr class="border-b border-gray-100 dark:border-gray-800 text-xs text-gray-800 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800/50">
             <td class="p-4 font-bold">{b['id']}</td>
             <td class="p-4">
@@ -1113,32 +1113,65 @@ def admin_dashboard():
         </tr>
         '''
 
-    html = get_base_head(back_url="/", back_text="Back to Home") + '''
-    <main class="max-w-7xl mx-auto px-4 py-12 animate-fade-in space-y-8">
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white dark:bg-gray-900 p-6 rounded-3xl border border-gray-200 dark:border-gray-800 shadow-xl">
-            <div>
-                <h1 class="text-3xl font-black text-gray-900 dark:text-white">🛡️ Master Admin Control Panel</h1>
-                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Manage listings approval, expiry & system settings.</p>
-            </div>
-            <a href="/admin/logout" class="bg-red-600 hover:bg-red-500 text-white px-5 py-2.5 rounded-xl text-xs font-bold transition shadow-md">Admin Logout</a>
-        </div>
+    # 2. Payment Table Rows
+    pay_rows = ""
+    for b in BUSINESSES.values():
+        pay_status = b.get('payment_status', 'pending')
+        pay_color = 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' if pay_status == 'paid' else 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+        
+        pay_rows += f'''
+        <tr class="border-b border-gray-100 dark:border-gray-800 text-xs text-gray-800 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800/50">
+            <td class="p-4 font-bold">{b['id']}</td>
+            <td class="p-4 font-bold text-sm text-gray-900 dark:text-white">{b['name']}</td>
+            <td class="p-4 font-semibold text-blue-600 dark:text-blue-400">{b.get('payment_method', 'N/A')}</td>
+            <td class="p-4 text-gray-500">{b.get('payment_ref', 'N/A')}</td>
+            <td class="p-4">
+                <span class="px-2.5 py-1 rounded-md text-[10px] font-extrabold uppercase {pay_color}">{pay_status}</span>
+            </td>
+            <td class="p-4 space-x-2 flex items-center">
+                <a href="/admin/payment/{b['id']}/paid" class="bg-green-600 hover:bg-green-500 text-white px-3 py-1 rounded-lg text-[11px] font-bold">Mark Paid</a>
+                <a href="/admin/payment/{b['id']}/pending" class="bg-yellow-600 hover:bg-yellow-500 text-white px-3 py-1 rounded-lg text-[11px] font-bold">Mark Pending</a>
+            </td>
+        </tr>
+        '''
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div class="bg-white dark:bg-gray-900 p-6 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm text-center">
-                <p class="text-xs text-gray-500 font-bold uppercase">Total Listings</p>
-                <p class="text-3xl font-black text-blue-600 dark:text-blue-400 mt-1">''' + str(total_listings) + '''</p>
-            </div>
-            <div class="bg-white dark:bg-gray-900 p-6 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm text-center">
-                <p class="text-xs text-gray-500 font-bold uppercase">Active / Approved</p>
-                <p class="text-3xl font-black text-green-500 mt-1">''' + str(approved_count) + '''</p>
-            </div>
-            <div class="bg-white dark:bg-gray-900 p-6 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm text-center">
-                <p class="text-xs text-gray-500 font-bold uppercase">Pending Approval</p>
-                <p class="text-3xl font-black text-yellow-500 mt-1">''' + str(pending_count) + '''</p>
-            </div>
-        </div>
+    biz_tab_active = 'bg-blue-600 text-white shadow-md' if active_tab == 'businesses' else 'bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-700'
+    pay_tab_active = 'bg-blue-600 text-white shadow-md' if active_tab == 'payments' else 'bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-700'
 
+    active_table_html = ""
+    if active_tab == 'payments':
+        active_table_html = f'''
         <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl overflow-hidden shadow-xl">
+            <div class="p-6 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center">
+                <h3 class="text-lg font-bold text-gray-900 dark:text-white">💳 Payment Requests & Verification</h3>
+                <span class="text-xs bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400 px-3 py-1 rounded-full font-bold">Pending: {pending_pay_count}</span>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-gray-50 dark:bg-gray-800/80 text-[11px] font-extrabold uppercase text-gray-500 border-b border-gray-200 dark:border-gray-800">
+                            <th class="p-4">ID</th>
+                            <th class="p-4">Business Name</th>
+                            <th class="p-4">Payment Method</th>
+                            <th class="p-4">Reference / Receipt</th>
+                            <th class="p-4">Payment Status</th>
+                            <th class="p-4">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {pay_rows}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        '''
+    else:
+        active_table_html = f'''
+        <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl overflow-hidden shadow-xl">
+            <div class="p-6 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center">
+                <h3 class="text-lg font-bold text-gray-900 dark:text-white">🏢 Business Registrations & Approvals</h3>
+                <span class="text-xs bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400 px-3 py-1 rounded-full font-bold">Pending: {pending_biz_count}</span>
+            </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse">
                     <thead>
@@ -1152,11 +1185,48 @@ def admin_dashboard():
                         </tr>
                     </thead>
                     <tbody>
-                        ''' + table_rows + '''
+                        {biz_rows}
                     </tbody>
                 </table>
             </div>
         </div>
+        '''
+
+    html = get_base_head(back_url="/", back_text="Back to Home") + '''
+    <main class="max-w-7xl mx-auto px-4 py-12 animate-fade-in space-y-8">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white dark:bg-gray-900 p-6 rounded-3xl border border-gray-200 dark:border-gray-800 shadow-xl">
+            <div>
+                <h1 class="text-3xl font-black text-gray-900 dark:text-white">🛡️ Master Admin Control Panel</h1>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Manage business approvals and payment verifications.</p>
+            </div>
+            <a href="/admin/logout" class="bg-red-600 hover:bg-red-500 text-white px-5 py-2.5 rounded-xl text-xs font-bold transition shadow-md">Admin Logout</a>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="bg-white dark:bg-gray-900 p-5 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm text-center">
+                <p class="text-xs text-gray-500 font-bold uppercase">Total Listings</p>
+                <p class="text-2xl font-black text-blue-600 dark:text-blue-400 mt-1">''' + str(total_listings) + '''</p>
+            </div>
+            <div class="bg-white dark:bg-gray-900 p-5 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm text-center">
+                <p class="text-xs text-gray-500 font-bold uppercase">Pending Business Approvals</p>
+                <p class="text-2xl font-black text-yellow-500 mt-1">''' + str(pending_biz_count) + '''</p>
+            </div>
+            <div class="bg-white dark:bg-gray-900 p-5 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm text-center">
+                <p class="text-xs text-gray-500 font-bold uppercase">Paid Payments</p>
+                <p class="text-2xl font-black text-green-500 mt-1">''' + str(paid_pay_count) + '''</p>
+            </div>
+            <div class="bg-white dark:bg-gray-900 p-5 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm text-center">
+                <p class="text-xs text-gray-500 font-bold uppercase">Pending Payments</p>
+                <p class="text-2xl font-black text-yellow-500 mt-1">''' + str(pending_pay_count) + '''</p>
+            </div>
+        </div>
+
+        <div class="flex gap-3">
+            <a href="/admin/dashboard?tab=businesses" class="px-6 py-3 rounded-2xl font-bold text-xs transition ''' + biz_tab_active + '''">🏢 Business Registrations</a>
+            <a href="/admin/dashboard?tab=payments" class="px-6 py-3 rounded-2xl font-bold text-xs transition ''' + pay_tab_active + '''">💳 Payment Requests</a>
+        </div>
+
+        ''' + active_table_html + '''
     </main>
     ''' + FOOTER
     return render_template_string(html)
@@ -1167,7 +1237,15 @@ def admin_change_status(b_id, new_status):
         return redirect(url_for('admin_login'))
     if b_id in BUSINESSES:
         BUSINESSES[b_id]['status'] = new_status
-    return redirect(url_for('admin_dashboard'))
+    return redirect(url_for('admin_dashboard', tab='businesses'))
+
+@app.route('/admin/payment/<b_id>/<new_pay_status>')
+def admin_change_payment(b_id, new_pay_status):
+    if not session.get('admin_logged_in'):
+        return redirect(url_for('admin_login'))
+    if b_id in BUSINESSES:
+        BUSINESSES[b_id]['payment_status'] = new_pay_status
+    return redirect(url_for('admin_dashboard', tab='payments'))
 
 @app.route('/admin/extend/<b_id>')
 def admin_extend_expiry(b_id):
@@ -1176,7 +1254,7 @@ def admin_extend_expiry(b_id):
     if b_id in BUSINESSES:
         curr_exp = BUSINESSES[b_id].get('expiry_date', datetime.now())
         BUSINESSES[b_id]['expiry_date'] = curr_exp + timedelta(days=30)
-    return redirect(url_for('admin_dashboard'))
+    return redirect(url_for('admin_dashboard', tab='businesses'))
 
 @app.route('/admin/delete/<b_id>')
 def admin_delete_business(b_id):
