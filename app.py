@@ -1,4 +1,4 @@
-"""SwatBiz Hub - Qualifications Field & Smart Admin Navigation Fix with Dynamic Registration Form."""
+"""SwatBiz Hub - Qualifications Field & Dynamic Category-Based Registration Form."""
 from datetime import datetime, timedelta
 import os
 import json
@@ -118,31 +118,108 @@ BUSINESSES = {
 CATEGORIES = {
     'hospitals': {
         'title': 'Hospitals & Healthcare', 'icon': '🏥', 'search_hint': 'Search name, doctor or location (e.g. Saidu)...', 'info_title': '👨‍⚕️ Doctors, Clinic & Timings', 'extra_title': '🔬 Available Tests & Medical Services',
-        'subcategories': ['General Hospital', 'Dental Clinic', 'Eye Specialist', 'Cardiology Clinic', 'Laboratory & Diagnostics']
+        'subcategories': ['General Hospital', 'Dental Clinic', 'Eye Specialist', 'Cardiology Clinic', 'Laboratory & Diagnostics'],
+        'staff_heading': '🩺 Doctors, Clinic & Timings',
+        'btn_text': '+ Add New Doctor',
+        'extra_label': '🧪 Tests & Medical Services (Optional)',
+        'extra_ph': 'e.g. MRI, CT Scan, Blood Tests, Ultrasound, OPD Services...',
+        'ph_name': 'Doctor Name (Dr. Ahmad)',
+        'ph_spec': 'Specialty (Cardiologist)',
+        'ph_qual': 'Qualifications (MBBS, FCPS)',
+        'ph_appt': 'Appointment Timing (9 AM - 2 PM)',
+        'ph_clinic': 'Clinic Timing (Mon-Sat, 9 AM - 5 PM)',
+        'ph_room': 'Clinic / Room (Room 12, OPD Block)',
+        'ph_phone': 'Appointment Phone Number(s) (comma separated)'
     },
     'pharmacies': {
         'title': 'Pharmacies & Medical Stores', 'icon': '💊', 'search_hint': 'Search medicine, store or place...', 'info_title': '🧑‍⚕️ Qualified Pharmacists & Staff', 'extra_title': '💊 Available Medicines & Supplies',
-        'subcategories': ['Medical Store', 'Homeopathic Store', 'Herbal & Organic', 'Surgical Equipment']
+        'subcategories': ['Medical Store', 'Homeopathic Store', 'Herbal & Organic', 'Surgical Equipment'],
+        'staff_heading': '🧑‍⚕️ Pharmacists & Key Staff',
+        'btn_text': '+ Add New Pharmacist',
+        'extra_label': '💊 Available Medicines & Medical Supplies (Optional)',
+        'extra_ph': 'e.g. Life-saving drugs, Surgical tools, Vaccines, Homeopathic remedies...',
+        'ph_name': 'Pharmacist Name (e.g. Ali Khan)',
+        'ph_spec': 'Role / Specialty (e.g. Senior Pharmacist)',
+        'ph_qual': 'Qualifications (e.g. Pharm-D, B-Pharm)',
+        'ph_appt': 'Shift Timing (e.g. 8 AM - 10 PM)',
+        'ph_clinic': 'Store Working Days (e.g. Daily Open)',
+        'ph_room': 'Counter / Section (e.g. Main Counter)',
+        'ph_phone': 'Direct Phone / WhatsApp (comma separated)'
     },
     'restaurants': {
         'title': 'Restaurants & Cafes', 'icon': '🍽️', 'search_hint': 'Search restaurant, dish or location (e.g. Fizagat)...', 'info_title': '👨‍🍳 Chefs & Dining Features', 'extra_title': '🍲 Menu, Special Dishes & Prices',
-        'subcategories': ['Traditional / Shinwari', 'Fast Food & Burgers', 'BBQ & Grill', 'Coffee Shop & Cafe', 'Desi Restaurant']
+        'subcategories': ['Traditional / Shinwari', 'Fast Food & Burgers', 'BBQ & Grill', 'Coffee Shop & Cafe', 'Desi Restaurant'],
+        'staff_heading': '👨‍🍳 Chefs, Staff & Dining Features',
+        'btn_text': '+ Add New Staff / Chef',
+        'extra_label': '🍲 Menu, Special Dishes & Prices (Optional)',
+        'extra_ph': 'e.g. Dumba Karahi (Rs. 2400/kg), Shinwari Tikka (Rs. 1800/kg), Zinger Burger...',
+        'ph_name': 'Chef / Manager Name (e.g. Chef Rashid)',
+        'ph_spec': 'Specialty (e.g. Master Grill & BBQ)',
+        'ph_qual': 'Experience (e.g. 15+ Years Culinary Exp)',
+        'ph_appt': 'Serving Hours (e.g. 12 PM - 11 PM)',
+        'ph_clinic': 'Operating Days (e.g. Daily Open)',
+        'ph_room': 'Dining Section (e.g. Family Cabin / Main Hall)',
+        'ph_phone': 'Order / Booking Phone Number(s)'
     },
     'supermarts': {
         'title': 'Supermarts & Grocery', 'icon': '🛒', 'search_hint': 'Search store, item or area...', 'info_title': '🏬 Store Facilities & Staff', 'extra_title': '🛍️ Available Groceries & Products',
-        'subcategories': ['General Store', 'Supermarket', 'Vegetables & Fruits', 'Bakery & Sweets']
+        'subcategories': ['General Store', 'Supermarket', 'Vegetables & Fruits', 'Bakery & Sweets'],
+        'staff_heading': '🏬 Store Management & Contacts',
+        'btn_text': '+ Add New Contact / Staff',
+        'extra_label': '🛍️ Featured Items & Groceries (Optional)',
+        'extra_ph': 'e.g. Fresh Fruits, Imported Chocolates, Bakery Items, Household Groceries...',
+        'ph_name': 'Contact Person / Manager Name',
+        'ph_spec': 'Designation / Role (e.g. Store Manager)',
+        'ph_qual': 'Services (e.g. Home Delivery Specialist)',
+        'ph_appt': 'Delivery Hours (e.g. 9 AM - 9 PM)',
+        'ph_clinic': 'Store Timings (e.g. Mon-Sun, 8 AM - 11 PM)',
+        'ph_room': 'Branch / Counter Name',
+        'ph_phone': 'Home Delivery Phone Number(s)'
     },
     'property': {
         'title': 'Property Dealers', 'icon': '🏠', 'search_hint': 'Search plot, house or dealer...', 'info_title': '🧑‍💼 Agents & Dealers', 'extra_title': '🏡 Featured Plots & Properties',
-        'subcategories': ['Plot & Land Dealer', 'House & Villa Rentals', 'Commercial Plaza', 'Real Estate Agency']
+        'subcategories': ['Plot & Land Dealer', 'House & Villa Rentals', 'Commercial Plaza', 'Real Estate Agency'],
+        'staff_heading': '🧑‍💼 Real Estate Agents & Consultants',
+        'btn_text': '+ Add New Agent',
+        'extra_label': '🏡 Available Plots & Property Deals (Optional)',
+        'extra_ph': 'e.g. 5 Marla Plot in Saidu Sharif, Commercial Shops on Canal Road...',
+        'ph_name': 'Agent / Dealer Name (e.g. Usman Khan)',
+        'ph_spec': 'Specialty (e.g. Residential Plots Specialist)',
+        'ph_qual': 'Experience / Certification',
+        'ph_appt': 'Meeting Hours (e.g. 10 AM - 6 PM)',
+        'ph_clinic': 'Office Days (e.g. Mon - Sat)',
+        'ph_room': 'Office Address / Desk',
+        'ph_phone': 'Agent Direct Phone / WhatsApp'
     },
     'hotels': {
         'title': 'Hotels & Guest Houses', 'icon': '🏨', 'search_hint': 'Search hotel or area...', 'info_title': '🛎️ Management & Reception', 'extra_title': '🛏️ Rooms, Rates & Facilities',
-        'subcategories': ['Luxury Hotel', 'Guest House', 'Resort', 'Budget Inn']
+        'subcategories': ['Luxury Hotel', 'Guest House', 'Resort', 'Budget Inn'],
+        'staff_heading': '🛎️ Front Desk & Reception Contacts',
+        'btn_text': '+ Add Receptionist / Manager',
+        'extra_label': '🛏️ Room Types, Rates & Amenities (Optional)',
+        'extra_ph': 'e.g. Deluxe Family Room (Rs. 6000/night), Executive Suite, Free Wi-Fi, Hot Water...',
+        'ph_name': 'Manager / Receptionist Name',
+        'ph_spec': 'Role (e.g. Front Desk Manager)',
+        'ph_qual': 'Services Provided',
+        'ph_appt': 'Check-in / Check-out Hours',
+        'ph_clinic': 'Reception Availability (e.g. 24/7)',
+        'ph_room': 'Reception Desk / Block',
+        'ph_phone': 'Booking Phone / WhatsApp Number(s)'
     },
     'education': {
         'title': 'Educational Institutes', 'icon': '🎓', 'search_hint': 'Search school, college, university or place (e.g. Saidu)...', 'info_title': '👨‍🏫 Faculty & Teachers Info', 'extra_title': '📚 Offered Courses & Programs',
-        'subcategories': ['School', 'School & College', 'College', 'University', 'Academy & Tuition', 'Language & Computer Center']
+        'subcategories': ['School', 'School & College', 'College', 'University', 'Academy & Tuition', 'Language & Computer Center'],
+        'staff_heading': '👨‍🏫 Principal, Faculty & Admin Staff',
+        'btn_text': '+ Add New Faculty / Staff',
+        'extra_label': '📚 Offered Courses & Facilities (Optional)',
+        'extra_ph': 'e.g. Metric Science, FSc Pre-Medical, Computer Science Labs, Library, Transport...',
+        'ph_name': 'Faculty / Principal Name (e.g. Prof. Shah Zarin)',
+        'ph_spec': 'Designation / Subject (e.g. Principal / Physics)',
+        'ph_qual': 'Qualifications (e.g. M.Phil, PhD)',
+        'ph_appt': 'Visiting Hours (e.g. 8 AM - 2 PM)',
+        'ph_clinic': 'Working Days (e.g. Mon - Sat)',
+        'ph_room': 'Office / Department Room',
+        'ph_phone': 'Admission Office Phone Number(s)'
     }
 }
 
@@ -710,7 +787,7 @@ def register():
             BUSINESSES[new_id] = {
                 'id': new_id,
                 'category': category,
-                'subcategory': subcategory,
+                'subcategory': subcategory if subcategory else 'General',
                 'name': name,
                 'address': address,
                 'phones': phones_list if phones_list else ['+92 300 0000000'],
@@ -734,15 +811,15 @@ def register():
             error_msg = "Please fill in all required fields."
 
     cats_options = "".join([f'<option value="{k}">{v["title"]}</option>' for k, v in CATEGORIES.items()])
-    categories_json = json.dumps({k: v['subcategories'] for k, v in CATEGORIES.items()})
+    categories_json = json.dumps(CATEGORIES)
 
     html = get_base_head(back_url="/", back_text="Back to Home") + '''
     <!-- Delete Confirmation Modal -->
     <div id="deleteConfirmModal" class="fixed inset-0 bg-black/60 dark:bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
         <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-6 max-w-sm w-full shadow-2xl animate-modal text-center space-y-4">
             <span class="text-4xl inline-block">🗑️</span>
-            <h3 class="text-lg font-extrabold text-gray-900 dark:text-white">Delete Doctor Entry?</h3>
-            <p class="text-xs text-gray-500 dark:text-gray-400">Are you sure you want to remove this doctor entry from your form?</p>
+            <h3 class="text-lg font-extrabold text-gray-900 dark:text-white">Delete Entry?</h3>
+            <p class="text-xs text-gray-500 dark:text-gray-400">Are you sure you want to remove this entry from your form?</p>
             <div class="flex items-center justify-center gap-3 pt-2">
                 <button type="button" onclick="cancelDeleteDoctor()" class="w-1/2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 py-2.5 rounded-xl font-bold text-xs transition">Cancel</button>
                 <button type="button" onclick="confirmDeleteDoctor()" class="w-1/2 bg-red-600 hover:bg-red-500 text-white py-2.5 rounded-xl font-bold text-xs shadow-md transition">Yes, Delete</button>
@@ -767,13 +844,13 @@ def register():
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Category *</label>
-                        <select id="categorySelect" name="category" required onchange="updateSubcategories()" class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white outline-none text-sm">
+                        <select id="categorySelect" name="category" required onchange="updateCategoryFields()" class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white outline-none text-sm">
                             ''' + cats_options + '''
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Subcategory / Type *</label>
-                        <select id="subcategorySelect" name="subcategory" required class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white outline-none text-sm">
+                        <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Subcategory / Type (Optional)</label>
+                        <select id="subcategorySelect" name="subcategory" class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white outline-none text-sm">
                         </select>
                     </div>
                 </div>
@@ -791,42 +868,42 @@ def register():
                     <input type="text" name="phone" required placeholder="e.g. +92 300 1234567, +92 946 9240125" class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white input-hover-effect outline-none text-sm">
                 </div>
 
-                <!-- Dynamic Doctors / Staff Section -->
+                <!-- Dynamic Staff Section -->
                 <div class="pt-4 border-t border-gray-100 dark:border-gray-800 space-y-4">
                     <div class="flex justify-between items-center">
-                        <label class="block text-sm font-extrabold text-blue-600 dark:text-blue-400">🩺 Doctors, Clinic & Timings</label>
+                        <label id="staffSectionHeading" class="block text-sm font-extrabold text-blue-600 dark:text-blue-400">🩺 Doctors, Clinic & Timings</label>
                     </div>
 
                     <div id="doctorsContainer" class="space-y-4">
                         <div class="doc-entry animate-modal bg-gray-50 dark:bg-gray-950 p-4 rounded-2xl border border-gray-200 dark:border-gray-800 space-y-3 relative">
                             <button type="button" onclick="requestDeleteDoctor(this)" class="absolute top-3 right-3 text-red-500 bg-red-100 dark:bg-red-900/40 w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs hover:bg-red-200 dark:hover:bg-red-800/60 transition">✕</button>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                <input type="text" name="doc_name" placeholder="Doctor Name (Dr. Ahmad)" class="p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
-                                <input type="text" name="doc_spec" placeholder="Specialty (Cardiologist)" class="p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
+                                <input type="text" name="doc_name" placeholder="Doctor Name (Dr. Ahmad)" class="doc-input-name p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
+                                <input type="text" name="doc_spec" placeholder="Specialty (Cardiologist)" class="doc-input-spec p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
                             </div>
                             <div>
-                                <input type="text" name="doc_qual" placeholder="Qualifications (MBBS, FCPS)" class="w-full p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
+                                <input type="text" name="doc_qual" placeholder="Qualifications (MBBS, FCPS)" class="doc-input-qual w-full p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
                             </div>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                <input type="text" name="doc_appt" placeholder="Appointment Timing (9 AM - 2 PM)" class="p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
-                                <input type="text" name="doc_clinic" placeholder="Clinic Timing (Mon-Sat, 9 AM - 5 PM)" class="p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
+                                <input type="text" name="doc_appt" placeholder="Appointment Timing (9 AM - 2 PM)" class="doc-input-appt p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
+                                <input type="text" name="doc_clinic" placeholder="Clinic Timing (Mon-Sat, 9 AM - 5 PM)" class="doc-input-clinic p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
                             </div>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                <input type="text" name="doc_room" placeholder="Clinic / Room (Room 12, OPD Block)" class="p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
-                                <input type="text" name="doc_phone" placeholder="Appointment Phone Number(s) (comma separated)" class="p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
+                                <input type="text" name="doc_room" placeholder="Clinic / Room (Room 12, OPD Block)" class="doc-input-room p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
+                                <input type="text" name="doc_phone" placeholder="Appointment Phone Number(s) (comma separated)" class="doc-input-phone p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
                             </div>
                         </div>
                     </div>
 
-                    <button type="button" onclick="addDoctorRow()" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2.5 rounded-xl text-xs font-bold btn-hover-effect flex items-center gap-2 shadow-md">
+                    <button id="addStaffBtn" type="button" onclick="addDoctorRow()" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2.5 rounded-xl text-xs font-bold btn-hover-effect flex items-center gap-2 shadow-md">
                         + Add New Doctor
                     </button>
                 </div>
 
-                <!-- Tests & Services Section -->
+                <!-- Extra Services Section -->
                 <div class="pt-4 border-t border-gray-100 dark:border-gray-800 space-y-2">
-                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300">🧪 Tests & Medical Services (Optional)</label>
-                    <textarea name="tests_dishes" rows="3" placeholder="e.g. MRI, CT Scan, Blood Tests, Ultrasound, OPD Services..." class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white input-hover-effect outline-none text-sm"></textarea>
+                    <label id="extraSectionLabel" class="block text-xs font-bold text-gray-700 dark:text-gray-300">🧪 Tests & Medical Services (Optional)</label>
+                    <textarea id="extraSectionTextarea" name="tests_dishes" rows="3" placeholder="e.g. MRI, CT Scan, Blood Tests, Ultrasound, OPD Services..." class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white input-hover-effect outline-none text-sm"></textarea>
                 </div>
 
                 <!-- Account Credentials Section -->
@@ -852,48 +929,82 @@ def register():
     </main>
 
     <script>
-        var categoriesData = ''' + categories_json + ''';
+        var categoriesMeta = ''' + categories_json + ''';
         var pendingDeleteTarget = null;
 
-        function updateSubcategories() {
+        function updateCategoryFields() {
             var catSelect = document.getElementById('categorySelect');
             var subcatSelect = document.getElementById('subcategorySelect');
-            var selectedCat = catSelect.value;
-            
+            var selectedCatKey = catSelect.value;
+            var catObj = categoriesMeta[selectedCatKey];
+
+            if (!catObj) return;
+
+            // 1. Update Subcategories
             subcatSelect.innerHTML = '';
-            if (categoriesData[selectedCat]) {
-                categoriesData[selectedCat].forEach(function(sub) {
+            var optNone = document.createElement('option');
+            optNone.value = '';
+            optNone.text = 'Select Subcategory (Optional)';
+            subcatSelect.appendChild(optNone);
+
+            if (catObj.subcategories) {
+                catObj.subcategories.forEach(function(sub) {
                     var option = document.createElement('option');
                     option.value = sub;
                     option.text = sub;
                     subcatSelect.appendChild(option);
                 });
             }
+
+            // 2. Update Dynamic Section Headings & Buttons
+            document.getElementById('staffSectionHeading').innerText = catObj.staff_heading;
+            document.getElementById('addStaffBtn').innerText = catObj.btn_text;
+            document.getElementById('extraSectionLabel').innerText = catObj.extra_label;
+            document.getElementById('extraSectionTextarea').placeholder = catObj.extra_ph;
+
+            // 3. Update Existing Inputs Placeholders
+            document.querySelectorAll('.doc-entry').forEach(function(row) {
+                applyPlaceholdersToRow(row, catObj);
+            });
+        }
+
+        function applyPlaceholdersToRow(row, catObj) {
+            row.querySelector('.doc-input-name').placeholder = catObj.ph_name;
+            row.querySelector('.doc-input-spec').placeholder = catObj.ph_spec;
+            row.querySelector('.doc-input-qual').placeholder = catObj.ph_qual;
+            row.querySelector('.doc-input-appt').placeholder = catObj.ph_appt;
+            row.querySelector('.doc-input-clinic').placeholder = catObj.ph_clinic;
+            row.querySelector('.doc-input-room').placeholder = catObj.ph_room;
+            row.querySelector('.doc-input-phone').placeholder = catObj.ph_phone;
         }
 
         function addDoctorRow() {
+            var catSelect = document.getElementById('categorySelect');
+            var catObj = categoriesMeta[catSelect.value];
             var container = document.getElementById('doctorsContainer');
+            
             var div = document.createElement('div');
             div.className = 'doc-entry animate-modal bg-gray-50 dark:bg-gray-950 p-4 rounded-2xl border border-gray-200 dark:border-gray-800 space-y-3 relative mt-3';
             div.innerHTML = `
                 <button type="button" onclick="requestDeleteDoctor(this)" class="absolute top-3 right-3 text-red-500 bg-red-100 dark:bg-red-900/40 w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs hover:bg-red-200 dark:hover:bg-red-800/60 transition">✕</button>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <input type="text" name="doc_name" placeholder="Doctor Name (Dr. Ahmad)" class="p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
-                    <input type="text" name="doc_spec" placeholder="Specialty (Cardiologist)" class="p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
+                    <input type="text" name="doc_name" placeholder="" class="doc-input-name p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
+                    <input type="text" name="doc_spec" placeholder="" class="doc-input-spec p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
                 </div>
                 <div>
-                    <input type="text" name="doc_qual" placeholder="Qualifications (MBBS, FCPS)" class="w-full p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
+                    <input type="text" name="doc_qual" placeholder="" class="doc-input-qual w-full p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <input type="text" name="doc_appt" placeholder="Appointment Timing (9 AM - 2 PM)" class="p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
-                    <input type="text" name="doc_clinic" placeholder="Clinic Timing (Mon-Sat, 9 AM - 5 PM)" class="p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
+                    <input type="text" name="doc_appt" placeholder="" class="doc-input-appt p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
+                    <input type="text" name="doc_clinic" placeholder="" class="doc-input-clinic p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <input type="text" name="doc_room" placeholder="Clinic / Room (Room 12, OPD Block)" class="p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
-                    <input type="text" name="doc_phone" placeholder="Appointment Phone Number(s) (comma separated)" class="p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
+                    <input type="text" name="doc_room" placeholder="" class="doc-input-room p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
+                    <input type="text" name="doc_phone" placeholder="" class="doc-input-phone p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
                 </div>
             `;
             container.appendChild(div);
+            applyPlaceholdersToRow(div, catObj);
         }
 
         function requestDeleteDoctor(btn) {
@@ -925,7 +1036,7 @@ def register():
         }
 
         window.addEventListener('DOMContentLoaded', function() {
-            updateSubcategories();
+            updateCategoryFields();
         });
     </script>
     ''' + FOOTER
