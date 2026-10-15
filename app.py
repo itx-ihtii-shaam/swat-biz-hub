@@ -1,4 +1,4 @@
-"""SwatBiz Hub - Complete & Fully Functional Application Code."""
+"""SwatBiz Hub - High-Contrast Visual Filter Tabs & Perfect Search UI."""
 from datetime import datetime, timedelta
 import os
 import json
@@ -300,16 +300,25 @@ ANIMATION_STYLES = '''
     .card-hover-effect { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
     .card-hover-effect:hover { transform: translateY(-4px); border-color: #3b82f6; box-shadow: 0 12px 28px -6px rgba(0, 0, 0, 0.15), 0 0 15px rgba(59, 130, 246, 0.2); }
 
-    /* ANIMATED TOGGLE BUTTONS */
+    /* HIGH CONTRAST VISUAL MODE TOGGLE BUTTONS */
     .mode-toggle-btn {
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        position: relative;
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        border: 1px solid rgba(156, 163, 175, 0.2);
+        background-color: rgba(30, 41, 59, 0.6);
+        color: #9ca3af;
+    }
+    .mode-toggle-btn:hover {
+        background-color: rgba(51, 65, 85, 0.9);
+        color: #ffffff;
+        border-color: #3b82f6;
     }
     .mode-toggle-btn.active {
         background-color: #2563eb !important;
         color: #ffffff !important;
-        box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4);
-        transform: scale(1.05);
+        border-color: #60a5fa !important;
+        box-shadow: 0 0 16px rgba(37, 99, 235, 0.5), 0 2px 6px rgba(0,0,0,0.3);
+        transform: translateY(-1px) scale(1.03);
+        font-weight: 800;
     }
 </style>
 '''
@@ -549,30 +558,34 @@ def category_page(cat_slug):
             <span class="text-6xl inline-block animate-bounce">''' + cat['icon'] + '''</span>
             <h2 class="text-4xl font-extrabold mt-4 text-gray-900 dark:text-white">''' + cat['title'] + '''</h2>
             
+            <!-- SEARCH BAR WRAPPER -->
             <div class="mt-6 max-w-2xl mx-auto">
                 <form id="searchForm" method="GET" action="/category/''' + cat_slug + '''" class="space-y-2 text-left">
                     <input type="hidden" name="subcat" value="''' + selected_subcat + '''">
                     <input type="hidden" id="modeInput" name="mode" value="''' + search_mode + '''">
                     
-                    <div class="flex items-center justify-between px-1">
-                        <div class="inline-flex items-center gap-1 bg-gray-200/80 dark:bg-gray-800/90 p-1 rounded-xl text-[11px] font-bold border border-gray-300 dark:border-gray-700/80 shadow-inner">
-                            <button type="button" onclick="setSearchMode('all')" id="btnModeAll" class="mode-toggle-btn px-3 py-1 rounded-lg text-gray-600 dark:text-gray-300 flex items-center gap-1 ` + ('active' if search_mode == 'all' else '') + `">
-                                🔍 All
+                    <!-- HIGH CONTRAST VISUAL MODE TOGGLE TABS -->
+                    <div class="flex items-center justify-between px-1 mb-1.5">
+                        <div class="inline-flex items-center gap-2 bg-slate-900/90 dark:bg-slate-900/90 p-1.5 rounded-2xl border border-gray-700/80 shadow-md">
+                            <button type="button" onclick="setSearchMode('all')" id="btnModeAll" class="mode-toggle-btn px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 ` + ('active' if search_mode == 'all' else '') + `">
+                                🔍 Search All
                             </button>
-                            <button type="button" onclick="setSearchMode('doctors')" id="btnModeDoc" class="mode-toggle-btn px-3 py-1 rounded-lg text-gray-600 dark:text-gray-300 flex items-center gap-1 ` + ('active' if search_mode == 'doctors' else '') + `">
-                                👨‍⚕️ ''' + cat['staff_label'] + '''
+                            <button type="button" onclick="setSearchMode('doctors')" id="btnModeDoc" class="mode-toggle-btn px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 ` + ('active' if search_mode == 'doctors' else '') + `">
+                                👨‍⚕️ ''' + cat['staff_label'] + ''' Only
                             </button>
-                            <button type="button" onclick="setSearchMode('hospitals')" id="btnModePlace" class="mode-toggle-btn px-3 py-1 rounded-lg text-gray-600 dark:text-gray-300 flex items-center gap-1 ` + ('active' if search_mode == 'hospitals' else '') + `">
-                                🏥 ''' + cat['place_label'] + '''
+                            <button type="button" onclick="setSearchMode('hospitals')" id="btnModePlace" class="mode-toggle-btn px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 ` + ('active' if search_mode == 'hospitals' else '') + `">
+                                🏥 ''' + cat['place_label'] + ''' Only
                             </button>
                         </div>
-                        <span class="text-[10px] text-gray-500 dark:text-gray-400 hidden sm:inline">Filter target mode</span>
+                        <span class="text-[11px] font-bold text-blue-500 bg-blue-50 dark:bg-blue-900/30 px-2.5 py-1 rounded-lg border border-blue-200 dark:border-blue-800 hidden sm:inline">🎯 Filter Target</span>
                     </div>
 
+                    <!-- BIG SEARCH BAR WITH DYNAMIC PLACEHOLDER -->
                     <div class="relative flex items-center gap-2">
                         <div class="relative w-full">
                             <input type="text" id="searchInput" name="q" value="''' + search_query + '''" placeholder="''' + initial_ph + '''" autocomplete="off" class="w-full px-6 py-4 rounded-2xl bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-800 text-gray-900 dark:text-white input-hover-effect outline-none text-base shadow-sm">
                             
+                            <!-- FIXED DROPDOWN SUGGESTIONS -->
                             <div id="suggestionsDropdown" class="absolute left-0 right-0 top-full mt-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-2xl z-50 max-h-80 overflow-y-auto hidden"></div>
                         </div>
                         <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-white px-8 py-4 rounded-2xl font-bold btn-hover-effect shadow-md flex-shrink-0 text-base">Search</button>
@@ -580,6 +593,7 @@ def category_page(cat_slug):
                 </form>
             </div>
 
+            <!-- SUBCATEGORY FILTER PILLS -->
             <div class="mt-6 flex flex-wrap justify-center gap-2 max-w-4xl mx-auto">
                 ''' + pills_html + '''
             </div>
