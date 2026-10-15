@@ -1,4 +1,4 @@
-"""SwatBiz Hub - Collapsible Tests & Services Section Code."""
+"""SwatBiz Hub - Smart Live Search with Doctor & Hospital Suggestions."""
 from datetime import datetime, timedelta
 import os
 import json
@@ -476,12 +476,17 @@ def category_page(cat_slug):
     if not cards:
         cards = '<div class="col-span-3 text-center py-20 text-gray-500 dark:text-gray-400"><p class="text-xl">No active or approved listings found matching your search.</p></div>'
 
-    biz_json_data = json.dumps([{
-        'id': b['id'],
-        'name': b['name'],
-        'address': b['address'],
-        'subcategory': b.get('subcategory', '')
-    } for b in all_biz])
+    # Build rich JSON array including doctor/staff details for live search suggestions
+    biz_data_list = []
+    for b in all_biz:
+        biz_data_list.append({
+            'id': b['id'],
+            'name': b['name'],
+            'address': b['address'],
+            'subcategory': b.get('subcategory', ''),
+            'doctors': b.get('doctors', [])
+        })
+    biz_json_data = json.dumps(biz_data_list)
 
     html = get_base_head(back_url="/", back_text="Back to Home") + '''
     <main class="max-w-7xl mx-auto px-4 py-12 animate-fade-in">
@@ -494,7 +499,7 @@ def category_page(cat_slug):
                     <input type="hidden" name="subcat" value="''' + selected_subcat + '''">
                     <div class="relative w-full">
                         <input type="text" id="searchInput" name="q" value="''' + search_query + '''" placeholder="''' + cat['search_hint'] + '''" autocomplete="off" class="w-full px-5 py-3.5 rounded-2xl bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-800 text-gray-900 dark:text-white input-hover-effect outline-none text-sm">
-                        <div id="suggestionsDropdown" class="absolute left-0 right-0 top-full mt-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-2xl z-50 max-h-60 overflow-y-auto hidden"></div>
+                        <div id="suggestionsDropdown" class="absolute left-0 right-0 top-full mt-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-2xl z-50 max-h-72 overflow-y-auto hidden"></div>
                     </div>
                     <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-white px-6 py-3.5 rounded-2xl font-semibold btn-hover-effect shadow-md">Search</button>
                 </form>
@@ -528,19 +533,47 @@ def category_page(cat_slug):
                     return;
                 }
 
-                var matches = categoryBusinesses.filter(function(b) {
-                    return b.name.toLowerCase().includes(q) || 
-                           b.address.toLowerCase().includes(q) || 
-                           b.subcategory.toLowerCase().includes(q);
+                var matchedItems = [];
+
+                categoryBusinesses.forEach(function(b) {
+                    // Match Business Name or Location
+                    if (b.name.toLowerCase().includes(q) || b.address.toLowerCase().includes(q) || b.subcategory.toLowerCase().includes(q)) {
+                        matchedItems.push({
+                            type: 'business',
+                            id: b.id,
+                            title: b.name,
+                            sub: '📍 ' + b.address,
+                            badge: b.subcategory
+                        });
+                    }
+
+                    // Match Doctors / Staff inside Business
+                    if (b.doctors && b.doctors.length > 0) {
+                        b.doctors.forEach(function(doc) {
+                            var docName = doc.name || '';
+                            var docSpec = doc.specialty || '';
+                            var docQual = doc.qualifications || '';
+
+                            if (docName.toLowerCase().includes(q) || docSpec.toLowerCase().includes(q) || docQual.toLowerCase().includes(q)) {
+                                matchedItems.push({
+                                    type: 'doctor',
+                                    id: b.id,
+                                    title: '👨‍⚕️ ' + docName + ' (' + docSpec + ')',
+                                    sub: '🏥 Hospital/Clinic: ' + b.name + ' (' + b.address + ')',
+                                    badge: docSpec
+                                });
+                            }
+                        });
+                    }
                 });
 
-                if (matches.length > 0) {
-                    matches.forEach(function(b) {
+                if (matchedItems.length > 0) {
+                    matchedItems.forEach(function(item) {
                         var div = document.createElement('div');
                         div.className = 'p-3 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer flex justify-between items-center text-left border-b border-gray-100 dark:border-gray-800/50 last:border-0';
-                        div.innerHTML = '<div><p class="font-bold text-sm text-gray-900 dark:text-white">' + b.name + '</p><p class="text-xs text-gray-500 dark:text-gray-400">📍 ' + b.address + '</p></div><span class="text-xs bg-blue-100 dark:bg-blue-600/20 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-md font-semibold">' + b.subcategory + '</span>';
+                        div.innerHTML = '<div><p class="font-bold text-sm text-gray-900 dark:text-white">' + item.title + '</p><p class="text-xs text-gray-500 dark:text-gray-400">' + item.sub + '</p></div><span class="text-xs bg-blue-100 dark:bg-blue-600/20 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-md font-semibold">' + item.badge + '</span>';
                         div.addEventListener('click', function() {
-                            window.location.href = '/business/' + b.id;
+                            window.location.href = '/business/' + item.id;
                         });
                         dropdown.appendChild(div);
                     });
@@ -660,7 +693,6 @@ def business_detail(b_id):
     tests_dishes = b.get('tests_dishes', 'Not specified')
     extra_img = b.get('extra_img', '')
     
-    # Small banner preview inside collapsible box
     extra_img_preview = f'''
     <div class="mt-2 flex items-center gap-3 bg-gray-100 dark:bg-gray-900 p-2 rounded-xl border border-gray-200 dark:border-gray-800 cursor-pointer" onclick="openImageZoom('{extra_img}'); event.stopPropagation();">
         <img src="{extra_img}" class="h-12 w-20 object-cover rounded-lg border border-gray-300 dark:border-gray-700">
@@ -730,7 +762,7 @@ def business_detail(b_id):
                 </div>
             </div>
 
-            <!-- Main Photos Gallery Grid -->
+            <!-- Photos Gallery Grid -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                 ''' + gallery_html + '''
             </div>
@@ -740,7 +772,7 @@ def business_detail(b_id):
                 <input type="text" id="pageDetailSearch" onkeyup="filterPageStaff()" placeholder="🔍 Quick Search Doctors, Specialty or Services (e.g. Cardiologist, MRI, Dr. Ali)..." class="w-full p-2.5 rounded-xl bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-800 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
             </div>
 
-            <!-- COMPACT & EXPANDABLE (COLLAPSIBLE) TESTS & SERVICES SECTION -->
+            <!-- COMPACT & EXPANDABLE TESTS & SERVICES SECTION -->
             <div id="testsSectionBlock" class="bg-gray-50 dark:bg-gray-950 p-4 rounded-2xl border border-gray-200 dark:border-gray-800 space-y-2 transition-all duration-300">
                 <div class="flex justify-between items-center cursor-pointer" onclick="toggleTestsExpand()">
                     <h3 class="text-sm font-extrabold text-gray-900 dark:text-white flex items-center gap-2">
@@ -750,19 +782,17 @@ def business_detail(b_id):
                     <button type="button" id="toggleExpandBtn" class="text-xs text-blue-600 dark:text-blue-400 font-bold hover:underline">View All ↓</button>
                 </div>
 
-                <!-- Collapsed Preview Text (Line Clamp) -->
                 <p id="testsTextPreview" class="text-gray-700 dark:text-gray-300 text-xs leading-relaxed line-clamp-2">
                     ''' + tests_dishes + '''
                 </p>
 
-                <!-- Full Expanded Content (Hidden by Default) -->
                 <div id="testsFullContent" class="hidden space-y-3 pt-2 border-t border-gray-200 dark:border-gray-800">
                     <p class="text-gray-700 dark:text-gray-300 text-xs leading-relaxed whitespace-pre-line">''' + tests_dishes + '''</p>
                     ''' + extra_img_preview + '''
                 </div>
             </div>
 
-            <!-- DOCTORS & STAFF SECTION (STAYS VISIBLE RIGHT BELOW) -->
+            <!-- DOCTORS & STAFF SECTION -->
             <div id="doctorsSectionBlock" class="space-y-3 pt-2 border-t border-gray-100 dark:border-gray-800">
                 <h3 class="text-lg font-black text-gray-900 dark:text-white">''' + cat_meta['info_title'] + '''</h3>
                 <div id="doctorsListGrid" class="grid grid-cols-1 md:grid-cols-2 gap-3">
