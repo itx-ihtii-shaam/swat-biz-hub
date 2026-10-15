@@ -1,4 +1,4 @@
-"""SwatBiz Hub - Smart Live Search with Doctor & Hospital Suggestions."""
+"""SwatBiz Hub - Advanced Search with Filter Dropdown & Picture Preview Support."""
 from datetime import datetime, timedelta
 import os
 import json
@@ -424,9 +424,10 @@ def category_page(cat_slug):
     cat = CATEGORIES[cat_slug]
     search_query = request.args.get('q', '').lower().strip()
     selected_subcat = request.args.get('subcat', '').strip()
+    search_mode = request.args.get('mode', 'all').strip()
     
     now = datetime.now()
-    all_biz = [b for b in BUSINESSES.values() if b.get('category') == cat_slug and b.get('status') == 'approved' and b.get('expiry_date', now) >= now]
+    all_biz = [b for b in BUSINESSES.values() if b.get('category') == cat_slug and b.get('status'] == 'approved' and b.get('expiry_date', now) >= now]
     filtered = []
     
     for b in all_biz:
@@ -435,13 +436,21 @@ def category_page(cat_slug):
         
         if search_query:
             doctors_str = " ".join([d.get('name', '') + " " + d.get('specialty', '') + " " + d.get('qualifications', '') for d in b.get('doctors', [])]).lower()
-            if not (search_query in b.get('name', '').lower() or 
-                    search_query in b.get('address', '').lower() or 
-                    search_query in b.get('subcategory', '').lower() or 
-                    search_query in doctors_str or
-                    search_query in b.get('special_info', '').lower() or 
-                    search_query in b.get('tests_dishes', '').lower()):
-                match_search = False
+            
+            if search_mode == 'doctors':
+                if not (search_query in doctors_str):
+                    match_search = False
+            elif search_mode == 'hospitals':
+                if not (search_query in b.get('name', '').lower() or search_query in b.get('address', '').lower() or search_query in b.get('subcategory', '').lower()):
+                    match_search = False
+            else:
+                if not (search_query in b.get('name', '').lower() or 
+                        search_query in b.get('address', '').lower() or 
+                        search_query in b.get('subcategory', '').lower() or 
+                        search_query in doctors_str or
+                        search_query in b.get('special_info', '').lower() or 
+                        search_query in b.get('tests_dishes', '').lower()):
+                    match_search = False
 
         if selected_subcat:
             if b.get('subcategory', '').lower() != selected_subcat.lower():
@@ -450,13 +459,13 @@ def category_page(cat_slug):
         if match_search and match_subcat:
             filtered.append(b)
 
-    pills_html = f'<a href="/category/{cat_slug}?q={search_query}" class="px-4 py-2 rounded-xl text-xs font-bold transition btn-hover-effect ' + \
+    pills_html = f'<a href="/category/{cat_slug}?mode={search_mode}&q={search_query}" class="px-4 py-2 rounded-xl text-xs font-bold transition btn-hover-effect ' + \
                  ('bg-blue-600 text-white shadow-md' if not selected_subcat else 'bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-700') + '">All</a>'
     
     for sc in cat['subcategories']:
         is_active = (selected_subcat.lower() == sc.lower())
         active_cls = 'bg-blue-600 text-white shadow-md' if is_active else 'bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-700'
-        pills_html += f'<a href="/category/{cat_slug}?subcat={sc}&q={search_query}" class="px-4 py-2 rounded-xl text-xs font-bold transition btn-hover-effect {active_cls}">{sc}</a>'
+        pills_html += f'<a href="/category/{cat_slug}?subcat={sc}&mode={search_mode}&q={search_query}" class="px-4 py-2 rounded-xl text-xs font-bold transition btn-hover-effect {active_cls}">{sc}</a>'
 
     cards = ""
     for b in filtered:
@@ -476,7 +485,6 @@ def category_page(cat_slug):
     if not cards:
         cards = '<div class="col-span-3 text-center py-20 text-gray-500 dark:text-gray-400"><p class="text-xl">No active or approved listings found matching your search.</p></div>'
 
-    # Build rich JSON array including doctor/staff details for live search suggestions
     biz_data_list = []
     for b in all_biz:
         biz_data_list.append({
@@ -484,6 +492,7 @@ def category_page(cat_slug):
             'name': b['name'],
             'address': b['address'],
             'subcategory': b.get('subcategory', ''),
+            'image': b.get('image', ''),
             'doctors': b.get('doctors', [])
         })
     biz_json_data = json.dumps(biz_data_list)
@@ -495,11 +504,18 @@ def category_page(cat_slug):
             <h2 class="text-4xl font-extrabold mt-4 text-gray-900 dark:text-white">''' + cat['title'] + '''</h2>
             
             <div class="mt-6 max-w-xl mx-auto relative">
-                <form method="GET" action="/category/''' + cat_slug + '''" class="flex gap-3">
+                <form method="GET" action="/category/''' + cat_slug + '''" class="flex flex-col sm:flex-row gap-3">
                     <input type="hidden" name="subcat" value="''' + selected_subcat + '''">
+                    
+                    <select name="mode" class="px-3 py-3.5 rounded-2xl bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-800 text-xs font-bold text-gray-900 dark:text-white outline-none cursor-pointer">
+                        <option value="all" ''' + ('selected' if search_mode == 'all' else '') + '''>🔍 Search All</option>
+                        <option value="doctors" ''' + ('selected' if search_mode == 'doctors' else '') + '''>👨‍⚕️ Search Doctors / Staff</option>
+                        <option value="hospitals" ''' + ('selected' if search_mode == 'hospitals' else '') + '''>🏥 Search Hospitals / Places</option>
+                    </select>
+
                     <div class="relative w-full">
-                        <input type="text" id="searchInput" name="q" value="''' + search_query + '''" placeholder="''' + cat['search_hint'] + '''" autocomplete="off" class="w-full px-5 py-3.5 rounded-2xl bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-800 text-gray-900 dark:text-white input-hover-effect outline-none text-sm">
-                        <div id="suggestionsDropdown" class="absolute left-0 right-0 top-full mt-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-2xl z-50 max-h-72 overflow-y-auto hidden"></div>
+                        <input type="text" id="searchInput" name="q" value="''' + search_query + '''" placeholder="Type to search..." autocomplete="off" class="w-full px-5 py-3.5 rounded-2xl bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-800 text-gray-900 dark:text-white input-hover-effect outline-none text-sm">
+                        <div id="suggestionsDropdown" class="absolute left-0 right-0 top-full mt-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-2xl z-50 max-h-80 overflow-y-auto hidden"></div>
                     </div>
                     <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-white px-6 py-3.5 rounded-2xl font-semibold btn-hover-effect shadow-md">Search</button>
                 </form>
@@ -521,11 +537,13 @@ def category_page(cat_slug):
         window.addEventListener('DOMContentLoaded', function() {
             var input = document.getElementById('searchInput');
             var dropdown = document.getElementById('suggestionsDropdown');
+            var modeSelect = document.querySelector('select[name="mode"]');
 
             if (!input || !dropdown) return;
 
             input.addEventListener('input', function() {
                 var q = this.value.trim().toLowerCase();
+                var currentMode = modeSelect ? modeSelect.value : 'all';
                 dropdown.innerHTML = '';
                 
                 if (q.length < 1) {
@@ -536,34 +554,38 @@ def category_page(cat_slug):
                 var matchedItems = [];
 
                 categoryBusinesses.forEach(function(b) {
-                    // Match Business Name or Location
-                    if (b.name.toLowerCase().includes(q) || b.address.toLowerCase().includes(q) || b.subcategory.toLowerCase().includes(q)) {
+                    var matchBiz = (b.name.toLowerCase().includes(q) || b.address.toLowerCase().includes(q) || b.subcategory.toLowerCase().includes(q));
+                    
+                    if ((currentMode === 'all' || currentMode === 'hospitals') && matchBiz) {
                         matchedItems.push({
                             type: 'business',
                             id: b.id,
                             title: b.name,
                             sub: '📍 ' + b.address,
-                            badge: b.subcategory
+                            badge: b.subcategory,
+                            image: b.image || 'https://images.unsplash.com/photo-1557804506-669a67965ba0?auto=format&fit=crop&w=150&q=80'
                         });
                     }
 
-                    // Match Doctors / Staff inside Business
-                    if (b.doctors && b.doctors.length > 0) {
-                        b.doctors.forEach(function(doc) {
-                            var docName = doc.name || '';
-                            var docSpec = doc.specialty || '';
-                            var docQual = doc.qualifications || '';
+                    if (currentMode === 'all' || currentMode === 'doctors') {
+                        if (b.doctors && b.doctors.length > 0) {
+                            b.doctors.forEach(function(doc) {
+                                var docName = doc.name || '';
+                                var docSpec = doc.specialty || '';
+                                var docQual = doc.qualifications || '';
 
-                            if (docName.toLowerCase().includes(q) || docSpec.toLowerCase().includes(q) || docQual.toLowerCase().includes(q)) {
-                                matchedItems.push({
-                                    type: 'doctor',
-                                    id: b.id,
-                                    title: '👨‍⚕️ ' + docName + ' (' + docSpec + ')',
-                                    sub: '🏥 Hospital/Clinic: ' + b.name + ' (' + b.address + ')',
-                                    badge: docSpec
-                                });
-                            }
-                        });
+                                if (docName.toLowerCase().includes(q) || docSpec.toLowerCase().includes(q) || docQual.toLowerCase().includes(q)) {
+                                    matchedItems.push({
+                                        type: 'doctor',
+                                        id: b.id,
+                                        title: '👨‍⚕️ ' + docName + ' (' + docSpec + ')',
+                                        sub: '🏥 Hospital/Clinic: ' + b.name + ' (' + b.address + ')',
+                                        badge: docSpec,
+                                        image: doc.doc_image || b.image || 'https://images.unsplash.com/photo-1557804506-669a67965ba0?auto=format&fit=crop&w=150&q=80'
+                                    });
+                                }
+                            });
+                        }
                     }
                 });
 
@@ -571,7 +593,16 @@ def category_page(cat_slug):
                     matchedItems.forEach(function(item) {
                         var div = document.createElement('div');
                         div.className = 'p-3 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer flex justify-between items-center text-left border-b border-gray-100 dark:border-gray-800/50 last:border-0';
-                        div.innerHTML = '<div><p class="font-bold text-sm text-gray-900 dark:text-white">' + item.title + '</p><p class="text-xs text-gray-500 dark:text-gray-400">' + item.sub + '</p></div><span class="text-xs bg-blue-100 dark:bg-blue-600/20 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-md font-semibold">' + item.badge + '</span>';
+                        div.innerHTML = `
+                            <div class="flex items-center gap-3">
+                                <img src="${item.image}" class="w-10 h-10 rounded-full object-cover border border-blue-500 shadow-sm flex-shrink-0">
+                                <div>
+                                    <p class="font-bold text-sm text-gray-900 dark:text-white">${item.title}</p>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400">${item.sub}</p>
+                                </div>
+                            </div>
+                            <span class="text-xs bg-blue-100 dark:bg-blue-600/20 text-blue-600 dark:text-blue-400 px-2.5 py-1 rounded-md font-semibold flex-shrink-0">${item.badge}</span>
+                        `;
                         div.addEventListener('click', function() {
                             window.location.href = '/business/' + item.id;
                         });
@@ -615,7 +646,7 @@ def business_detail(b_id):
     now = datetime.now()
     category_back_url = f"/category/{b['category']}"
     
-    if (b.get('status') != 'approved' or b.get('expiry_date', now) < now) and not is_admin and not is_client:
+    if (b.get('status'] != 'approved' or b.get('expiry_date', now) < now) and not is_admin and not is_client:
         html = get_base_head(back_url=category_back_url, back_text="Back to Category") + '''
         <main class="max-w-xl mx-auto px-4 py-20 text-center animate-fade-in">
             <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-10 shadow-xl space-y-4 animate-modal">
@@ -1700,7 +1731,7 @@ def client_edit_business(b_id):
                     <input type="text" name="name" value="''' + b['name'] + '''" required class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white input-hover-effect outline-none text-sm">
                 </div>
                 <div>
-                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Address / Location</label>
+                    <label class="block text-xs font-braces text-gray-700 dark:text-gray-300 mb-1">Address / Location</label>
                     <input type="text" name="address" value="''' + b['address'] + '''" required class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white input-hover-effect outline-none text-sm">
                 </div>
                 <div>
