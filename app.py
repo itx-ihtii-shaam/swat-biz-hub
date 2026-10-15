@@ -1,4 +1,4 @@
-"""SwatBiz Hub - Complete Code with Staff/Doctor Image Upload (Gallery & URL)."""
+"""SwatBiz Hub - Staff/Doctor Image Zoom Lightbox in Modal Popup."""
 from datetime import datetime, timedelta
 import os
 import json
@@ -630,12 +630,13 @@ def business_detail(b_id):
             
             quals_badge = f'<p class="text-[11px] text-gray-500 dark:text-gray-400 italic">🎓 {quals}</p>' if quals else ''
             
-            doc_avatar = f'<img src="{doc_img}" class="w-12 h-12 rounded-full object-cover border-2 border-blue-500 shadow-sm">' if doc_img else '<span class="text-2xl p-2 bg-blue-50 dark:bg-blue-600/20 rounded-full">👤</span>'
+            # Improved visible picture size on card (w-16 h-16)
+            doc_avatar = f'<img src="{doc_img}" class="w-16 h-16 rounded-2xl object-cover border-2 border-blue-500 shadow-md transition transform hover:scale-105 cursor-pointer" title="Click to view full picture">' if doc_img else '<span class="text-3xl p-3 bg-blue-50 dark:bg-blue-600/20 rounded-2xl">👤</span>'
 
             doctors_cards_html += f'''
-            <div onclick='openDoctorModal({doc_json})' class="doc-card-item bg-gray-50 dark:bg-gray-950 p-5 rounded-2xl border border-gray-200 dark:border-gray-800 card-hover-effect space-y-2 cursor-pointer group animate-modal">
+            <div onclick='openDoctorModal({doc_json})' class="doc-card-item bg-gray-50 dark:bg-gray-950 p-5 rounded-2xl border border-gray-200 dark:border-gray-800 card-hover-effect space-y-3 cursor-pointer group animate-modal">
                 <div class="flex justify-between items-start">
-                    <div class="flex items-center gap-3">
+                    <div class="flex items-center gap-4">
                         {doc_avatar}
                         <div>
                             <h4 class="text-base font-extrabold text-blue-600 dark:text-blue-400 group-hover:underline">{doc.get('name', 'N/A')}</h4>
@@ -659,7 +660,7 @@ def business_detail(b_id):
 
     tests_dishes = b.get('tests_dishes', 'Not specified')
     extra_img = b.get('extra_img', '')
-    extra_img_html = f'<div class="mt-4"><p class="text-xs font-bold text-gray-500 mb-2">📸 Attached Service / Charges Banner:</p><img src="{extra_img}" class="max-h-80 w-full object-contain rounded-2xl border border-gray-200 dark:border-gray-800 shadow-lg"></div>' if extra_img else ''
+    extra_img_html = f'<div class="mt-4"><p class="text-xs font-bold text-gray-500 mb-2">📸 Attached Service / Charges Banner:</p><img src="{extra_img}" class="max-h-80 w-full object-contain rounded-2xl border border-gray-200 dark:border-gray-800 shadow-lg cursor-pointer hover:opacity-90" onclick="openLightbox(\'{extra_img}\')"></div>' if extra_img else ''
 
     phones_list = b.get('phones', ['N/A'])
     phones_html = ", ".join([f'<a href="tel:{p}" class="text-blue-600 dark:text-white hover:underline font-bold">{p}</a>' for p in phones_list])
@@ -668,14 +669,23 @@ def business_detail(b_id):
     gallery_html = ""
     for img_url in gallery_imgs:
         if img_url:
-            gallery_html += f'<img src="{img_url}" class="w-full h-64 object-cover rounded-2xl border border-gray-200 dark:border-gray-800 hover:scale-105 transition duration-300 shadow-md">'
+            gallery_html += f'<img src="{img_url}" class="w-full h-64 object-cover rounded-2xl border border-gray-200 dark:border-gray-800 hover:scale-105 transition duration-300 shadow-md cursor-pointer" onclick="openLightbox(\'{img_url}\')">'
 
     html = get_base_head(back_url=category_back_url, back_text="Back to Category") + '''
+    <!-- Image Lightbox Modal for Full View -->
+    <div id="lightboxModal" class="fixed inset-0 bg-black/90 backdrop-blur-md z-50 flex items-center justify-center hidden p-4" onclick="closeLightbox()">
+        <div class="relative max-w-4xl w-full p-2 text-center" onclick="event.stopPropagation()">
+            <button type="button" onclick="closeLightbox()" class="absolute -top-12 right-0 text-white bg-gray-800 hover:bg-red-600 w-10 h-10 rounded-full font-bold text-xl flex items-center justify-center transition shadow-lg">×</button>
+            <img id="lightboxImg" src="" class="max-h-[85vh] w-auto mx-auto rounded-2xl shadow-2xl border-2 border-gray-700 object-contain">
+        </div>
+    </div>
+
+    <!-- Doctor Info Modal -->
     <div id="doctorModal" class="fixed inset-0 bg-black/60 dark:bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
-        <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-6 md:p-8 max-w-md w-full shadow-2xl animate-modal space-y-4">
+        <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-6 md:p-8 max-w-lg w-full shadow-2xl animate-modal space-y-4">
             <div class="flex justify-between items-start">
-                <div class="flex items-center gap-3">
-                    <div id="mDocAvatarContainer">
+                <div class="flex items-center gap-4">
+                    <div id="mDocAvatarContainer" class="cursor-pointer" title="Click to view large photo">
                         <span class="text-4xl p-2 bg-blue-50 dark:bg-blue-600/20 rounded-2xl">👤</span>
                     </div>
                     <div>
@@ -736,6 +746,8 @@ def business_detail(b_id):
     </main>
 
     <script>
+        var currentDocImgUrl = '';
+
         function openDoctorModal(doc) {
             document.getElementById('mDocName').innerText = doc.name;
             document.getElementById('mDocSpec').innerText = doc.specialty;
@@ -744,9 +756,10 @@ def business_detail(b_id):
             document.getElementById('mClinicTiming').innerText = doc.clinic_timing;
             document.getElementById('mRoom').innerText = doc.room;
             
+            currentDocImgUrl = doc.doc_image;
             var avatarContainer = document.getElementById('mDocAvatarContainer');
             if (doc.doc_image) {
-                avatarContainer.innerHTML = '<img src="' + doc.doc_image + '" class="w-16 h-16 rounded-full object-cover border-2 border-blue-500 shadow-md">';
+                avatarContainer.innerHTML = '<img src="' + doc.doc_image + '" class="w-20 h-20 rounded-2xl object-cover border-2 border-blue-500 shadow-md hover:scale-105 transition" onclick="openLightbox(currentDocImgUrl)" title="Click to Zoom Picture">';
             } else {
                 avatarContainer.innerHTML = '<span class="text-4xl p-2 bg-blue-50 dark:bg-blue-600/20 rounded-2xl">👤</span>';
             }
@@ -763,6 +776,16 @@ def business_detail(b_id):
 
         function closeDoctorModal() {
             document.getElementById('doctorModal').classList.add('hidden');
+        }
+
+        function openLightbox(imgUrl) {
+            if (!imgUrl) return;
+            document.getElementById('lightboxImg').src = imgUrl;
+            document.getElementById('lightboxModal').classList.remove('hidden');
+        }
+
+        function closeLightbox() {
+            document.getElementById('lightboxModal').classList.add('hidden');
         }
     </script>
     ''' + FOOTER
@@ -929,7 +952,7 @@ def register():
                                     <input type="text" name="doc_image" placeholder="Paste Image URL link..." class="doc-img-input w-full p-2 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
                                 </div>
                                 <div class="doc-preview-box hidden flex items-center gap-2 pt-1">
-                                    <img class="doc-preview-img w-8 h-8 rounded-full object-cover border border-blue-500">
+                                    <img class="doc-preview-img w-10 h-10 rounded-xl object-cover border border-blue-500">
                                     <span class="text-[10px] text-green-500 font-bold">✓ Photo Selected</span>
                                 </div>
                             </div>
@@ -1111,7 +1134,7 @@ def register():
                         <input type="text" name="doc_image" placeholder="Paste Image URL link..." class="doc-img-input w-full p-2 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
                     </div>
                     <div class="doc-preview-box hidden flex items-center gap-2 pt-1">
-                        <img class="doc-preview-img w-8 h-8 rounded-full object-cover border border-blue-500">
+                        <img class="doc-preview-img w-10 h-10 rounded-xl object-cover border border-blue-500">
                         <span class="text-[10px] text-green-500 font-bold">✓ Photo Selected</span>
                     </div>
                 </div>
