@@ -1,4 +1,4 @@
-"""SwatBiz Hub - Staff/Doctor Image Zoom Lightbox in Modal Popup."""
+"""SwatBiz Hub - Fixed Image Modal Click & Zoom Lightbox."""
 from datetime import datetime, timedelta
 import os
 import json
@@ -630,8 +630,8 @@ def business_detail(b_id):
             
             quals_badge = f'<p class="text-[11px] text-gray-500 dark:text-gray-400 italic">🎓 {quals}</p>' if quals else ''
             
-            # Improved visible picture size on card (w-16 h-16)
-            doc_avatar = f'<img src="{doc_img}" class="w-16 h-16 rounded-2xl object-cover border-2 border-blue-500 shadow-md transition transform hover:scale-105 cursor-pointer" title="Click to view full picture">' if doc_img else '<span class="text-3xl p-3 bg-blue-50 dark:bg-blue-600/20 rounded-2xl">👤</span>'
+            # Clicking directly on doctor card image opens zoom lightbox without opening modal
+            doc_avatar = f'<img src="{doc_img}" class="w-16 h-16 rounded-2xl object-cover border-2 border-blue-500 shadow-md transition transform hover:scale-105 cursor-pointer" onclick="event.stopPropagation(); openLightbox(\'{doc_img}\');" title="Click to view full picture">' if doc_img else '<span class="text-3xl p-3 bg-blue-50 dark:bg-blue-600/20 rounded-2xl">👤</span>'
 
             doctors_cards_html += f'''
             <div onclick='openDoctorModal({doc_json})' class="doc-card-item bg-gray-50 dark:bg-gray-950 p-5 rounded-2xl border border-gray-200 dark:border-gray-800 card-hover-effect space-y-3 cursor-pointer group animate-modal">
@@ -1586,11 +1586,11 @@ def client_edit_business(b_id):
 @app.route('/client/delete/<b_id>')
 def client_delete_business(b_id):
     client_email = session.get('client_logged_email')
-    if not client_email or b_id not in BUSINESSES:
+    if not client_email or b_id notin BUSINESSES:
         return redirect(url_for('client_login'))
         
-    b = BUSINESSES[b_id]
-    if b.get('client_email', '').lower() == client_email.lower():
+    _b = BUSINESSES[b_id]
+    if _b.get('client_email', '').lower() == client_email.lower():
         del BUSINESSES[b_id]
         
     return redirect(url_for('client_dashboard'))
