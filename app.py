@@ -1,8 +1,9 @@
-"""SwatBiz Hub - Complete & Fully Functional Code with Aligned Tabs & Google Maps."""
+"""SwatBiz Hub - Complete & Fully Functional Code with Fixed Maps & Dynamic Theme Toggle Buttons."""
 from datetime import datetime, timedelta
 import os
 import json
 import urllib.parse
+import re
 from flask import Flask, abort, redirect, render_template_string, request, url_for, session
 
 SITE_NAME = 'SwatBiz Hub'
@@ -10,6 +11,19 @@ ADMIN_PASSWORD = 'admin123'
 
 app = Flask(__name__)
 app.secret_key = 'swat_biz_hub_secret_key'
+
+def get_google_maps_url(name, address):
+    """Smart Google Maps URL builder: extracts GPS coords if available, else builds name+address query."""
+    if not address:
+        return f"https://www.google.com/maps/search/?api=1&query={urllib.parse.quote(name)}"
+    
+    coords_match = re.search(r'(-?\d+\.\d+),\s*(-?\d+\.\d+)', address)
+    if coords_match:
+        lat, lon = coords_match.groups()
+        return f"https://www.google.com/maps?q={lat},{lon}"
+    else:
+        query_str = f"{name} {address}".strip()
+        return f"https://www.google.com/maps/search/?api=1&query={urllib.parse.quote(query_str)}"
 
 BUSINESSES = {
     '1': {
@@ -301,24 +315,40 @@ ANIMATION_STYLES = '''
     .card-hover-effect { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
     .card-hover-effect:hover { transform: translateY(-4px); border-color: #3b82f6; box-shadow: 0 12px 28px -6px rgba(0, 0, 0, 0.15), 0 0 15px rgba(59, 130, 246, 0.2); }
 
-    /* DARK SOBER ELEGANT MODE TOGGLE BUTTONS */
+    /* DYNAMIC LIGHT / DARK MODE TOGGLE BUTTONS */
     .mode-toggle-btn {
         transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        border: 1px solid rgba(203, 213, 225, 0.8);
+        background-color: #f1f5f9;
+        color: #475569;
+    }
+    .light .mode-toggle-btn:hover {
+        background-color: #e2e8f0;
+        color: #0f172a;
+    }
+    .light .mode-toggle-btn.active {
+        background-color: #2563eb !important;
+        color: #ffffff !important;
+        border-color: #1d4ed8 !important;
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        font-weight: 800;
+    }
+    
+    .dark .mode-toggle-btn {
         border: 1px solid rgba(255, 255, 255, 0.1);
         background-color: rgba(15, 23, 42, 0.6);
         color: #94a3b8;
     }
-    .mode-toggle-btn:hover {
+    .dark .mode-toggle-btn:hover {
         background-color: rgba(30, 41, 59, 0.9);
         color: #f8fafc;
         border-color: rgba(255, 255, 255, 0.25);
     }
-    .mode-toggle-btn.active {
+    .dark .mode-toggle-btn.active {
         background-color: #1e293b !important;
         color: #ffffff !important;
         border: 1.5px solid #475569 !important;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255,255,255,0.15);
-        transform: translateY(-1px);
         font-weight: 800;
     }
 </style>
@@ -523,7 +553,7 @@ def category_page(cat_slug):
     cards = ""
     for b in filtered:
         subcat_badge = '<span class="bg-indigo-100 dark:bg-indigo-600/20 text-indigo-700 dark:text-indigo-400 text-xs px-2.5 py-1 rounded-md font-semibold">' + b.get('subcategory', 'General') + '</span>' if b.get('subcategory') else ''
-        map_url = f"https://www.google.com/maps/search/?api=1&query={urllib.parse.quote(b['name'] + ' ' + b['address'])}"
+        map_url = get_google_maps_url(b['name'], b['address'])
         
         cards += '''
         <a href="/business/''' + b['id'] + '''" class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800/80 overflow-hidden card-hover-effect flex flex-col justify-between group shadow-sm dark:shadow-lg animate-modal">
@@ -573,9 +603,9 @@ def category_page(cat_slug):
                     <input type="hidden" name="subcat" value="''' + selected_subcat + '''">
                     <input type="hidden" id="modeInput" name="mode" value="''' + search_mode + '''">
                     
-                    <!-- PERFECTLY ALIGNED TABS TO LEFT WITH NO FILTER TARGET TEXT -->
+                    <!-- DYNAMIC LIGHT & DARK MODE COMPATIBLE TOGGLE BUTTONS -->
                     <div class="flex items-center justify-start mb-1">
-                        <div class="inline-flex items-center gap-1.5 bg-slate-900/90 dark:bg-slate-900/90 p-1.5 rounded-2xl border border-gray-800 shadow-lg">
+                        <div class="inline-flex items-center gap-1.5 bg-gray-200/80 dark:bg-slate-900/90 p-1.5 rounded-2xl border border-gray-300 dark:border-gray-800 shadow-md">
                             <button type="button" onclick="setSearchMode('all')" id="btnModeAll" class="mode-toggle-btn px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1 ` + ('active' if search_mode == 'all' else '') + `">
                                 🔍 All
                             </button>
@@ -850,7 +880,7 @@ def business_detail(b_id):
         if img_url:
             gallery_html += f'<img src="{img_url}" onclick="openImageZoom(\'{img_url}\')" title="Click to zoom" class="w-full h-48 md:h-56 object-cover rounded-2xl border border-gray-200 dark:border-gray-800 hover:scale-105 transition duration-300 shadow-md cursor-pointer">'
 
-    map_direct_url = f"https://www.google.com/maps/search/?api=1&query={urllib.parse.quote(b['name'] + ' ' + b['address'])}"
+    map_direct_url = get_google_maps_url(b['name'], b['address'])
 
     html = get_base_head(back_url=category_back_url, back_text="Back to Category") + '''
     <div id="imageZoomModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-[99] flex items-center justify-center hidden p-4" onclick="closeImageZoom()">
@@ -1890,4 +1920,4 @@ def client_delete_business(b_id):
     return redirect(url_for('client_dashboard'))
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    app.run(debug=True, port5000)
