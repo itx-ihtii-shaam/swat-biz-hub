@@ -1,4 +1,4 @@
-"""SwatBiz Hub - High-Contrast Visual Filter Tabs & Perfect Search UI."""
+"""SwatBiz Hub - High-Contrast Visual Filter Tabs, Live GPS & Perfect Search UI."""
 from datetime import datetime, timedelta
 import os
 import json
@@ -300,24 +300,24 @@ ANIMATION_STYLES = '''
     .card-hover-effect { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
     .card-hover-effect:hover { transform: translateY(-4px); border-color: #3b82f6; box-shadow: 0 12px 28px -6px rgba(0, 0, 0, 0.15), 0 0 15px rgba(59, 130, 246, 0.2); }
 
-    /* HIGH CONTRAST VISUAL MODE TOGGLE BUTTONS */
+    /* DARK SOBER ELEGANT MODE TOGGLE BUTTONS */
     .mode-toggle-btn {
         transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-        border: 1px solid rgba(156, 163, 175, 0.2);
-        background-color: rgba(30, 41, 59, 0.6);
-        color: #9ca3af;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background-color: rgba(15, 23, 42, 0.6);
+        color: #94a3b8;
     }
     .mode-toggle-btn:hover {
-        background-color: rgba(51, 65, 85, 0.9);
-        color: #ffffff;
-        border-color: #3b82f6;
+        background-color: rgba(30, 41, 59, 0.9);
+        color: #f8fafc;
+        border-color: rgba(255, 255, 255, 0.25);
     }
     .mode-toggle-btn.active {
-        background-color: #2563eb !important;
+        background-color: #1e293b !important;
         color: #ffffff !important;
-        border-color: #60a5fa !important;
-        box-shadow: 0 0 16px rgba(37, 99, 235, 0.5), 0 2px 6px rgba(0,0,0,0.3);
-        transform: translateY(-1px) scale(1.03);
+        border: 1.5px solid #475569 !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255,255,255,0.15);
+        transform: translateY(-1px);
         font-weight: 800;
     }
 </style>
@@ -473,7 +473,11 @@ def category_page(cat_slug):
     cat = CATEGORIES[cat_slug]
     search_query = request.args.get('q', '').lower().strip()
     selected_subcat = request.args.get('subcat', '').strip()
+    
+    # Default search mode always defaults to 'all' if not provided
     search_mode = request.args.get('mode', 'all').strip()
+    if search_mode not in ['all', 'doctors', 'hospitals']:
+        search_mode = 'all'
     
     now = datetime.now()
     all_biz = [b for b in BUSINESSES.values() if b.get('category') == cat_slug and b.get('status') == 'approved' and b.get('expiry_date', now) >= now]
@@ -564,20 +568,23 @@ def category_page(cat_slug):
                     <input type="hidden" name="subcat" value="''' + selected_subcat + '''">
                     <input type="hidden" id="modeInput" name="mode" value="''' + search_mode + '''">
                     
-                    <!-- HIGH CONTRAST VISUAL MODE TOGGLE TABS -->
-                    <div class="flex items-center justify-between px-1 mb-1.5">
-                        <div class="inline-flex items-center gap-2 bg-slate-900/90 dark:bg-slate-900/90 p-1.5 rounded-2xl border border-gray-700/80 shadow-md">
-                            <button type="button" onclick="setSearchMode('all')" id="btnModeAll" class="mode-toggle-btn px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 ` + ('active' if search_mode == 'all' else '') + `">
-                                🔍 Search All
+                    <!-- RE-POSITIONED FILTER TARGET LABEL AT UPPER-LEFT + SOBER DARK TABS -->
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 px-1 mb-1">
+                        <span class="text-[11px] font-extrabold text-gray-400 uppercase tracking-wider flex items-center gap-1">
+                            🎯 Filter Target
+                        </span>
+                        
+                        <div class="inline-flex items-center gap-1.5 bg-slate-900/90 dark:bg-slate-900/90 p-1.5 rounded-2xl border border-gray-800 shadow-lg">
+                            <button type="button" onclick="setSearchMode('all')" id="btnModeAll" class="mode-toggle-btn px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1 ` + ('active' if search_mode == 'all' else '') + `">
+                                🔍 All
                             </button>
-                            <button type="button" onclick="setSearchMode('doctors')" id="btnModeDoc" class="mode-toggle-btn px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 ` + ('active' if search_mode == 'doctors' else '') + `">
-                                👨‍⚕️ ''' + cat['staff_label'] + ''' Only
+                            <button type="button" onclick="setSearchMode('doctors')" id="btnModeDoc" class="mode-toggle-btn px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1 ` + ('active' if search_mode == 'doctors' else '') + `">
+                                👨‍⚕️ ''' + cat['staff_label'] + '''
                             </button>
-                            <button type="button" onclick="setSearchMode('hospitals')" id="btnModePlace" class="mode-toggle-btn px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 ` + ('active' if search_mode == 'hospitals' else '') + `">
-                                🏥 ''' + cat['place_label'] + ''' Only
+                            <button type="button" onclick="setSearchMode('hospitals')" id="btnModePlace" class="mode-toggle-btn px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1 ` + ('active' if search_mode == 'hospitals' else '') + `">
+                                🏥 ''' + cat['place_label'] + '''
                             </button>
                         </div>
-                        <span class="text-[11px] font-bold text-blue-500 bg-blue-50 dark:bg-blue-900/30 px-2.5 py-1 rounded-lg border border-blue-200 dark:border-blue-800 hidden sm:inline">🎯 Filter Target</span>
                     </div>
 
                     <!-- BIG SEARCH BAR WITH DYNAMIC PLACEHOLDER -->
@@ -585,7 +592,7 @@ def category_page(cat_slug):
                         <div class="relative w-full">
                             <input type="text" id="searchInput" name="q" value="''' + search_query + '''" placeholder="''' + initial_ph + '''" autocomplete="off" class="w-full px-6 py-4 rounded-2xl bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-800 text-gray-900 dark:text-white input-hover-effect outline-none text-base shadow-sm">
                             
-                            <!-- FIXED DROPDOWN SUGGESTIONS -->
+                            <!-- DROPDOWN SUGGESTIONS -->
                             <div id="suggestionsDropdown" class="absolute left-0 right-0 top-full mt-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-2xl z-50 max-h-80 overflow-y-auto hidden"></div>
                         </div>
                         <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-white px-8 py-4 rounded-2xl font-bold btn-hover-effect shadow-md flex-shrink-0 text-base">Search</button>
@@ -634,6 +641,9 @@ def category_page(cat_slug):
         }
 
         window.addEventListener('DOMContentLoaded', function() {
+            var currentMode = document.getElementById('modeInput').value || 'all';
+            setSearchMode(currentMode);
+
             var input = document.getElementById('searchInput');
             var dropdown = document.getElementById('suggestionsDropdown');
 
@@ -641,7 +651,7 @@ def category_page(cat_slug):
 
             input.addEventListener('input', function() {
                 var q = this.value.trim().toLowerCase();
-                var currentMode = document.getElementById('modeInput').value || 'all';
+                var mode = document.getElementById('modeInput').value || 'all';
                 
                 dropdown.innerHTML = '';
                 
@@ -655,7 +665,7 @@ def category_page(cat_slug):
                 categoryBusinesses.forEach(function(b) {
                     var matchBiz = (b.name.toLowerCase().includes(q) || b.address.toLowerCase().includes(q) || b.subcategory.toLowerCase().includes(q));
                     
-                    if ((currentMode === 'all' || currentMode === 'hospitals') && matchBiz) {
+                    if ((mode === 'all' || mode === 'hospitals') && matchBiz) {
                         matchedItems.push({
                             type: 'business',
                             id: b.id,
@@ -666,7 +676,7 @@ def category_page(cat_slug):
                         });
                     }
 
-                    if (currentMode === 'all' || currentMode === 'doctors') {
+                    if (mode === 'all' || mode === 'doctors') {
                         if (b.doctors && b.doctors.length > 0) {
                             b.doctors.forEach(function(doc) {
                                 var docName = doc.name || '';
@@ -1124,9 +1134,16 @@ def register():
                     </div>
                 </div>
 
+                <!-- ADDRESS FIELD WITH LIVE LOCATION AUTO-DETECT GPS -->
                 <div>
-                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Address / Location *</label>
-                    <input type="text" name="address" required placeholder="e.g. Mingora Bazaar, Swat" class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white input-hover-effect outline-none text-sm">
+                    <div class="flex justify-between items-center mb-1">
+                        <label class="block text-xs font-bold text-gray-700 dark:text-gray-300">Address / Location *</label>
+                        <button type="button" onclick="detectLiveLocation()" class="text-[11px] font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1">
+                            📍 Detect My Live Location
+                        </button>
+                    </div>
+                    <input type="text" id="addressInput" name="address" required placeholder="e.g. Mingora Bazaar, Swat (OR Click Detect Live Location above)" class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white input-hover-effect outline-none text-sm">
+                    <p id="locationStatus" class="text-[10px] text-gray-400 mt-1 hidden"></p>
                 </div>
 
                 <div>
@@ -1252,6 +1269,29 @@ def register():
     <script>
         var categoriesMeta = ''' + categories_json + ''';
         var pendingDeleteTarget = null;
+
+        function detectLiveLocation() {
+            var status = document.getElementById('locationStatus');
+            var addrInput = document.getElementById('addressInput');
+            status.classList.remove('hidden');
+            status.innerText = "⏳ Detecting GPS location...";
+
+            if ("geolocation" in navigator) {
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    var lat = position.coords.latitude.toFixed(5);
+                    var lon = position.coords.longitude.toFixed(5);
+                    addrInput.value = "GPS Location: Lat " + lat + ", Long " + lon + " (Swat Region)";
+                    status.innerText = "✓ Live location captured successfully!";
+                    status.className = "text-[10px] text-green-500 mt-1";
+                }, function(error) {
+                    status.innerText = "⚠️ Location permission denied or unavailable. Please enter manually.";
+                    status.className = "text-[10px] text-red-400 mt-1";
+                });
+            } else {
+                status.innerText = "⚠️ Geolocation not supported by browser. Enter manually.";
+                status.className = "text-[10px] text-red-400 mt-1";
+            }
+        }
 
         function handleMainFileUpload(event, fileInput) {
             var file = event.target.files[0];
