@@ -1,4 +1,4 @@
-"""SwatBiz Hub - Advanced Search with Filter Dropdown & Picture Preview Support."""
+"""SwatBiz Hub - Clean Layout Search Bar with Compact Filter Top-Left."""
 from datetime import datetime, timedelta
 import os
 import json
@@ -503,24 +503,44 @@ def category_page(cat_slug):
             <span class="text-6xl inline-block animate-bounce">''' + cat['icon'] + '''</span>
             <h2 class="text-4xl font-extrabold mt-4 text-gray-900 dark:text-white">''' + cat['title'] + '''</h2>
             
-            <div class="mt-6 max-w-xl mx-auto relative">
-                <form method="GET" action="/category/''' + cat_slug + '''" class="flex flex-col sm:flex-row gap-3">
+            <!-- SEARCH BAR WRAPPER WITH TOP-LEFT COMPACT FILTER TOGGLE -->
+            <div class="mt-6 max-w-2xl mx-auto">
+                <form method="GET" action="/category/''' + cat_slug + '''" class="space-y-2 text-left">
                     <input type="hidden" name="subcat" value="''' + selected_subcat + '''">
                     
-                    <select name="mode" class="px-3 py-3.5 rounded-2xl bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-800 text-xs font-bold text-gray-900 dark:text-white outline-none cursor-pointer">
-                        <option value="all" ''' + ('selected' if search_mode == 'all' else '') + '''>🔍 Search All</option>
-                        <option value="doctors" ''' + ('selected' if search_mode == 'doctors' else '') + '''>👨‍⚕️ Search Doctors / Staff</option>
-                        <option value="hospitals" ''' + ('selected' if search_mode == 'hospitals' else '') + '''>🏥 Search Hospitals / Places</option>
-                    </select>
-
-                    <div class="relative w-full">
-                        <input type="text" id="searchInput" name="q" value="''' + search_query + '''" placeholder="Type to search..." autocomplete="off" class="w-full px-5 py-3.5 rounded-2xl bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-800 text-gray-900 dark:text-white input-hover-effect outline-none text-sm">
-                        <div id="suggestionsDropdown" class="absolute left-0 right-0 top-full mt-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-2xl z-50 max-h-80 overflow-y-auto hidden"></div>
+                    <!-- COMPACT MODE TOGGLE (TOP LEFT OF SEARCH BAR) -->
+                    <div class="flex items-center justify-between px-1">
+                        <div class="inline-flex items-center gap-1.5 bg-gray-200/80 dark:bg-gray-800/90 p-1 rounded-xl text-[11px] font-bold border border-gray-300 dark:border-gray-700/80">
+                            <label class="cursor-pointer px-2.5 py-1 rounded-lg transition flex items-center gap-1 ` + ('bg-blue-600 text-white shadow-sm' if search_mode == 'all' else 'text-gray-600 dark:text-gray-400 hover:text-white') + `">
+                                <input type="radio" name="mode" value="all" ` + ('checked' if search_mode == 'all' else '') + ` onclick="this.form.submit()" class="hidden">
+                                🔍 All
+                            </label>
+                            <label class="cursor-pointer px-2.5 py-1 rounded-lg transition flex items-center gap-1 ` + ('bg-blue-600 text-white shadow-sm' if search_mode == 'doctors' else 'text-gray-600 dark:text-gray-400 hover:text-white') + `">
+                                <input type="radio" name="mode" value="doctors" ` + ('checked' if search_mode == 'doctors' else '') + ` onclick="this.form.submit()" class="hidden">
+                                👨‍⚕️ Doctors
+                            </label>
+                            <label class="cursor-pointer px-2.5 py-1 rounded-lg transition flex items-center gap-1 ` + ('bg-blue-600 text-white shadow-sm' if search_mode == 'hospitals' else 'text-gray-600 dark:text-gray-400 hover:text-white') + `">
+                                <input type="radio" name="mode" value="hospitals" ` + ('checked' if search_mode == 'hospitals' else '') + ` onclick="this.form.submit()" class="hidden">
+                                🏥 Places
+                            </label>
+                        </div>
+                        <span class="text-[10px] text-gray-500 dark:text-gray-400 hidden sm:inline">Filter search target</span>
                     </div>
-                    <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-white px-6 py-3.5 rounded-2xl font-semibold btn-hover-effect shadow-md">Search</button>
+
+                    <!-- FULL WIDTH BIG SEARCH BAR -->
+                    <div class="relative flex items-center gap-2">
+                        <div class="relative w-full">
+                            <input type="text" id="searchInput" name="q" value="''' + search_query + '''" placeholder="''' + cat['search_hint'] + '''" autocomplete="off" class="w-full px-6 py-4 rounded-2xl bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-800 text-gray-900 dark:text-white input-hover-effect outline-none text-base shadow-sm">
+                            
+                            <!-- FIXED & NEAT DROPDOWN SUGGESTIONS -->
+                            <div id="suggestionsDropdown" class="absolute left-0 right-0 top-full mt-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-2xl z-50 max-h-80 overflow-y-auto hidden"></div>
+                        </div>
+                        <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-white px-8 py-4 rounded-2xl font-bold btn-hover-effect shadow-md flex-shrink-0 text-base">Search</button>
+                    </div>
                 </form>
             </div>
 
+            <!-- SUBCATEGORY FILTER PILLS -->
             <div class="mt-6 flex flex-wrap justify-center gap-2 max-w-4xl mx-auto">
                 ''' + pills_html + '''
             </div>
@@ -537,13 +557,14 @@ def category_page(cat_slug):
         window.addEventListener('DOMContentLoaded', function() {
             var input = document.getElementById('searchInput');
             var dropdown = document.getElementById('suggestionsDropdown');
-            var modeSelect = document.querySelector('select[name="mode"]');
 
             if (!input || !dropdown) return;
 
             input.addEventListener('input', function() {
                 var q = this.value.trim().toLowerCase();
-                var currentMode = modeSelect ? modeSelect.value : 'all';
+                var modeRadio = document.querySelector('input[name="mode"]:checked');
+                var currentMode = modeRadio ? modeRadio.value : 'all';
+                
                 dropdown.innerHTML = '';
                 
                 if (q.length < 1) {
@@ -579,7 +600,7 @@ def category_page(cat_slug):
                                         type: 'doctor',
                                         id: b.id,
                                         title: '👨‍⚕️ ' + docName + ' (' + docSpec + ')',
-                                        sub: '🏥 Hospital/Clinic: ' + b.name + ' (' + b.address + ')',
+                                        sub: '🏥 Hospital: ' + b.name,
                                         badge: docSpec,
                                         image: doc.doc_image || b.image || 'https://images.unsplash.com/photo-1557804506-669a67965ba0?auto=format&fit=crop&w=150&q=80'
                                     });
@@ -592,16 +613,16 @@ def category_page(cat_slug):
                 if (matchedItems.length > 0) {
                     matchedItems.forEach(function(item) {
                         var div = document.createElement('div');
-                        div.className = 'p-3 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer flex justify-between items-center text-left border-b border-gray-100 dark:border-gray-800/50 last:border-0';
+                        div.className = 'p-3 hover:bg-gray-100 dark:hover:bg-gray-800 cursor-pointer flex justify-between items-center text-left border-b border-gray-100 dark:border-gray-800/50 last:border-0 gap-3';
                         div.innerHTML = `
-                            <div class="flex items-center gap-3">
+                            <div class="flex items-center gap-3 min-w-0">
                                 <img src="${item.image}" class="w-10 h-10 rounded-full object-cover border border-blue-500 shadow-sm flex-shrink-0">
-                                <div>
-                                    <p class="font-bold text-sm text-gray-900 dark:text-white">${item.title}</p>
-                                    <p class="text-xs text-gray-500 dark:text-gray-400">${item.sub}</p>
+                                <div class="truncate">
+                                    <p class="font-bold text-sm text-gray-900 dark:text-white truncate">${item.title}</p>
+                                    <p class="text-xs text-gray-500 dark:text-gray-400 truncate">${item.sub}</p>
                                 </div>
                             </div>
-                            <span class="text-xs bg-blue-100 dark:bg-blue-600/20 text-blue-600 dark:text-blue-400 px-2.5 py-1 rounded-md font-semibold flex-shrink-0">${item.badge}</span>
+                            <span class="text-[10px] bg-blue-100 dark:bg-blue-600/20 text-blue-600 dark:text-blue-400 px-2.5 py-1 rounded-md font-semibold flex-shrink-0 whitespace-nowrap">${item.badge}</span>
                         `;
                         div.addEventListener('click', function() {
                             window.location.href = '/business/' + item.id;
@@ -655,7 +676,7 @@ def business_detail(b_id):
                 <p class="text-gray-600 dark:text-gray-400 text-sm">Please enter the Client Password to unlock and view this listing.</p>
                 
                 <form method="POST" class="space-y-3 pt-2">
-                    <input type="password" name="client_password" required placeholder="Enter Client Password" class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-center text-gray-900 dark:text-white input-hover-effect outline-none text-sm">
+                    <input type="password" name="client_password" required placeholder="Enter Client Password" class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white input-hover-effect outline-none text-sm">
                     <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-3 rounded-xl font-bold btn-hover-effect text-sm">Unlock Listing</button>
                 </form>
                 ''' + (f'<p class="text-red-500 text-xs font-semibold">{error_msg}</p>' if error_msg else '') + '''
