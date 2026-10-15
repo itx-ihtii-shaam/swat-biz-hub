@@ -1,7 +1,8 @@
-"""SwatBiz Hub - High-Contrast Visual Filter Tabs, Live GPS & Perfect Search UI."""
+"""SwatBiz Hub - Complete & Fully Functional Code with Aligned Tabs & Google Maps."""
 from datetime import datetime, timedelta
 import os
 import json
+import urllib.parse
 from flask import Flask, abort, redirect, render_template_string, request, url_for, session
 
 SITE_NAME = 'SwatBiz Hub'
@@ -474,7 +475,6 @@ def category_page(cat_slug):
     search_query = request.args.get('q', '').lower().strip()
     selected_subcat = request.args.get('subcat', '').strip()
     
-    # Default search mode always defaults to 'all' if not provided
     search_mode = request.args.get('mode', 'all').strip()
     if search_mode not in ['all', 'doctors', 'hospitals']:
         search_mode = 'all'
@@ -523,13 +523,18 @@ def category_page(cat_slug):
     cards = ""
     for b in filtered:
         subcat_badge = '<span class="bg-indigo-100 dark:bg-indigo-600/20 text-indigo-700 dark:text-indigo-400 text-xs px-2.5 py-1 rounded-md font-semibold">' + b.get('subcategory', 'General') + '</span>' if b.get('subcategory') else ''
+        map_url = f"https://www.google.com/maps/search/?api=1&query={urllib.parse.quote(b['name'] + ' ' + b['address'])}"
+        
         cards += '''
         <a href="/business/''' + b['id'] + '''" class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800/80 overflow-hidden card-hover-effect flex flex-col justify-between group shadow-sm dark:shadow-lg animate-modal">
             <img src="''' + b.get('image', 'https://images.unsplash.com/photo-1557804506-669a67965ba0?auto=format&fit=crop&w=800&q=80') + '''" class="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-500">
             <div class="p-6">
                 <div class="mb-2">''' + subcat_badge + '''</div>
                 <h3 class="text-xl font-bold text-gray-900 dark:text-white group-hover:text-blue-500 dark:group-hover:text-blue-400 transition-colors">''' + b['name'] + '''</h3>
-                <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">📍 ''' + b['address'] + '''</p>
+                <p class="text-sm text-gray-600 dark:text-gray-400 mt-1 flex items-center gap-1.5">
+                    📍 ''' + b['address'] + '''
+                    <object><a href="''' + map_url + '''" target="_blank" onclick="event.stopPropagation();" class="text-[10px] font-bold bg-blue-100 dark:bg-blue-600/20 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-md hover:underline">Map 🗺️</a></object>
+                </p>
                 <p class="text-xs text-blue-600 dark:text-blue-400 mt-2 font-bold">📞 ''' + b.get('phones', ['N/A'])[0] + '''</p>
                 <span class="inline-block mt-4 text-xs font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-500/10 px-3 py-1.5 rounded-lg group-hover:bg-blue-600 group-hover:text-white transition">View Details →</span>
             </div>
@@ -568,12 +573,8 @@ def category_page(cat_slug):
                     <input type="hidden" name="subcat" value="''' + selected_subcat + '''">
                     <input type="hidden" id="modeInput" name="mode" value="''' + search_mode + '''">
                     
-                    <!-- RE-POSITIONED FILTER TARGET LABEL AT UPPER-LEFT + SOBER DARK TABS -->
-                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 px-1 mb-1">
-                        <span class="text-[11px] font-extrabold text-gray-400 uppercase tracking-wider flex items-center gap-1">
-                            🎯 Filter Target
-                        </span>
-                        
+                    <!-- PERFECTLY ALIGNED TABS TO LEFT WITH NO FILTER TARGET TEXT -->
+                    <div class="flex items-center justify-start mb-1">
                         <div class="inline-flex items-center gap-1.5 bg-slate-900/90 dark:bg-slate-900/90 p-1.5 rounded-2xl border border-gray-800 shadow-lg">
                             <button type="button" onclick="setSearchMode('all')" id="btnModeAll" class="mode-toggle-btn px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1 ` + ('active' if search_mode == 'all' else '') + `">
                                 🔍 All
@@ -849,6 +850,8 @@ def business_detail(b_id):
         if img_url:
             gallery_html += f'<img src="{img_url}" onclick="openImageZoom(\'{img_url}\')" title="Click to zoom" class="w-full h-48 md:h-56 object-cover rounded-2xl border border-gray-200 dark:border-gray-800 hover:scale-105 transition duration-300 shadow-md cursor-pointer">'
 
+    map_direct_url = f"https://www.google.com/maps/search/?api=1&query={urllib.parse.quote(b['name'] + ' ' + b['address'])}"
+
     html = get_base_head(back_url=category_back_url, back_text="Back to Category") + '''
     <div id="imageZoomModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-[99] flex items-center justify-center hidden p-4" onclick="closeImageZoom()">
         <div class="relative max-w-4xl max-h-[90vh] flex items-center justify-center animate-modal" onclick="event.stopPropagation()">
@@ -892,7 +895,12 @@ def business_detail(b_id):
                 <div>
                     <span class="bg-blue-100 dark:bg-blue-600/20 text-blue-600 dark:text-blue-400 text-xs px-3 py-1 rounded-md font-bold uppercase tracking-wider">''' + b['category'] + '''</span>
                     <h1 class="text-2xl md:text-3xl font-black text-gray-900 dark:text-white mt-1">''' + b['name'] + '''</h1>
-                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">📍 ''' + b['address'] + '''</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 flex items-center gap-2">
+                        📍 ''' + b['address'] + '''
+                        <a href="''' + map_direct_url + '''" target="_blank" class="bg-blue-600 text-white text-[10px] font-bold px-2.5 py-1 rounded-lg hover:bg-blue-500 transition shadow-sm flex items-center gap-1">
+                            🗺️ Open Live Map
+                        </a>
+                    </p>
                 </div>
                 <div class="text-left md:text-right space-y-1">
                     <p class="text-[11px] text-gray-400">Contact Number(s)</p>
@@ -1139,7 +1147,7 @@ def register():
                     <div class="flex justify-between items-center mb-1">
                         <label class="block text-xs font-bold text-gray-700 dark:text-gray-300">Address / Location *</label>
                         <button type="button" onclick="detectLiveLocation()" class="text-[11px] font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1">
-                            📍 Detect My Live Location
+                            📍 Detect My Live GPS Location
                         </button>
                     </div>
                     <input type="text" id="addressInput" name="address" required placeholder="e.g. Mingora Bazaar, Swat (OR Click Detect Live Location above)" class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white input-hover-effect outline-none text-sm">
@@ -1280,8 +1288,8 @@ def register():
                 navigator.geolocation.getCurrentPosition(function(position) {
                     var lat = position.coords.latitude.toFixed(5);
                     var lon = position.coords.longitude.toFixed(5);
-                    addrInput.value = "GPS Location: Lat " + lat + ", Long " + lon + " (Swat Region)";
-                    status.innerText = "✓ Live location captured successfully!";
+                    addrInput.value = lat + ", " + lon;
+                    status.innerText = "✓ Live location captured successfully! (Coordinates saved)";
                     status.className = "text-[10px] text-green-500 mt-1";
                 }, function(error) {
                     status.innerText = "⚠️ Location permission denied or unavailable. Please enter manually.";
