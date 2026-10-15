@@ -1920,4 +1920,4 @@ def client_delete_business(b_id):
     return redirect(url_for('client_dashboard'))
 
 if __name__ == '__main__':
-    app.run(debug=True, port5000)
+    app.run(debug=True, port=5000)
