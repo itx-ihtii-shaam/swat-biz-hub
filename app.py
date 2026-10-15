@@ -1,4 +1,4 @@
-"""SwatBiz Hub - Updated Layout & Multi Image Support Code."""
+"""SwatBiz Hub - Collapsible Tests & Services Section Code."""
 from datetime import datetime, timedelta
 import os
 import json
@@ -49,7 +49,7 @@ BUSINESSES = {
             }
         ],
         'special_info': 'Dr. Muhammad Ali (Cardiologist), Dr. Ayesha Khan (Pediatrician)',
-        'tests_dishes': 'MRI, CT Scan, X-Ray, Ultrasound, Emergency Care',
+        'tests_dishes': 'MRI, CT Scan, X-Ray, Ultrasound, Emergency Care, Blood Bank Services, ICU & CCU Facilities, OPD & IPD Services, Pathology Lab',
         'extra_img': 'https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&w=800&q=80',
         'client_email': 'owner1@swatbiz.com',
         'client_password': 'client123'
@@ -659,7 +659,14 @@ def business_detail(b_id):
 
     tests_dishes = b.get('tests_dishes', 'Not specified')
     extra_img = b.get('extra_img', '')
-    extra_img_html = f'<div class="mt-4"><p class="text-xs font-bold text-gray-500 mb-2">📸 Attached Service / Charges Banner:</p><img src="{extra_img}" onclick="openImageZoom(\'{extra_img}\')" title="Click to zoom image" class="max-h-80 w-full object-contain rounded-2xl border border-gray-200 dark:border-gray-800 shadow-lg cursor-pointer hover:opacity-90 transition"></div>' if extra_img else ''
+    
+    # Small banner preview inside collapsible box
+    extra_img_preview = f'''
+    <div class="mt-2 flex items-center gap-3 bg-gray-100 dark:bg-gray-900 p-2 rounded-xl border border-gray-200 dark:border-gray-800 cursor-pointer" onclick="openImageZoom('{extra_img}'); event.stopPropagation();">
+        <img src="{extra_img}" class="h-12 w-20 object-cover rounded-lg border border-gray-300 dark:border-gray-700">
+        <span class="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline">📸 View Attached Rates Banner / Picture →</span>
+    </div>
+    ''' if extra_img else ''
 
     phones_list = b.get('phones', ['N/A'])
     phones_html = ", ".join([f'<a href="tel:{p}" class="text-blue-600 dark:text-white hover:underline font-bold">{p}</a>' for p in phones_list])
@@ -668,10 +675,10 @@ def business_detail(b_id):
     gallery_html = ""
     for img_url in gallery_imgs:
         if img_url:
-            gallery_html += f'<img src="{img_url}" onclick="openImageZoom(\'{img_url}\')" title="Click to zoom" class="w-full h-64 object-cover rounded-2xl border border-gray-200 dark:border-gray-800 hover:scale-105 transition duration-300 shadow-md cursor-pointer">'
+            gallery_html += f'<img src="{img_url}" onclick="openImageZoom(\'{img_url}\')" title="Click to zoom" class="w-full h-48 md:h-56 object-cover rounded-2xl border border-gray-200 dark:border-gray-800 hover:scale-105 transition duration-300 shadow-md cursor-pointer">'
 
     html = get_base_head(back_url=category_back_url, back_text="Back to Category") + '''
-    <!-- Image Zoom Lightbox Modal with Higher Z-Index -->
+    <!-- Image Zoom Lightbox Modal -->
     <div id="imageZoomModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-[99] flex items-center justify-center hidden p-4" onclick="closeImageZoom()">
         <div class="relative max-w-4xl max-h-[90vh] flex items-center justify-center animate-modal" onclick="event.stopPropagation()">
             <button type="button" onclick="closeImageZoom()" class="absolute -top-12 right-0 text-white hover:text-gray-300 text-2xl font-bold bg-gray-800/80 w-10 h-10 rounded-full flex items-center justify-center shadow-lg">×</button>
@@ -679,6 +686,7 @@ def business_detail(b_id):
         </div>
     </div>
 
+    <!-- Doctor Info Popup Modal -->
     <div id="doctorModal" class="fixed inset-0 bg-black/60 dark:bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
         <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-6 md:p-8 max-w-md w-full shadow-2xl animate-modal space-y-4">
             <div class="flex justify-between items-start">
@@ -708,44 +716,56 @@ def business_detail(b_id):
         </div>
     </div>
 
-    <main class="max-w-5xl mx-auto px-4 py-12 animate-fade-in space-y-8">
-        <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-6 md:p-10 shadow-xl space-y-6 animate-modal">
-            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-gray-100 dark:border-gray-800 pb-6">
+    <main class="max-w-5xl mx-auto px-4 py-8 animate-fade-in space-y-6">
+        <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-6 md:p-8 shadow-xl space-y-5 animate-modal">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-gray-100 dark:border-gray-800 pb-5">
                 <div>
                     <span class="bg-blue-100 dark:bg-blue-600/20 text-blue-600 dark:text-blue-400 text-xs px-3 py-1 rounded-md font-bold uppercase tracking-wider">''' + b['category'] + '''</span>
-                    <h1 class="text-3xl md:text-4xl font-black text-gray-900 dark:text-white mt-2">''' + b['name'] + '''</h1>
-                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">📍 ''' + b['address'] + '''</p>
+                    <h1 class="text-2xl md:text-3xl font-black text-gray-900 dark:text-white mt-1">''' + b['name'] + '''</h1>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">📍 ''' + b['address'] + '''</p>
                 </div>
                 <div class="text-left md:text-right space-y-1">
-                    <p class="text-xs text-gray-400">Contact Number(s)</p>
-                    <p class="text-sm">📞 ''' + phones_html + '''</p>
+                    <p class="text-[11px] text-gray-400">Contact Number(s)</p>
+                    <p class="text-xs">📞 ''' + phones_html + '''</p>
                 </div>
             </div>
 
-            <!-- Photos Gallery Grid -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Main Photos Gallery Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                 ''' + gallery_html + '''
             </div>
 
-            <!-- In-Page Live Doctor / Specialty / Staff Search Box -->
-            <div class="bg-gray-50 dark:bg-gray-950 p-4 rounded-2xl border border-gray-200 dark:border-gray-800 space-y-2">
-                <label class="block text-xs font-bold text-gray-700 dark:text-gray-300">🔍 Quick Search Doctors, Staff or Services in ''' + b['name'] + ''':</label>
-                <input type="text" id="pageDetailSearch" onkeyup="filterPageStaff()" placeholder="Type doctor name, specialty, room or service (e.g. Cardiologist, MRI, Dr. Ali)..." class="w-full p-3 rounded-xl bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-800 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
+            <!-- In-Page Live Doctor Search Box -->
+            <div class="bg-gray-50 dark:bg-gray-950 p-3 rounded-2xl border border-gray-200 dark:border-gray-800">
+                <input type="text" id="pageDetailSearch" onkeyup="filterPageStaff()" placeholder="🔍 Quick Search Doctors, Specialty or Services (e.g. Cardiologist, MRI, Dr. Ali)..." class="w-full p-2.5 rounded-xl bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-800 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
             </div>
 
-            <!-- 1. AVAILABLE TESTS & SERVICES MOVED TO TOP -->
-            <div id="testsSectionBlock" class="space-y-2 pt-2">
-                <h3 class="text-xl font-bold text-gray-900 dark:text-white">''' + cat_meta['extra_title'] + '''</h3>
-                <div class="bg-gray-50 dark:bg-gray-950 p-4 rounded-2xl border border-gray-200 dark:border-gray-800 space-y-3">
-                    <p id="testsTextContent" class="text-gray-700 dark:text-gray-300 text-sm leading-relaxed whitespace-pre-line">''' + tests_dishes + '''</p>
-                    ''' + extra_img_html + '''
+            <!-- COMPACT & EXPANDABLE (COLLAPSIBLE) TESTS & SERVICES SECTION -->
+            <div id="testsSectionBlock" class="bg-gray-50 dark:bg-gray-950 p-4 rounded-2xl border border-gray-200 dark:border-gray-800 space-y-2 transition-all duration-300">
+                <div class="flex justify-between items-center cursor-pointer" onclick="toggleTestsExpand()">
+                    <h3 class="text-sm font-extrabold text-gray-900 dark:text-white flex items-center gap-2">
+                        <span>''' + cat_meta['extra_title'] + '''</span>
+                        <span id="expandBadge" class="bg-blue-100 dark:bg-blue-600/20 text-blue-600 dark:text-blue-400 text-[10px] px-2 py-0.5 rounded-md font-bold">Click to Expand</span>
+                    </h3>
+                    <button type="button" id="toggleExpandBtn" class="text-xs text-blue-600 dark:text-blue-400 font-bold hover:underline">View All ↓</button>
+                </div>
+
+                <!-- Collapsed Preview Text (Line Clamp) -->
+                <p id="testsTextPreview" class="text-gray-700 dark:text-gray-300 text-xs leading-relaxed line-clamp-2">
+                    ''' + tests_dishes + '''
+                </p>
+
+                <!-- Full Expanded Content (Hidden by Default) -->
+                <div id="testsFullContent" class="hidden space-y-3 pt-2 border-t border-gray-200 dark:border-gray-800">
+                    <p class="text-gray-700 dark:text-gray-300 text-xs leading-relaxed whitespace-pre-line">''' + tests_dishes + '''</p>
+                    ''' + extra_img_preview + '''
                 </div>
             </div>
 
-            <!-- 2. DOCTORS / STAFF SECTION -->
-            <div id="doctorsSectionBlock" class="space-y-4 pt-4 border-t border-gray-100 dark:border-gray-800">
-                <h3 class="text-xl font-bold text-gray-900 dark:text-white">''' + cat_meta['info_title'] + '''</h3>
-                <div id="doctorsListGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- DOCTORS & STAFF SECTION (STAYS VISIBLE RIGHT BELOW) -->
+            <div id="doctorsSectionBlock" class="space-y-3 pt-2 border-t border-gray-100 dark:border-gray-800">
+                <h3 class="text-lg font-black text-gray-900 dark:text-white">''' + cat_meta['info_title'] + '''</h3>
+                <div id="doctorsListGrid" class="grid grid-cols-1 md:grid-cols-2 gap-3">
                     ''' + doctors_cards_html + '''
                 </div>
             </div>
@@ -753,10 +773,28 @@ def business_detail(b_id):
     </main>
 
     <script>
+        function toggleTestsExpand() {
+            var fullContent = document.getElementById('testsFullContent');
+            var previewText = document.getElementById('testsTextPreview');
+            var btn = document.getElementById('toggleExpandBtn');
+            var badge = document.getElementById('expandBadge');
+
+            if (fullContent.classList.contains('hidden')) {
+                fullContent.classList.remove('hidden');
+                previewText.classList.add('hidden');
+                btn.innerText = 'Collapse ↑';
+                badge.innerText = 'Expanded';
+            } else {
+                fullContent.classList.add('hidden');
+                previewText.classList.remove('hidden');
+                btn.innerText = 'View All ↓';
+                badge.innerText = 'Click to Expand';
+            }
+        }
+
         function filterPageStaff() {
-            var q = document.getElementById('pageDetailSearch').value.toLowerCase().strip ? document.getElementById('pageDetailSearch').value.toLowerCase().trim() : document.getElementById('pageDetailSearch').value.toLowerCase();
+            var q = document.getElementById('pageDetailSearch').value.toLowerCase().trim();
             
-            // Filter Doctors Cards
             var docCards = document.querySelectorAll('.doc-card-item');
             docCards.forEach(function(card) {
                 var text = card.innerText.toLowerCase();
@@ -767,9 +805,8 @@ def business_detail(b_id):
                 }
             });
 
-            // Filter Tests Block
             var testsBlock = document.getElementById('testsSectionBlock');
-            var testsText = document.getElementById('testsTextContent').innerText.toLowerCase();
+            var testsText = document.getElementById('testsTextPreview').innerText.toLowerCase();
             if (q === '' || testsText.includes(q)) {
                 testsBlock.style.display = 'block';
             } else {
@@ -833,7 +870,6 @@ def register():
         tests_dishes = request.form.get('tests_dishes', '').strip()
         extra_img = request.form.get('extra_img', '').strip()
         
-        # Multiple Main Photos Support
         main_images = [img.strip() for img in request.form.getlist('main_images') if img.strip()]
         if not main_images:
             main_images = ['https://images.unsplash.com/photo-1557804506-669a67965ba0?auto=format&fit=crop&w=800&q=80']
@@ -947,7 +983,7 @@ def register():
                     <input type="text" name="phone" required placeholder="e.g. +92 300 1234567, +92 946 9240125" class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white input-hover-effect outline-none text-sm">
                 </div>
 
-                <!-- MULTIPLE MAIN / BANNER IMAGES UPLOAD SECTION -->
+                <!-- MULTIPLE MAIN IMAGES SECTION -->
                 <div class="pt-2 border-t border-gray-100 dark:border-gray-800 space-y-3">
                     <label class="block text-xs font-bold text-gray-700 dark:text-gray-300">🖼️ Main / Gallery Pictures (Multiple Pictures Allowed)</label>
                     <div id="mainImagesContainer" class="space-y-3">
@@ -990,7 +1026,6 @@ def register():
                                 <input type="text" name="doc_phone" placeholder="Direct Phone (comma separated)" class="doc-input-phone p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
                             </div>
 
-                            <!-- Single Doctor Photo Upload Section -->
                             <div class="pt-2 border-t border-gray-200 dark:border-gray-800/60 space-y-2">
                                 <label class="block text-[11px] font-bold text-gray-500 dark:text-gray-400">🖼️ Doctor Profile Picture (Single Photo)</label>
                                 <div class="flex flex-col sm:flex-row gap-2 items-center">
