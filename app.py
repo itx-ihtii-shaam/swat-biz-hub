@@ -1,4 +1,4 @@
-"""SwatBiz Hub - Staff/Doctor Image Zoom Modal Feature."""
+"""SwatBiz Hub - Staff/Doctor Image Zoom Lightbox Z-Index Fix."""
 from datetime import datetime, timedelta
 import os
 import json
@@ -671,8 +671,8 @@ def business_detail(b_id):
             gallery_html += f'<img src="{img_url}" class="w-full h-64 object-cover rounded-2xl border border-gray-200 dark:border-gray-800 hover:scale-105 transition duration-300 shadow-md">'
 
     html = get_base_head(back_url=category_back_url, back_text="Back to Category") + '''
-    <!-- Image Zoom Lightbox Modal -->
-    <div id="imageZoomModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center hidden p-4" onclick="closeImageZoom()">
+    <!-- Image Zoom Lightbox Modal with Higher Z-Index -->
+    <div id="imageZoomModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-[99] flex items-center justify-center hidden p-4" onclick="closeImageZoom()">
         <div class="relative max-w-4xl max-h-[90vh] flex items-center justify-center animate-modal" onclick="event.stopPropagation()">
             <button type="button" onclick="closeImageZoom()" class="absolute -top-12 right-0 text-white hover:text-gray-300 text-2xl font-bold bg-gray-800/80 w-10 h-10 rounded-full flex items-center justify-center shadow-lg">×</button>
             <img id="zoomedImageElement" src="" class="max-w-full max-h-[85vh] object-contain rounded-2xl shadow-2xl border-2 border-gray-700">
