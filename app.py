@@ -427,7 +427,7 @@ def category_page(cat_slug):
     search_mode = request.args.get('mode', 'all').strip()
     
     now = datetime.now()
-    all_biz = [b for b in BUSINESSES.values() if b.get('category') == cat_slug and b.get('status'] == 'approved' and b.get('expiry_date', now) >= now]
+    all_biz = [b for b in BUSINESSES.values() if b.get('category') == cat_slug and b.get('status') == 'approved' and b.get('expiry_date', now) >= now]
     filtered = []
     
     for b in all_biz:
@@ -646,7 +646,7 @@ def business_detail(b_id):
     now = datetime.now()
     category_back_url = f"/category/{b['category']}"
     
-    if (b.get('status'] != 'approved' or b.get('expiry_date', now) < now) and not is_admin and not is_client:
+    if (b.get('status') != 'approved' or b.get('expiry_date', now) < now) and not is_admin and not is_client:
         html = get_base_head(back_url=category_back_url, back_text="Back to Category") + '''
         <main class="max-w-xl mx-auto px-4 py-20 text-center animate-fade-in">
             <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-10 shadow-xl space-y-4 animate-modal">
@@ -1731,7 +1731,7 @@ def client_edit_business(b_id):
                     <input type="text" name="name" value="''' + b['name'] + '''" required class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white input-hover-effect outline-none text-sm">
                 </div>
                 <div>
-                    <label class="block text-xs font-braces text-gray-700 dark:text-gray-300 mb-1">Address / Location</label>
+                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Address / Location</label>
                     <input type="text" name="address" value="''' + b['address'] + '''" required class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white input-hover-effect outline-none text-sm">
                 </div>
                 <div>
