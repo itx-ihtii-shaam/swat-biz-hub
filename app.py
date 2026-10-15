@@ -1,4 +1,4 @@
-"""SwatBiz Hub - Staff/Doctor Image Zoom Lightbox Z-Index Fix."""
+"""SwatBiz Hub - Updated Layout & Multi Image Support Code."""
 from datetime import datetime, timedelta
 import os
 import json
@@ -630,7 +630,7 @@ def business_detail(b_id):
             
             quals_badge = f'<p class="text-[11px] text-gray-500 dark:text-gray-400 italic">🎓 {quals}</p>' if quals else ''
             
-            doc_avatar = f'<img src="{doc_img}" class="w-12 h-12 rounded-full object-cover border-2 border-blue-500 shadow-sm">' if doc_img else '<span class="text-2xl p-2 bg-blue-50 dark:bg-blue-600/20 rounded-full">👤</span>'
+            doc_avatar = f'<img src="{doc_img}" onclick="openImageZoom(\'{doc_img}\'); event.stopPropagation();" class="w-12 h-12 rounded-full object-cover border-2 border-blue-500 shadow-sm cursor-pointer hover:scale-110 transition duration-200" title="Click to zoom picture">' if doc_img else '<span class="text-2xl p-2 bg-blue-50 dark:bg-blue-600/20 rounded-full">👤</span>'
 
             doctors_cards_html += f'''
             <div onclick='openDoctorModal({doc_json})' class="doc-card-item bg-gray-50 dark:bg-gray-950 p-5 rounded-2xl border border-gray-200 dark:border-gray-800 card-hover-effect space-y-2 cursor-pointer group animate-modal">
@@ -659,7 +659,7 @@ def business_detail(b_id):
 
     tests_dishes = b.get('tests_dishes', 'Not specified')
     extra_img = b.get('extra_img', '')
-    extra_img_html = f'<div class="mt-4"><p class="text-xs font-bold text-gray-500 mb-2">📸 Attached Service / Charges Banner:</p><img src="{extra_img}" class="max-h-80 w-full object-contain rounded-2xl border border-gray-200 dark:border-gray-800 shadow-lg"></div>' if extra_img else ''
+    extra_img_html = f'<div class="mt-4"><p class="text-xs font-bold text-gray-500 mb-2">📸 Attached Service / Charges Banner:</p><img src="{extra_img}" onclick="openImageZoom(\'{extra_img}\')" title="Click to zoom image" class="max-h-80 w-full object-contain rounded-2xl border border-gray-200 dark:border-gray-800 shadow-lg cursor-pointer hover:opacity-90 transition"></div>' if extra_img else ''
 
     phones_list = b.get('phones', ['N/A'])
     phones_html = ", ".join([f'<a href="tel:{p}" class="text-blue-600 dark:text-white hover:underline font-bold">{p}</a>' for p in phones_list])
@@ -668,7 +668,7 @@ def business_detail(b_id):
     gallery_html = ""
     for img_url in gallery_imgs:
         if img_url:
-            gallery_html += f'<img src="{img_url}" class="w-full h-64 object-cover rounded-2xl border border-gray-200 dark:border-gray-800 hover:scale-105 transition duration-300 shadow-md">'
+            gallery_html += f'<img src="{img_url}" onclick="openImageZoom(\'{img_url}\')" title="Click to zoom" class="w-full h-64 object-cover rounded-2xl border border-gray-200 dark:border-gray-800 hover:scale-105 transition duration-300 shadow-md cursor-pointer">'
 
     html = get_base_head(back_url=category_back_url, back_text="Back to Category") + '''
     <!-- Image Zoom Lightbox Modal with Higher Z-Index -->
@@ -722,28 +722,61 @@ def business_detail(b_id):
                 </div>
             </div>
 
+            <!-- Photos Gallery Grid -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 ''' + gallery_html + '''
             </div>
 
-            <div class="space-y-4 pt-4 border-t border-gray-100 dark:border-gray-800">
-                <h3 class="text-xl font-bold text-gray-900 dark:text-white">''' + cat_meta['info_title'] + '''</h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    ''' + doctors_cards_html + '''
+            <!-- In-Page Live Doctor / Specialty / Staff Search Box -->
+            <div class="bg-gray-50 dark:bg-gray-950 p-4 rounded-2xl border border-gray-200 dark:border-gray-800 space-y-2">
+                <label class="block text-xs font-bold text-gray-700 dark:text-gray-300">🔍 Quick Search Doctors, Staff or Services in ''' + b['name'] + ''':</label>
+                <input type="text" id="pageDetailSearch" onkeyup="filterPageStaff()" placeholder="Type doctor name, specialty, room or service (e.g. Cardiologist, MRI, Dr. Ali)..." class="w-full p-3 rounded-xl bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-800 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
+            </div>
+
+            <!-- 1. AVAILABLE TESTS & SERVICES MOVED TO TOP -->
+            <div id="testsSectionBlock" class="space-y-2 pt-2">
+                <h3 class="text-xl font-bold text-gray-900 dark:text-white">''' + cat_meta['extra_title'] + '''</h3>
+                <div class="bg-gray-50 dark:bg-gray-950 p-4 rounded-2xl border border-gray-200 dark:border-gray-800 space-y-3">
+                    <p id="testsTextContent" class="text-gray-700 dark:text-gray-300 text-sm leading-relaxed whitespace-pre-line">''' + tests_dishes + '''</p>
+                    ''' + extra_img_html + '''
                 </div>
             </div>
 
-            <div class="space-y-2 pt-4 border-t border-gray-100 dark:border-gray-800">
-                <h3 class="text-xl font-bold text-gray-900 dark:text-white">''' + cat_meta['extra_title'] + '''</h3>
-                <div class="bg-gray-50 dark:bg-gray-950 p-4 rounded-2xl border border-gray-200 dark:border-gray-800 space-y-3">
-                    <p class="text-gray-700 dark:text-gray-300 text-sm leading-relaxed whitespace-pre-line">''' + tests_dishes + '''</p>
-                    ''' + extra_img_html + '''
+            <!-- 2. DOCTORS / STAFF SECTION -->
+            <div id="doctorsSectionBlock" class="space-y-4 pt-4 border-t border-gray-100 dark:border-gray-800">
+                <h3 class="text-xl font-bold text-gray-900 dark:text-white">''' + cat_meta['info_title'] + '''</h3>
+                <div id="doctorsListGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    ''' + doctors_cards_html + '''
                 </div>
             </div>
         </div>
     </main>
 
     <script>
+        function filterPageStaff() {
+            var q = document.getElementById('pageDetailSearch').value.toLowerCase().strip ? document.getElementById('pageDetailSearch').value.toLowerCase().trim() : document.getElementById('pageDetailSearch').value.toLowerCase();
+            
+            // Filter Doctors Cards
+            var docCards = document.querySelectorAll('.doc-card-item');
+            docCards.forEach(function(card) {
+                var text = card.innerText.toLowerCase();
+                if (text.includes(q)) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+
+            // Filter Tests Block
+            var testsBlock = document.getElementById('testsSectionBlock');
+            var testsText = document.getElementById('testsTextContent').innerText.toLowerCase();
+            if (q === '' || testsText.includes(q)) {
+                testsBlock.style.display = 'block';
+            } else {
+                testsBlock.style.display = 'none';
+            }
+        }
+
         function openDoctorModal(doc) {
             document.getElementById('mDocName').innerText = doc.name;
             document.getElementById('mDocSpec').innerText = doc.specialty;
@@ -800,6 +833,11 @@ def register():
         tests_dishes = request.form.get('tests_dishes', '').strip()
         extra_img = request.form.get('extra_img', '').strip()
         
+        # Multiple Main Photos Support
+        main_images = [img.strip() for img in request.form.getlist('main_images') if img.strip()]
+        if not main_images:
+            main_images = ['https://images.unsplash.com/photo-1557804506-669a67965ba0?auto=format&fit=crop&w=800&q=80']
+
         doc_names = request.form.getlist('doc_name')
         doc_specs = request.form.getlist('doc_spec')
         doc_quals = request.form.getlist('doc_qual')
@@ -832,8 +870,8 @@ def register():
                 'name': name,
                 'address': address,
                 'phones': phones_list if phones_list else ['+92 300 0000000'],
-                'image': 'https://images.unsplash.com/photo-1557804506-669a67965ba0?auto=format&fit=crop&w=800&q=80',
-                'images': ['https://images.unsplash.com/photo-1557804506-669a67965ba0?auto=format&fit=crop&w=800&q=80'],
+                'image': main_images[0],
+                'images': main_images,
                 'status': 'pending',
                 'payment_method': 'Bank Transfer / JazzCash',
                 'payment_ref': 'PENDING-VERIFY',
@@ -909,6 +947,24 @@ def register():
                     <input type="text" name="phone" required placeholder="e.g. +92 300 1234567, +92 946 9240125" class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white input-hover-effect outline-none text-sm">
                 </div>
 
+                <!-- MULTIPLE MAIN / BANNER IMAGES UPLOAD SECTION -->
+                <div class="pt-2 border-t border-gray-100 dark:border-gray-800 space-y-3">
+                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300">🖼️ Main / Gallery Pictures (Multiple Pictures Allowed)</label>
+                    <div id="mainImagesContainer" class="space-y-3">
+                        <div class="main-img-row flex flex-col sm:flex-row gap-2 items-center">
+                            <label class="w-full sm:w-auto bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 px-3 py-2 rounded-xl text-xs font-bold cursor-pointer transition flex items-center justify-center gap-1 border border-gray-300 dark:border-gray-700">
+                                📁 Gallery
+                                <input type="file" accept="image/*" onchange="handleMainFileUpload(event, this)" class="hidden">
+                            </label>
+                            <span class="text-[10px] text-gray-400">OR</span>
+                            <input type="text" name="main_images" placeholder="Paste Image URL link..." class="w-full p-2.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
+                        </div>
+                    </div>
+                    <button type="button" onclick="addMainImageRow()" class="text-xs bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 px-3 py-2 rounded-xl font-bold transition flex items-center gap-1">
+                        + Add Another Main Picture
+                    </button>
+                </div>
+
                 <div class="pt-4 border-t border-gray-100 dark:border-gray-800 space-y-4">
                     <div class="flex justify-between items-center">
                         <label id="staffSectionHeading" class="block text-sm font-extrabold text-blue-600 dark:text-blue-400">🩺 Doctors, Clinic & Timings</label>
@@ -934,9 +990,9 @@ def register():
                                 <input type="text" name="doc_phone" placeholder="Direct Phone (comma separated)" class="doc-input-phone p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
                             </div>
 
-                            <!-- Doctor/Staff Photo Upload Section (Gallery or URL) -->
+                            <!-- Single Doctor Photo Upload Section -->
                             <div class="pt-2 border-t border-gray-200 dark:border-gray-800/60 space-y-2">
-                                <label class="block text-[11px] font-bold text-gray-500 dark:text-gray-400">🖼️ Photo / Picture (Optional - Gallery or URL)</label>
+                                <label class="block text-[11px] font-bold text-gray-500 dark:text-gray-400">🖼️ Doctor Profile Picture (Single Photo)</label>
                                 <div class="flex flex-col sm:flex-row gap-2 items-center">
                                     <label class="w-full sm:w-auto bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 px-3 py-2 rounded-xl text-xs font-bold cursor-pointer transition flex items-center justify-center gap-1 border border-gray-300 dark:border-gray-700">
                                         📁 Gallery
@@ -1008,6 +1064,35 @@ def register():
     <script>
         var categoriesMeta = ''' + categories_json + ''';
         var pendingDeleteTarget = null;
+
+        function handleMainFileUpload(event, fileInput) {
+            var file = event.target.files[0];
+            if (file) {
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    var base64Img = e.target.result;
+                    var row = fileInput.closest('.main-img-row');
+                    var urlInput = row.querySelector('input[name="main_images"]');
+                    urlInput.value = base64Img;
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function addMainImageRow() {
+            var container = document.getElementById('mainImagesContainer');
+            var div = document.createElement('div');
+            div.className = 'main-img-row flex flex-col sm:flex-row gap-2 items-center animate-modal';
+            div.innerHTML = `
+                <label class="w-full sm:w-auto bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 px-3 py-2 rounded-xl text-xs font-bold cursor-pointer transition flex items-center justify-center gap-1 border border-gray-300 dark:border-gray-700">
+                    📁 Gallery
+                    <input type="file" accept="image/*" onchange="handleMainFileUpload(event, this)" class="hidden">
+                </label>
+                <span class="text-[10px] text-gray-400">OR</span>
+                <input type="text" name="main_images" placeholder="Paste Image URL link..." class="w-full p-2.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
+            `;
+            container.appendChild(div);
+        }
 
         function handleFileUpload(event) {
             var file = event.target.files[0];
@@ -1173,7 +1258,7 @@ def register():
     return render_template_string(html)
 
 # ==========================================
-# ADMIN SYSTEM ROUTES (CLICKABLE STATS CARDS)
+# ADMIN SYSTEM ROUTES
 # ==========================================
 
 @app.route('/admin', methods=['GET', 'POST'])
@@ -1220,14 +1305,12 @@ def admin_dashboard():
         
     active_tab = request.args.get('tab', 'businesses')
     filter_status = request.args.get('filter', 'all')
-    now = datetime.now()
 
     total_listings = len(BUSINESSES)
     pending_biz_count = len([b for b in BUSINESSES.values() if b.get('status') == 'pending'])
     paid_pay_count = len([b for b in BUSINESSES.values() if b.get('payment_status') == 'paid'])
     pending_pay_count = len([b for b in BUSINESSES.values() if b.get('payment_status') == 'pending'])
 
-    # 1. Business Table Rows (with filter support)
     biz_rows = ""
     for b in BUSINESSES.values():
         status = b.get('status', 'pending')
@@ -1260,7 +1343,6 @@ def admin_dashboard():
         </tr>
         '''
 
-    # 2. Payment Table Rows (with filter support)
     pay_rows = ""
     for b in BUSINESSES.values():
         pay_status = b.get('payment_status', 'pending')
@@ -1296,11 +1378,6 @@ def admin_dashboard():
         <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl overflow-hidden shadow-xl animate-modal">
             <div class="p-6 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center">
                 <h3 class="text-lg font-bold text-gray-900 dark:text-white">💳 Payment Requests & Verification</h3>
-                <div class="flex items-center gap-2">
-                    <a href="/admin/dashboard?tab=payments&filter=all" class="text-xs px-3 py-1 rounded-lg font-bold {'bg-blue-600 text-white' if filter_status == 'all' else 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'}">All</a>
-                    <a href="/admin/dashboard?tab=payments&filter=pending_pay" class="text-xs px-3 py-1 rounded-lg font-bold {'bg-blue-600 text-white' if filter_status == 'pending_pay' else 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'}">Pending ({pending_pay_count})</a>
-                    <a href="/admin/dashboard?tab=payments&filter=paid_pay" class="text-xs px-3 py-1 rounded-lg font-bold {'bg-blue-600 text-white' if filter_status == 'paid_pay' else 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'}">Paid ({paid_pay_count})</a>
-                </div>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse">
@@ -1326,10 +1403,6 @@ def admin_dashboard():
         <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl overflow-hidden shadow-xl animate-modal">
             <div class="p-6 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center">
                 <h3 class="text-lg font-bold text-gray-900 dark:text-white">🏢 Business Registrations & Approvals</h3>
-                <div class="flex items-center gap-2">
-                    <a href="/admin/dashboard?tab=businesses&filter=all" class="text-xs px-3 py-1 rounded-lg font-bold {'bg-blue-600 text-white' if filter_status == 'all' else 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'}">All</a>
-                    <a href="/admin/dashboard?tab=businesses&filter=pending_biz" class="text-xs px-3 py-1 rounded-lg font-bold {'bg-blue-600 text-white' if filter_status == 'pending_biz' else 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400'}">Pending ({pending_biz_count})</a>
-                </div>
             </div>
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse">
@@ -1361,7 +1434,6 @@ def admin_dashboard():
             <a href="/admin/logout" class="bg-red-600 hover:bg-red-500 text-white px-5 py-2.5 rounded-xl text-xs font-bold transition shadow-md">Admin Logout</a>
         </div>
 
-        <!-- Clickable Stats Cards -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <a href="/admin/dashboard?tab=businesses&filter=all" class="bg-white dark:bg-gray-900 p-5 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm text-center card-hover-effect block">
                 <p class="text-xs text-gray-500 font-bold uppercase">Total Listings</p>
