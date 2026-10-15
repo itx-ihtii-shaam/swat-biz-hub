@@ -1,4 +1,4 @@
-"""SwatBiz Hub - Clean Layout Search Bar with Compact Filter Top-Left."""
+"""SwatBiz Hub - Complete & Fully Functional Application Code."""
 from datetime import datetime, timedelta
 import os
 import json
@@ -124,7 +124,11 @@ BUSINESSES = {
 
 CATEGORIES = {
     'hospitals': {
-        'title': 'Hospitals & Healthcare', 'icon': '🏥', 'search_hint': 'Search hospital name, doctor or location (e.g. Saidu)...', 'info_title': '👨‍⚕️ Doctors, Clinic & Timings', 'extra_title': '🔬 Available Tests & Medical Services',
+        'title': 'Hospitals & Healthcare', 'icon': '🏥', 'place_label': 'Hospitals', 'staff_label': 'Doctors',
+        'search_all_ph': 'Search hospital name, doctor or location (e.g. Saidu)...',
+        'search_doc_ph': '🔍 Search Doctors by name, specialty (e.g. Cardiologist, Dr. Ali)...',
+        'search_place_ph': '🏥 Search Hospitals or Clinics by name or location...',
+        'info_title': '👨‍⚕️ Doctors, Clinic & Timings', 'extra_title': '🔬 Available Tests & Medical Services',
         'subcategories': ['General Hospital', 'Dental Clinic', 'Eye Specialist', 'Cardiology Clinic', 'Laboratory & Diagnostics'],
         'biz_ph': 'e.g. Saidu Teaching Hospital',
         'staff_heading': '🩺 Doctors, Clinic & Timings',
@@ -141,7 +145,11 @@ CATEGORIES = {
         'ph_phone': 'Appointment Phone Number(s) (comma separated)'
     },
     'pharmacies': {
-        'title': 'Pharmacies & Medical Stores', 'icon': '💊', 'search_hint': 'Search medicine, store or place...', 'info_title': '🧑‍⚕️ Qualified Pharmacists & Staff', 'extra_title': '💊 Available Medicines & Supplies',
+        'title': 'Pharmacies & Medical Stores', 'icon': '💊', 'place_label': 'Pharmacies', 'staff_label': 'Pharmacists',
+        'search_all_ph': 'Search medicine, store or location...',
+        'search_doc_ph': '🧑‍⚕️ Search Pharmacist or Staff by name...',
+        'search_place_ph': '💊 Search Pharmacy or Medical Store by name...',
+        'info_title': '🧑‍⚕️ Qualified Pharmacists & Staff', 'extra_title': '💊 Available Medicines & Supplies',
         'subcategories': ['Medical Store', 'Homeopathic Store', 'Herbal & Organic', 'Surgical Equipment'],
         'biz_ph': 'e.g. Swat City Pharmacy',
         'staff_heading': '🧑‍⚕️ Pharmacists & Key Staff',
@@ -158,7 +166,11 @@ CATEGORIES = {
         'ph_phone': 'Direct Phone / WhatsApp (comma separated)'
     },
     'restaurants': {
-        'title': 'Restaurants & Cafes', 'icon': '🍽️', 'search_hint': 'Search restaurant, dish or location (e.g. Fizagat)...', 'info_title': '👨‍🍳 Chefs & Dining Features', 'extra_title': '🍲 Menu, Special Dishes & Prices',
+        'title': 'Restaurants & Cafes', 'icon': '🍽️', 'place_label': 'Restaurants', 'staff_label': 'Chefs',
+        'search_all_ph': 'Search restaurant, dish or location (e.g. Fizagat)...',
+        'search_doc_ph': '👨‍🍳 Search Chef or Manager by name...',
+        'search_place_ph': '🍽️ Search Restaurants or Cafes by name...',
+        'info_title': '👨‍🍳 Chefs & Dining Features', 'extra_title': '🍲 Menu, Special Dishes & Prices',
         'subcategories': ['Traditional / Shinwari', 'Fast Food & Burgers', 'BBQ & Grill', 'Coffee Shop & Cafe', 'Desi Restaurant'],
         'biz_ph': 'e.g. Khyber Shinwari Restaurant',
         'staff_heading': '👨‍🍳 Chefs, Staff & Dining Features',
@@ -175,7 +187,11 @@ CATEGORIES = {
         'ph_phone': 'Order / Booking Phone Number(s)'
     },
     'supermarts': {
-        'title': 'Supermarts & Grocery', 'icon': '🛒', 'search_hint': 'Search store, item or area...', 'info_title': '🏬 Store Facilities & Staff', 'extra_title': '🛍️ Available Groceries & Products',
+        'title': 'Supermarts & Grocery', 'icon': '🛒', 'place_label': 'Supermarts', 'staff_label': 'Staff',
+        'search_all_ph': 'Search store, item or area...',
+        'search_doc_ph': '🏬 Search Store Contact Person / Manager...',
+        'search_place_ph': '🛒 Search Supermarts or Stores by name...',
+        'info_title': '🏬 Store Facilities & Staff', 'extra_title': '🛍️ Available Groceries & Products',
         'subcategories': ['General Store', 'Supermarket', 'Vegetables & Fruits', 'Bakery & Sweets'],
         'biz_ph': 'e.g. Swat Supermart',
         'staff_heading': '🏬 Store Management & Contacts',
@@ -192,7 +208,11 @@ CATEGORIES = {
         'ph_phone': 'Home Delivery Phone Number(s)'
     },
     'property': {
-        'title': 'Property Dealers', 'icon': '🏠', 'search_hint': 'Search plot, house or dealer...', 'info_title': '🧑‍💼 Agents & Dealers', 'extra_title': '🏡 Featured Plots & Properties',
+        'title': 'Property Dealers', 'icon': '🏠', 'place_label': 'Agencies', 'staff_label': 'Agents',
+        'search_all_ph': 'Search plot, house or dealer...',
+        'search_doc_ph': '🧑‍💼 Search Real Estate Agent by name...',
+        'search_place_ph': '🏠 Search Real Estate Agency or Office...',
+        'info_title': '🧑‍💼 Agents & Dealers', 'extra_title': '🏡 Featured Plots & Properties',
         'subcategories': ['Plot & Land Dealer', 'House & Villa Rentals', 'Commercial Plaza', 'Real Estate Agency'],
         'biz_ph': 'e.g. Swat Real Estate Agency',
         'staff_heading': '🧑‍💼 Real Estate Agents & Consultants',
@@ -209,7 +229,11 @@ CATEGORIES = {
         'ph_phone': 'Agent Direct Phone / WhatsApp'
     },
     'hotels': {
-        'title': 'Hotels & Guest Houses', 'icon': '🏨', 'search_hint': 'Search hotel or area...', 'info_title': '🛎️ Management & Reception', 'extra_title': '🛏️ Rooms, Rates & Facilities',
+        'title': 'Hotels & Guest Houses', 'icon': '🏨', 'place_label': 'Hotels', 'staff_label': 'Receptionists',
+        'search_all_ph': 'Search hotel or area...',
+        'search_doc_ph': '🛎️ Search Reception / Manager by name...',
+        'search_place_ph': '🏨 Search Hotels or Guest Houses...',
+        'info_title': '🛎️ Management & Reception', 'extra_title': '🛏️ Rooms, Rates & Facilities',
         'subcategories': ['Luxury Hotel', 'Guest House', 'Resort', 'Budget Inn'],
         'biz_ph': 'e.g. Swat Serena Hotel',
         'staff_heading': '🛎️ Front Desk & Reception Contacts',
@@ -226,7 +250,11 @@ CATEGORIES = {
         'ph_phone': 'Booking Phone / WhatsApp Number(s)'
     },
     'education': {
-        'title': 'Educational Institutes', 'icon': '🎓', 'search_hint': 'Search school, college, university or place (e.g. Saidu)...', 'info_title': '👨‍🏫 Faculty & Teachers Info', 'extra_title': '📚 Offered Courses & Programs',
+        'title': 'Educational Institutes', 'icon': '🎓', 'place_label': 'Institutes', 'staff_label': 'Faculty',
+        'search_all_ph': 'Search school, college, university or place (e.g. Saidu)...',
+        'search_doc_ph': '👨‍🏫 Search Principal, Teacher or Faculty Name...',
+        'search_place_ph': '🎓 Search School, College or Institute Name...',
+        'info_title': '👨‍🏫 Faculty & Teachers Info', 'extra_title': '📚 Offered Courses & Programs',
         'subcategories': ['School', 'School & College', 'College', 'University', 'Academy & Tuition', 'Language & Computer Center'],
         'biz_ph': 'e.g. Swat Public School & College',
         'staff_heading': '👨‍🏫 Principal, Faculty & Admin Staff',
@@ -271,6 +299,18 @@ ANIMATION_STYLES = '''
 
     .card-hover-effect { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
     .card-hover-effect:hover { transform: translateY(-4px); border-color: #3b82f6; box-shadow: 0 12px 28px -6px rgba(0, 0, 0, 0.15), 0 0 15px rgba(59, 130, 246, 0.2); }
+
+    /* ANIMATED TOGGLE BUTTONS */
+    .mode-toggle-btn {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+    }
+    .mode-toggle-btn.active {
+        background-color: #2563eb !important;
+        color: #ffffff !important;
+        box-shadow: 0 4px 14px rgba(37, 99, 235, 0.4);
+        transform: scale(1.05);
+    }
 </style>
 '''
 
@@ -497,42 +537,42 @@ def category_page(cat_slug):
         })
     biz_json_data = json.dumps(biz_data_list)
 
+    initial_ph = cat['search_all_ph']
+    if search_mode == 'doctors':
+        initial_ph = cat['search_doc_ph']
+    elif search_mode == 'hospitals':
+        initial_ph = cat['search_place_ph']
+
     html = get_base_head(back_url="/", back_text="Back to Home") + '''
     <main class="max-w-7xl mx-auto px-4 py-12 animate-fade-in">
         <div class="mb-8 text-center">
             <span class="text-6xl inline-block animate-bounce">''' + cat['icon'] + '''</span>
             <h2 class="text-4xl font-extrabold mt-4 text-gray-900 dark:text-white">''' + cat['title'] + '''</h2>
             
-            <!-- SEARCH BAR WRAPPER WITH TOP-LEFT COMPACT FILTER TOGGLE -->
             <div class="mt-6 max-w-2xl mx-auto">
-                <form method="GET" action="/category/''' + cat_slug + '''" class="space-y-2 text-left">
+                <form id="searchForm" method="GET" action="/category/''' + cat_slug + '''" class="space-y-2 text-left">
                     <input type="hidden" name="subcat" value="''' + selected_subcat + '''">
+                    <input type="hidden" id="modeInput" name="mode" value="''' + search_mode + '''">
                     
-                    <!-- COMPACT MODE TOGGLE (TOP LEFT OF SEARCH BAR) -->
                     <div class="flex items-center justify-between px-1">
-                        <div class="inline-flex items-center gap-1.5 bg-gray-200/80 dark:bg-gray-800/90 p-1 rounded-xl text-[11px] font-bold border border-gray-300 dark:border-gray-700/80">
-                            <label class="cursor-pointer px-2.5 py-1 rounded-lg transition flex items-center gap-1 ` + ('bg-blue-600 text-white shadow-sm' if search_mode == 'all' else 'text-gray-600 dark:text-gray-400 hover:text-white') + `">
-                                <input type="radio" name="mode" value="all" ` + ('checked' if search_mode == 'all' else '') + ` onclick="this.form.submit()" class="hidden">
+                        <div class="inline-flex items-center gap-1 bg-gray-200/80 dark:bg-gray-800/90 p-1 rounded-xl text-[11px] font-bold border border-gray-300 dark:border-gray-700/80 shadow-inner">
+                            <button type="button" onclick="setSearchMode('all')" id="btnModeAll" class="mode-toggle-btn px-3 py-1 rounded-lg text-gray-600 dark:text-gray-300 flex items-center gap-1 ` + ('active' if search_mode == 'all' else '') + `">
                                 🔍 All
-                            </label>
-                            <label class="cursor-pointer px-2.5 py-1 rounded-lg transition flex items-center gap-1 ` + ('bg-blue-600 text-white shadow-sm' if search_mode == 'doctors' else 'text-gray-600 dark:text-gray-400 hover:text-white') + `">
-                                <input type="radio" name="mode" value="doctors" ` + ('checked' if search_mode == 'doctors' else '') + ` onclick="this.form.submit()" class="hidden">
-                                👨‍⚕️ Doctors
-                            </label>
-                            <label class="cursor-pointer px-2.5 py-1 rounded-lg transition flex items-center gap-1 ` + ('bg-blue-600 text-white shadow-sm' if search_mode == 'hospitals' else 'text-gray-600 dark:text-gray-400 hover:text-white') + `">
-                                <input type="radio" name="mode" value="hospitals" ` + ('checked' if search_mode == 'hospitals' else '') + ` onclick="this.form.submit()" class="hidden">
-                                🏥 Places
-                            </label>
+                            </button>
+                            <button type="button" onclick="setSearchMode('doctors')" id="btnModeDoc" class="mode-toggle-btn px-3 py-1 rounded-lg text-gray-600 dark:text-gray-300 flex items-center gap-1 ` + ('active' if search_mode == 'doctors' else '') + `">
+                                👨‍⚕️ ''' + cat['staff_label'] + '''
+                            </button>
+                            <button type="button" onclick="setSearchMode('hospitals')" id="btnModePlace" class="mode-toggle-btn px-3 py-1 rounded-lg text-gray-600 dark:text-gray-300 flex items-center gap-1 ` + ('active' if search_mode == 'hospitals' else '') + `">
+                                🏥 ''' + cat['place_label'] + '''
+                            </button>
                         </div>
-                        <span class="text-[10px] text-gray-500 dark:text-gray-400 hidden sm:inline">Filter search target</span>
+                        <span class="text-[10px] text-gray-500 dark:text-gray-400 hidden sm:inline">Filter target mode</span>
                     </div>
 
-                    <!-- FULL WIDTH BIG SEARCH BAR -->
                     <div class="relative flex items-center gap-2">
                         <div class="relative w-full">
-                            <input type="text" id="searchInput" name="q" value="''' + search_query + '''" placeholder="''' + cat['search_hint'] + '''" autocomplete="off" class="w-full px-6 py-4 rounded-2xl bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-800 text-gray-900 dark:text-white input-hover-effect outline-none text-base shadow-sm">
+                            <input type="text" id="searchInput" name="q" value="''' + search_query + '''" placeholder="''' + initial_ph + '''" autocomplete="off" class="w-full px-6 py-4 rounded-2xl bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-800 text-gray-900 dark:text-white input-hover-effect outline-none text-base shadow-sm">
                             
-                            <!-- FIXED & NEAT DROPDOWN SUGGESTIONS -->
                             <div id="suggestionsDropdown" class="absolute left-0 right-0 top-full mt-2 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-2xl z-50 max-h-80 overflow-y-auto hidden"></div>
                         </div>
                         <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-white px-8 py-4 rounded-2xl font-bold btn-hover-effect shadow-md flex-shrink-0 text-base">Search</button>
@@ -540,7 +580,6 @@ def category_page(cat_slug):
                 </form>
             </div>
 
-            <!-- SUBCATEGORY FILTER PILLS -->
             <div class="mt-6 flex flex-wrap justify-center gap-2 max-w-4xl mx-auto">
                 ''' + pills_html + '''
             </div>
@@ -553,6 +592,32 @@ def category_page(cat_slug):
 
     <script>
         var categoryBusinesses = ''' + biz_json_data + ''';
+        var catPhAll = "''' + cat['search_all_ph'] + '''";
+        var catPhDoc = "''' + cat['search_doc_ph'] + '''";
+        var catPhPlace = "''' + cat['search_place_ph'] + '''";
+
+        function setSearchMode(mode) {
+            document.getElementById('modeInput').value = mode;
+            var input = document.getElementById('searchInput');
+
+            document.getElementById('btnModeAll').classList.remove('active');
+            document.getElementById('btnModeDoc').classList.remove('active');
+            document.getElementById('btnModePlace').classList.remove('active');
+
+            if (mode === 'doctors') {
+                document.getElementById('btnModeDoc').classList.add('active');
+                input.placeholder = catPhDoc;
+            } else if (mode === 'hospitals') {
+                document.getElementById('btnModePlace').classList.add('active');
+                input.placeholder = catPhPlace;
+            } else {
+                document.getElementById('btnModeAll').classList.add('active');
+                input.placeholder = catPhAll;
+            }
+
+            var event = new Event('input', { bubbles: true });
+            input.dispatchEvent(event);
+        }
 
         window.addEventListener('DOMContentLoaded', function() {
             var input = document.getElementById('searchInput');
@@ -562,8 +627,7 @@ def category_page(cat_slug):
 
             input.addEventListener('input', function() {
                 var q = this.value.trim().toLowerCase();
-                var modeRadio = document.querySelector('input[name="mode"]:checked');
-                var currentMode = modeRadio ? modeRadio.value : 'all';
+                var currentMode = document.getElementById('modeInput').value || 'all';
                 
                 dropdown.innerHTML = '';
                 
@@ -762,7 +826,6 @@ def business_detail(b_id):
             gallery_html += f'<img src="{img_url}" onclick="openImageZoom(\'{img_url}\')" title="Click to zoom" class="w-full h-48 md:h-56 object-cover rounded-2xl border border-gray-200 dark:border-gray-800 hover:scale-105 transition duration-300 shadow-md cursor-pointer">'
 
     html = get_base_head(back_url=category_back_url, back_text="Back to Category") + '''
-    <!-- Image Zoom Lightbox Modal -->
     <div id="imageZoomModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-[99] flex items-center justify-center hidden p-4" onclick="closeImageZoom()">
         <div class="relative max-w-4xl max-h-[90vh] flex items-center justify-center animate-modal" onclick="event.stopPropagation()">
             <button type="button" onclick="closeImageZoom()" class="absolute -top-12 right-0 text-white hover:text-gray-300 text-2xl font-bold bg-gray-800/80 w-10 h-10 rounded-full flex items-center justify-center shadow-lg">×</button>
@@ -770,7 +833,6 @@ def business_detail(b_id):
         </div>
     </div>
 
-    <!-- Doctor Info Popup Modal -->
     <div id="doctorModal" class="fixed inset-0 bg-black/60 dark:bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
         <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-6 md:p-8 max-w-md w-full shadow-2xl animate-modal space-y-4">
             <div class="flex justify-between items-start">
@@ -814,17 +876,14 @@ def business_detail(b_id):
                 </div>
             </div>
 
-            <!-- Photos Gallery Grid -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                 ''' + gallery_html + '''
             </div>
 
-            <!-- In-Page Live Doctor Search Box -->
             <div class="bg-gray-50 dark:bg-gray-950 p-3 rounded-2xl border border-gray-200 dark:border-gray-800">
                 <input type="text" id="pageDetailSearch" onkeyup="filterPageStaff()" placeholder="🔍 Quick Search Doctors, Specialty or Services (e.g. Cardiologist, MRI, Dr. Ali)..." class="w-full p-2.5 rounded-xl bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-800 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
             </div>
 
-            <!-- COMPACT & EXPANDABLE TESTS & SERVICES SECTION -->
             <div id="testsSectionBlock" class="bg-gray-50 dark:bg-gray-950 p-4 rounded-2xl border border-gray-200 dark:border-gray-800 space-y-2 transition-all duration-300">
                 <div class="flex justify-between items-center cursor-pointer" onclick="toggleTestsExpand()">
                     <h3 class="text-sm font-extrabold text-gray-900 dark:text-white flex items-center gap-2">
@@ -844,7 +903,6 @@ def business_detail(b_id):
                 </div>
             </div>
 
-            <!-- DOCTORS & STAFF SECTION -->
             <div id="doctorsSectionBlock" class="space-y-3 pt-2 border-t border-gray-100 dark:border-gray-800">
                 <h3 class="text-lg font-black text-gray-900 dark:text-white">''' + cat_meta['info_title'] + '''</h3>
                 <div id="doctorsListGrid" class="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -1065,7 +1123,6 @@ def register():
                     <input type="text" name="phone" required placeholder="e.g. +92 300 1234567, +92 946 9240125" class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white input-hover-effect outline-none text-sm">
                 </div>
 
-                <!-- MULTIPLE MAIN IMAGES SECTION -->
                 <div class="pt-2 border-t border-gray-100 dark:border-gray-800 space-y-3">
                     <label class="block text-xs font-bold text-gray-700 dark:text-gray-300">🖼️ Main / Gallery Pictures (Multiple Pictures Allowed)</label>
                     <div id="mainImagesContainer" class="space-y-3">
@@ -1374,10 +1431,6 @@ def register():
     ''' + FOOTER
     return render_template_string(html)
 
-# ==========================================
-# ADMIN SYSTEM ROUTES
-# ==========================================
-
 @app.route('/admin', methods=['GET', 'POST'])
 @app.route('/admin/login', methods=['GET', 'POST'])
 def admin_login():
@@ -1617,10 +1670,6 @@ def admin_delete_business(b_id):
 def admin_logout():
     session.pop('admin_logged_in', None)
     return redirect(url_for('home'))
-
-# ==========================================
-# CLIENT LOGIN & DASHBOARD ROUTES
-# ==========================================
 
 @app.route('/client/login', methods=['GET', 'POST'])
 def client_login():
