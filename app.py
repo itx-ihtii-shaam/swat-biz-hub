@@ -1,10 +1,8 @@
-"""SwatBiz Hub - Complete Original Code with 4-Digit Email Verification, Forgot Password, Admin Preview & Clean Notifications."""
+"""SwatBiz Hub - Perfectly Aligned Tabs & Google Maps Live Navigation."""
 from datetime import datetime, timedelta
 import os
 import json
 import urllib.parse
-import re
-import random
 from flask import Flask, abort, redirect, render_template_string, request, url_for, session
 
 SITE_NAME = 'SwatBiz Hub'
@@ -12,21 +10,6 @@ ADMIN_PASSWORD = 'admin123'
 
 app = Flask(__name__)
 app.secret_key = 'swat_biz_hub_secret_key'
-
-EMAIL_VERIFICATION_CODES = {}
-
-def get_google_maps_url(name, address):
-    """Smart Google Maps URL builder: extracts GPS coords if available, else builds name+address query."""
-    if not address:
-        return f"https://www.google.com/maps/search/?api=1&query={urllib.parse.quote(name)}"
-    
-    coords_match = re.search(r'(-?\d+\.\d+),\s*(-?\d+\.\d+)', address)
-    if coords_match:
-        lat, lon = coords_match.groups()
-        return f"https://www.google.com/maps?q={lat},{lon}"
-    else:
-        query_str = f"{name} {address}".strip()
-        return f"https://www.google.com/maps/search/?api=1&query={urllib.parse.quote(query_str)}"
 
 BUSINESSES = {
     '1': {
@@ -70,6 +53,72 @@ BUSINESSES = {
         'tests_dishes': 'MRI, CT Scan, X-Ray, Ultrasound, Emergency Care, Blood Bank Services, ICU & CCU Facilities, OPD & IPD Services, Pathology Lab',
         'extra_img': 'https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&w=800&q=80',
         'client_email': 'owner1@swatbiz.com',
+        'client_password': 'client123'
+    },
+    '2': {
+        'id': '2',
+        'category': 'restaurants',
+        'subcategory': 'Traditional / Shinwari',
+        'name': 'Khyber Shinwari Restaurant',
+        'address': 'Fizagat, Swat',
+        'phones': ['+92 946 881122'],
+        'image': 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=800&q=80',
+        'images': ['https://images.unsplash.com/photo-1555396273-367ea4eb4db5?auto=format&fit=crop&w=800&q=80'],
+        'status': 'pending',
+        'payment_method': 'EasyPaisa',
+        'payment_ref': 'EP-8837261',
+        'payment_status': 'pending',
+        'joining_date': datetime.now(),
+        'expiry_date': datetime.now() + timedelta(days=60),
+        'doctors': [
+            {
+                'name': 'Chef Rashid',
+                'specialty': 'Master Grill & BBQ Chef',
+                'qualifications': '15+ Years Culinary Experience',
+                'appt_timing': '12:00 PM - 11:00 PM',
+                'clinic_timing': 'Daily Open',
+                'room': 'Main Grill Section / Family Cabin',
+                'appt_numbers': '+92 946 881122',
+                'doc_image': ''
+            }
+        ],
+        'special_info': 'Special Family Cabin Available | Chef Rashid',
+        'tests_dishes': 'Dumba Karahi (Rs. 2400/kg), Shinwari Tikka (Rs. 1800/kg), Mutton Kabab, Green Tea',
+        'extra_img': '',
+        'client_email': 'owner2@swatbiz.com',
+        'client_password': 'client123'
+    },
+    '3': {
+        'id': '3',
+        'category': 'education',
+        'subcategory': 'School & College',
+        'name': 'Swat Public School & Science College',
+        'address': 'Saidu Sharif, Mingora, Swat',
+        'phones': ['+92 946 720111'],
+        'image': 'https://images.unsplash.com/photo-1562774053-701939374585?auto=format&fit=crop&w=800&q=80',
+        'images': ['https://images.unsplash.com/photo-1562774053-701939374585?auto=format&fit=crop&w=800&q=80'],
+        'status': 'approved',
+        'payment_method': 'JazzCash',
+        'payment_ref': 'JC-5528190',
+        'payment_status': 'paid',
+        'joining_date': datetime.now() - timedelta(days=5),
+        'expiry_date': datetime.now() + timedelta(days=55),
+        'doctors': [
+            {
+                'name': 'Prof. Shah Zarin',
+                'specialty': 'Principal & Academic Head',
+                'qualifications': 'M.Phil Education, Gold Medalist',
+                'appt_timing': '8:00 AM - 2:00 PM',
+                'clinic_timing': 'Mon - Sat',
+                'room': 'Main Administration Block',
+                'appt_numbers': '+92 946 720111',
+                'doc_image': ''
+            }
+        ],
+        'special_info': 'Prof. Shah Zarin (Principal), Admissions open for Metric & FSc',
+        'tests_dishes': 'Science Labs, Computer Labs, Library, Sports Ground',
+        'extra_img': '',
+        'client_email': 'owner3@swatbiz.com',
         'client_password': 'client123'
     }
 }
@@ -252,40 +301,24 @@ ANIMATION_STYLES = '''
     .card-hover-effect { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
     .card-hover-effect:hover { transform: translateY(-4px); border-color: #3b82f6; box-shadow: 0 12px 28px -6px rgba(0, 0, 0, 0.15), 0 0 15px rgba(59, 130, 246, 0.2); }
 
-    /* DYNAMIC LIGHT / DARK MODE TOGGLE BUTTONS */
+    /* DARK SOBER ELEGANT MODE TOGGLE BUTTONS */
     .mode-toggle-btn {
         transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-        border: 1px solid rgba(203, 213, 225, 0.8);
-        background-color: #f1f5f9;
-        color: #475569;
-    }
-    .light .mode-toggle-btn:hover {
-        background-color: #e2e8f0;
-        color: #0f172a;
-    }
-    .light .mode-toggle-btn.active {
-        background-color: #2563eb !important;
-        color: #ffffff !important;
-        border-color: #1d4ed8 !important;
-        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
-        font-weight: 800;
-    }
-    
-    .dark .mode-toggle-btn {
         border: 1px solid rgba(255, 255, 255, 0.1);
         background-color: rgba(15, 23, 42, 0.6);
         color: #94a3b8;
     }
-    .dark .mode-toggle-btn:hover {
+    .mode-toggle-btn:hover {
         background-color: rgba(30, 41, 59, 0.9);
         color: #f8fafc;
         border-color: rgba(255, 255, 255, 0.25);
     }
-    .dark .mode-toggle-btn.active {
+    .mode-toggle-btn.active {
         background-color: #1e293b !important;
         color: #ffffff !important;
         border: 1.5px solid #475569 !important;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255,255,255,0.15);
+        transform: translateY(-1px);
         font-weight: 800;
     }
 </style>
@@ -490,7 +523,7 @@ def category_page(cat_slug):
     cards = ""
     for b in filtered:
         subcat_badge = '<span class="bg-indigo-100 dark:bg-indigo-600/20 text-indigo-700 dark:text-indigo-400 text-xs px-2.5 py-1 rounded-md font-semibold">' + b.get('subcategory', 'General') + '</span>' if b.get('subcategory') else ''
-        map_url = get_google_maps_url(b['name'], b['address'])
+        map_url = f"https://www.google.com/maps/search/?api=1&query={urllib.parse.quote(b['name'] + ' ' + b['address'])}"
         
         cards += '''
         <a href="/business/''' + b['id'] + '''" class="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800/80 overflow-hidden card-hover-effect flex flex-col justify-between group shadow-sm dark:shadow-lg animate-modal">
@@ -540,9 +573,9 @@ def category_page(cat_slug):
                     <input type="hidden" name="subcat" value="''' + selected_subcat + '''">
                     <input type="hidden" id="modeInput" name="mode" value="''' + search_mode + '''">
                     
-                    <!-- DYNAMIC LIGHT & DARK MODE COMPATIBLE TOGGLE BUTTONS -->
+                    <!-- PERFECTLY ALIGNED TABS TO LEFT WITH NO EXTRA TEXT -->
                     <div class="flex items-center justify-start mb-1">
-                        <div class="inline-flex items-center gap-1.5 bg-gray-200/80 dark:bg-slate-900/90 p-1.5 rounded-2xl border border-gray-300 dark:border-gray-800 shadow-md">
+                        <div class="inline-flex items-center gap-1.5 bg-slate-900/90 dark:bg-slate-900/90 p-1.5 rounded-2xl border border-gray-800 shadow-lg">
                             <button type="button" onclick="setSearchMode('all')" id="btnModeAll" class="mode-toggle-btn px-3.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1 ` + ('active' if search_mode == 'all' else '') + `">
                                 🔍 All
                             </button>
@@ -817,7 +850,7 @@ def business_detail(b_id):
         if img_url:
             gallery_html += f'<img src="{img_url}" onclick="openImageZoom(\'{img_url}\')" title="Click to zoom" class="w-full h-48 md:h-56 object-cover rounded-2xl border border-gray-200 dark:border-gray-800 hover:scale-105 transition duration-300 shadow-md cursor-pointer">'
 
-    map_direct_url = get_google_maps_url(b['name'], b['address'])
+    map_direct_url = f"https://www.google.com/maps/search/?api=1&query={urllib.parse.quote(b['name'] + ' ' + b['address'])}"
 
     html = get_base_head(back_url=category_back_url, back_text="Back to Category") + '''
     <div id="imageZoomModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-[99] flex items-center justify-center hidden p-4" onclick="closeImageZoom()">
@@ -994,125 +1027,76 @@ def business_detail(b_id):
     ''' + FOOTER
     return render_template_string(html)
 
-# --- 4-DIGIT EMAIL VERIFICATION & REGISTRATION FLOW ---
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     error_msg = ""
     if request.method == 'POST':
-        step = request.form.get('step', 'init')
+        name = request.form.get('name', '').strip()
+        category = request.form.get('category', '').strip()
+        subcategory = request.form.get('subcategory', '').strip()
+        address = request.form.get('address', '').strip()
+        raw_phones = request.form.get('phone', '').strip()
+        phones_list = [p.strip() for p in raw_phones.split(',') if p.strip()]
+        client_email = request.form.get('client_email', '').strip().lower()
+        client_password = request.form.get('client_password', '').strip()
+        tests_dishes = request.form.get('tests_dishes', '').strip()
+        extra_img = request.form.get('extra_img', '').strip()
         
-        if step == 'init':
-            name = request.form.get('name', '').strip()
-            category = request.form.get('category', '').strip()
-            address = request.form.get('address', '').strip()
-            raw_phones = request.form.get('phone', '').strip()
-            phones_list = [p.strip() for p in raw_phones.split(',') if p.strip()]
-            client_email = request.form.get('client_email', '').strip().lower()
-            client_password = request.form.get('client_password', '').strip()
-            tests_dishes = request.form.get('tests_dishes', '').strip()
-            extra_img = request.form.get('extra_img', '').strip()
-            
-            main_images = [img.strip() for img in request.form.getlist('main_images') if img.strip()]
-            if not main_images:
-                main_images = ['https://images.unsplash.com/photo-1557804506-669a67965ba0?auto=format&fit=crop&w=800&q=80']
+        main_images = [img.strip() for img in request.form.getlist('main_images') if img.strip()]
+        if not main_images:
+            main_images = ['https://images.unsplash.com/photo-1557804506-669a67965ba0?auto=format&fit=crop&w=800&q=80']
 
-            doc_names = request.form.getlist('doc_name')
-            doc_specs = request.form.getlist('doc_spec')
-            doc_quals = request.form.getlist('doc_qual')
-            doc_appts = request.form.getlist('doc_appt')
-            doc_clinics = request.form.getlist('doc_clinic')
-            doc_rooms = request.form.getlist('doc_room')
-            doc_phones = request.form.getlist('doc_phone')
-            doc_images = request.form.getlist('doc_image')
-            
-            doctors_list = []
-            for i in range(len(doc_names)):
-                if doc_names[i].strip():
-                    doctors_list.append({
-                        'name': doc_names[i].strip(),
-                        'specialty': doc_specs[i].strip() if i < len(doc_specs) else '',
-                        'qualifications': doc_quals[i].strip() if i < len(doc_quals) else '',
-                        'appt_timing': doc_appts[i].strip() if i < len(doc_appts) else '',
-                        'clinic_timing': doc_clinics[i].strip() if i < len(doc_clinics) else '',
-                        'room': doc_rooms[i].strip() if i < len(doc_rooms) else '',
-                        'appt_numbers': doc_phones[i].strip() if i < len(doc_phones) and doc_phones[i].strip() else raw_phones,
-                        'doc_image': doc_images[i].strip() if i < len(doc_images) else ''
-                    })
-            
-            if name and category and client_email and client_password:
-                v_code = str(random.randint(1000, 9999))
-                EMAIL_VERIFICATION_CODES[client_email] = v_code
-                
-                session['pending_reg'] = {
-                    'name': name,
-                    'category': category,
-                    'subcategory': request.form.get('subcategory', '').strip() or 'General',
-                    'address': address,
-                    'phones': phones_list if phones_list else ['+92 300 0000000'],
-                    'image': main_images[0],
-                    'images': main_images,
-                    'doctors': doctors_list,
-                    'tests_dishes': tests_dishes,
-                    'extra_img': extra_img,
-                    'client_email': client_email,
-                    'client_password': client_password
-                }
-                
-                return get_base_head() + f'''
-                <main class="max-w-md mx-auto px-4 py-12 animate-fade-in">
-                    <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-8 shadow-2xl space-y-6 text-center animate-modal">
-                        <span class="text-5xl inline-block">✉️</span>
-                        <h1 class="text-2xl font-black text-gray-900 dark:text-white">Verify Your Email</h1>
-                        <p class="text-xs text-gray-500 dark:text-gray-400">We have sent a secure 4-digit verification code to <strong class="text-blue-500">{client_email}</strong>.</p>
-                        <div class="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-xl border border-blue-200 dark:border-blue-800 text-xs text-blue-600 dark:text-blue-300 font-bold">
-                            [Simulated Inbox] Your 4-Digit Code is: {v_code}
-                        </div>
-                        <form method="POST" class="space-y-4 pt-2">
-                            <input type="hidden" name="step" value="verify">
-                            <input type="text" name="code" required maxlength="4" placeholder="Enter 4-digit code" class="w-full p-4 text-center text-2xl font-black tracking-widest rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white outline-none">
-                            <button type="submit" class="w-full bg-blue-600 text-white py-3.5 rounded-xl font-bold btn-hover-effect">Verify & Complete Registration</button>
-                        </form>
-                    </div>
-                </main>
-                ''' + FOOTER
-            else:
-                error_msg = "Please fill in all required fields."
-                
-        elif step == 'verify':
-            entered_code = request.form.get('code', '').strip()
-            pending = session.get('pending_reg', {})
-            email = pending.get('client_email')
-            
-            if email and EMAIL_VERIFICATION_CODES.get(email) == entered_code:
-                new_id = str(len(BUSINESSES) + 1)
-                BUSINESSES[new_id] = {
-                    'id': new_id,
-                    'category': pending.get('category'),
-                    'subcategory': pending.get('subcategory'),
-                    'name': pending.get('name'),
-                    'address': pending.get('address'),
-                    'phones': pending.get('phones'),
-                    'image': pending.get('image'),
-                    'images': pending.get('images'),
-                    'status': 'pending',
-                    'payment_method': 'Bank Transfer / JazzCash',
-                    'payment_ref': 'PENDING-VERIFY',
-                    'payment_status': 'pending',
-                    'joining_date': datetime.now(),
-                    'expiry_date': datetime.now() + timedelta(days=30),
-                    'doctors': pending.get('doctors', []),
-                    'special_info': f"{len(pending.get('doctors', []))} Staff / Specialist(s) Registered",
-                    'tests_dishes': pending.get('tests_dishes') or 'Services available.',
-                    'extra_img': pending.get('extra_img'),
-                    'client_email': email,
-                    'client_password': pending.get('client_password')
-                }
-                session.pop('pending_reg', None)
-                EMAIL_VERIFICATION_CODES.pop(email, None)
-                session['client_logged_email'] = email
-                return redirect(url_for('client_dashboard'))
-            else:
-                error_msg = "Invalid 4-digit verification code! Please try again."
+        doc_names = request.form.getlist('doc_name')
+        doc_specs = request.form.getlist('doc_spec')
+        doc_quals = request.form.getlist('doc_qual')
+        doc_appts = request.form.getlist('doc_appt')
+        doc_clinics = request.form.getlist('doc_clinic')
+        doc_rooms = request.form.getlist('doc_room')
+        doc_phones = request.form.getlist('doc_phone')
+        doc_images = request.form.getlist('doc_image')
+        
+        doctors_list = []
+        for i in range(len(doc_names)):
+            if doc_names[i].strip():
+                doctors_list.append({
+                    'name': doc_names[i].strip(),
+                    'specialty': doc_specs[i].strip() if i < len(doc_specs) else '',
+                    'qualifications': doc_quals[i].strip() if i < len(doc_quals) else '',
+                    'appt_timing': doc_appts[i].strip() if i < len(doc_appts) else '',
+                    'clinic_timing': doc_clinics[i].strip() if i < len(doc_clinics) else '',
+                    'room': doc_rooms[i].strip() if i < len(doc_rooms) else '',
+                    'appt_numbers': doc_phones[i].strip() if i < len(doc_phones) and doc_phones[i].strip() else raw_phones,
+                    'doc_image': doc_images[i].strip() if i < len(doc_images) else ''
+                })
+        
+        if name and category and client_email and client_password:
+            new_id = str(len(BUSINESSES) + 1)
+            BUSINESSES[new_id] = {
+                'id': new_id,
+                'category': category,
+                'subcategory': subcategory if subcategory else 'General',
+                'name': name,
+                'address': address,
+                'phones': phones_list if phones_list else ['+92 300 0000000'],
+                'image': main_images[0],
+                'images': main_images,
+                'status': 'pending',
+                'payment_method': 'Bank Transfer / JazzCash',
+                'payment_ref': 'PENDING-VERIFY',
+                'payment_status': 'pending',
+                'joining_date': datetime.now(),
+                'expiry_date': datetime.now() + timedelta(days=30),
+                'doctors': doctors_list,
+                'special_info': f"{len(doctors_list)} Staff / Specialist(s) Registered",
+                'tests_dishes': tests_dishes if tests_dishes else 'Services available.',
+                'extra_img': extra_img,
+                'client_email': client_email,
+                'client_password': client_password
+            }
+            session['client_logged_email'] = client_email
+            return redirect(url_for('client_dashboard'))
+        else:
+            error_msg = "Please fill in all required fields."
 
     cats_options = "".join([f'<option value="{k}">{v["title"]}</option>' for k, v in CATEGORIES.items()])
     categories_json = json.dumps(CATEGORIES)
@@ -1135,11 +1119,10 @@ def register():
             <div class="text-center space-y-2">
                 <span class="text-5xl inline-block">🚀</span>
                 <h1 class="text-2xl font-black text-gray-900 dark:text-white">Register Your Business</h1>
-                <p class="text-xs text-gray-500 dark:text-gray-400">Create an account with Email Verification to manage your listings.</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400">Create an account with Email & Password to manage your listings.</p>
             </div>
 
             <form method="POST" class="space-y-6">
-                <input type="hidden" name="step" value="init">
                 <div>
                     <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Business Name *</label>
                     <input type="text" id="bizNameInput" name="name" required placeholder="e.g. Saidu Teaching Hospital" class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white input-hover-effect outline-none text-sm">
@@ -1284,7 +1267,7 @@ def register():
                     </div>
                 </div>
 
-                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-3.5 rounded-xl font-bold btn-hover-effect text-sm shadow-lg">Verify Email & Register</button>
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-3.5 rounded-xl font-bold btn-hover-effect text-sm shadow-lg">Register & Open Dashboard</button>
             </form>
 
             ''' + (f'<div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-3 rounded-xl text-red-600 dark:text-red-400 text-xs text-center font-semibold">{error_msg}</div>' if error_msg else '') + '''
@@ -1510,208 +1493,66 @@ def register():
     ''' + FOOTER
     return render_template_string(html)
 
-# --- FORGOT PASSWORD SYSTEM ---
-@app.route('/client/forgot-password', methods=['GET', 'POST'])
-def forgot_password():
-    error_msg = ""
-    step = request.form.get('step', 'request')
-    
-    if request.method == 'POST':
-        if step == 'request':
-            email = request.form.get('email', '').strip().lower()
-            found = any(b.get('client_email', '').lower() == email for b in BUSINESSES.values())
-            if found:
-                v_code = str(random.randint(1000, 9999))
-                EMAIL_VERIFICATION_CODES[email] = v_code
-                session['reset_email'] = email
-                return get_base_head() + f'''
-                <main class="max-w-md mx-auto px-4 py-20 animate-fade-in">
-                    <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-8 shadow-2xl space-y-6 text-center animate-modal">
-                        <span class="text-5xl inline-block">🔑</span>
-                        <h1 class="text-2xl font-black text-gray-900 dark:text-white">Reset Password</h1>
-                        <p class="text-xs text-gray-500 dark:text-gray-400">Enter the 4-digit verification code sent to <strong class="text-blue-500">{email}</strong>.</p>
-                        <div class="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-xl border border-blue-200 dark:border-blue-800 text-xs text-blue-600 dark:text-blue-300 font-bold">
-                            [Simulated Inbox] 4-Digit Code: {v_code}
-                        </div>
-                        <form method="POST" class="space-y-4">
-                            <input type="hidden" name="step" value="verify_reset">
-                            <input type="text" name="code" required maxlength="4" placeholder="4-digit code" class="w-full p-4 text-center text-2xl font-black tracking-widest rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white outline-none">
-                            <input type="password" name="new_password" required placeholder="New Password" class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white outline-none">
-                            <button type="submit" class="w-full bg-blue-600 text-white py-3.5 rounded-xl font-bold btn-hover-effect">Update Password</button>
-                        </form>
-                    </div>
-                </main>
-                ''' + FOOTER
-            else:
-                error_msg = "Email address not found in our records."
-                
-        elif step == 'verify_reset':
-            email = session.get('reset_email')
-            entered_code = request.form.get('code', '').strip()
-            new_pass = request.form.get('new_password', '').strip()
-            
-            if email and EMAIL_VERIFICATION_CODES.get(email) == entered_code:
-                for b in BUSINESSES.values():
-                    if b.get('client_email', '').lower() == email.lower():
-                        b['client_password'] = new_pass
-                EMAIL_VERIFICATION_CODES.pop(email, None)
-                session.pop('reset_email', None)
-                return redirect(url_for('client_login'))
-            else:
-                error_msg = "Invalid verification code!"
-
-    return get_base_head() + f'''
-    <main class="max-w-md mx-auto px-4 py-20 animate-fade-in">
-        <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-8 shadow-2xl space-y-6 animate-modal">
-            <div class="text-center">
-                <span class="text-5xl inline-block">🔒</span>
-                <h1 class="text-2xl font-black text-gray-900 dark:text-white mt-2">Forgot Password</h1>
-                <p class="text-xs text-gray-500">Enter your registered owner email.</p>
-            </div>
-            {f'<p class="text-red-500 text-xs text-center font-semibold">{error_msg}</p>' if error_msg else ''}
-            <form method="POST" class="space-y-4">
-                <input type="hidden" name="step" value="request">
-                <input type="email" name="email" required placeholder="owner@gmail.com" class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white outline-none">
-                <button type="submit" class="w-full bg-blue-600 text-white py-3.5 rounded-xl font-bold btn-hover-effect">Send Reset Code</button>
-            </form>
-        </div>
-    </main>
-    ''' + FOOTER
-
-@app.route('/client/login', methods=['GET', 'POST'])
-def client_login():
-    error_msg = ""
-    if request.method == 'POST':
-        email = request.form.get('email', '').strip().lower()
-        password = request.form.get('password', '')
-        matched = any(b.get('client_email', '').lower() == email and b.get('client_password'] == password for b in BUSINESSES.values())
-        if matched:
-            session['client_logged_email'] = email
-            return redirect(url_for('client_dashboard'))
-        else:
-            error_msg = "Invalid Email or Password!"
-
-    return get_base_head() + f'''
-    <main class="max-w-md mx-auto px-4 py-20 animate-fade-in">
-        <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-8 shadow-2xl space-y-6 animate-modal">
-            <div class="text-center">
-                <span class="text-5xl inline-block">🔑</span>
-                <h1 class="text-2xl font-black text-gray-900 dark:text-white mt-2">Owner Login</h1>
-            </div>
-            {f'<p class="text-red-500 text-xs text-center font-semibold">{error_msg}</p>' if error_msg else ''}
-            <form method="POST" class="space-y-4">
-                <input type="email" name="email" required placeholder="owner@gmail.com" class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white outline-none">
-                <input type="password" name="password" required placeholder="••••••••" class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white outline-none">
-                <button type="submit" class="w-full bg-blue-600 text-white py-3.5 rounded-xl font-bold btn-hover-effect">Login</button>
-            </form>
-            <div class="text-center pt-2">
-                <a href="/client/forgot-password" class="text-xs text-blue-500 hover:underline font-semibold">Forgot Password?</a>
-            </div>
-        </div>
-    </main>
-    ''' + FOOTER
-
-@app.route('/client/dashboard', methods=['GET', 'POST'])
-def client_dashboard():
-    client_email = session.get('client_logged_email')
-    if not client_email: return redirect(url_for('client_login'))
-    
-    pass_msg = ""
-    if request.method == 'POST':
-        new_p = request.form.get('new_password', '').strip()
-        if new_p:
-            for b in BUSINESSES.values():
-                if b.get('client_email', '').lower() == client_email.lower():
-                    b['client_password'] = new_p
-            pass_msg = "Password updated successfully!"
-
-    owner_businesses = [b for b in BUSINESSES.values() if b.get('client_email', '').lower() == client_email.lower()]
-    cards_html = ""
-    for b in owner_businesses:
-        cards_html += f'''
-        <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6 shadow-md flex flex-col justify-between space-y-4 animate-modal">
-            <div>
-                <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-md bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">{b.get('status', 'pending')}</span>
-                <h3 class="text-lg font-bold text-gray-900 dark:text-white mt-1">{b['name']}</h3>
-                <p class="text-xs text-gray-500">📍 {b['address']}</p>
-            </div>
-            <div class="flex items-center justify-between pt-3 border-t border-gray-100 dark:border-gray-800">
-                <a href="/business/{b['id']}" class="text-xs font-bold text-blue-500 hover:underline">View Listing →</a>
-                <a href="/client/delete/{b['id']}" onclick="return confirm('Delete?');" class="text-xs text-red-500 hover:underline font-bold">Delete 🗑️</a>
-            </div>
-        </div>
-        '''
-
-    return get_base_head(back_url="/", back_text="Back to Home") + f'''
-    <main class="max-w-5xl mx-auto px-4 py-12 space-y-8 animate-fade-in">
-        <div class="bg-white dark:bg-gray-900 p-6 rounded-3xl border border-gray-200 dark:border-gray-800 shadow-xl flex justify-between items-center animate-modal">
-            <div>
-                <h1 class="text-2xl font-black text-gray-900 dark:text-white">Client Dashboard</h1>
-                <p class="text-xs text-gray-500">Logged in as: <strong class="text-blue-500">{client_email}</strong></p>
-            </div>
-            <a href="/client/logout" class="bg-red-500 text-white px-4 py-2 rounded-xl text-xs font-bold btn-hover-effect">Logout</a>
-        </div>
-        
-        {f'<div class="bg-green-500 text-white p-3 rounded-xl text-xs text-center font-bold">{pass_msg}</div>' if pass_msg else ''}
-        
-        <div class="bg-white dark:bg-gray-900 p-6 rounded-3xl border border-gray-200 dark:border-gray-800 shadow-xl space-y-4 animate-modal">
-            <h3 class="text-lg font-black text-gray-900 dark:text-white">Change Password</h3>
-            <form method="POST" class="flex gap-3">
-                <input type="password" name="new_password" required placeholder="New Password" class="w-full p-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white outline-none text-xs">
-                <button type="submit" class="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold text-xs btn-hover-effect">Update</button>
-            </form>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">{cards_html}</div>
-    </main>
-    ''' + FOOTER
-
-@app.route('/client/logout')
-def client_logout():
-    session.pop('client_logged_email', None)
-    return redirect(url_for('home'))
-
-@app.route('/client/delete/<b_id>')
-def client_delete_business(b_id):
-    client_email = session.get('client_logged_email')
-    if client_email and b_id in BUSINESSES and BUSINESSES[b_id].get('client_email', '').lower() == client_email.lower():
-        del BUSINESSES[b_id]
-    return redirect(url_for('client_dashboard'))
-
-# --- ADMIN PANEL WITH BUSINESS PREVIEW & CLEAN NOTIFICATIONS ---
 @app.route('/admin', methods=['GET', 'POST'])
 @app.route('/admin/login', methods=['GET', 'POST'])
 def admin_login():
-    if session.get('admin_logged_in'): return redirect(url_for('admin_dashboard'))
+    if session.get('admin_logged_in'):
+        return redirect(url_for('admin_dashboard'))
+        
     error_msg = ""
     if request.method == 'POST':
-        if request.form.get('password') == ADMIN_PASSWORD:
+        password = request.form.get('password', '')
+        if password == ADMIN_PASSWORD:
             session['admin_logged_in'] = True
             return redirect(url_for('admin_dashboard'))
-        else: error_msg = "Incorrect Password!"
-    return get_base_head() + f'''
+        else:
+            error_msg = "Incorrect Admin Password!"
+
+    html = get_base_head(back_url="/", back_text="Back to Home") + '''
     <main class="max-w-md mx-auto px-4 py-20 animate-fade-in">
-        <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-8 shadow-2xl space-y-6 text-center animate-modal">
-            <span class="text-5xl inline-block">🛡️</span>
-            <h1 class="text-2xl font-black text-gray-900 dark:text-white">Admin Login</h1>
-            {f'<p class="text-red-500 text-xs font-semibold">{error_msg}</p>' if error_msg else ''}
+        <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-8 shadow-2xl space-y-6 animate-modal">
+            <div class="text-center space-y-2">
+                <span class="text-5xl inline-block">🛡️</span>
+                <h1 class="text-2xl font-black text-gray-900 dark:text-white">Admin Login</h1>
+                <p class="text-xs text-gray-500 dark:text-gray-400">Enter master password to access system control.</p>
+            </div>
+
             <form method="POST" class="space-y-4">
-                <input type="password" name="password" required placeholder="Master Password" class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white outline-none">
-                <button type="submit" class="w-full bg-red-600 text-white py-3.5 rounded-xl font-bold btn-hover-effect">Login</button>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Admin Password</label>
+                    <input type="password" name="password" required placeholder="••••••••" class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white input-hover-effect outline-none text-sm">
+                </div>
+                <button type="submit" class="w-full bg-red-600 hover:bg-red-500 text-white py-3.5 rounded-xl font-bold btn-hover-effect text-sm shadow-lg">Access Admin Dashboard</button>
             </form>
+            ''' + (f'<p class="text-red-500 text-xs text-center font-semibold">{error_msg}</p>' if error_msg else '') + '''
         </div>
     </main>
     ''' + FOOTER
+    return render_template_string(html)
 
 @app.route('/admin/dashboard')
 def admin_dashboard():
-    if not session.get('admin_logged_in'): return redirect(url_for('admin_login'))
-    
-    notice = request.args.get('notice', '')
+    if not session.get('admin_logged_in'):
+        return redirect(url_for('admin_login'))
+        
+    active_tab = request.args.get('tab', 'businesses')
+    filter_status = request.args.get('filter', 'all')
+
+    total_listings = len(BUSINESSES)
+    pending_biz_count = len([b for b in BUSINESSES.values() if b.get('status') == 'pending'])
+    paid_pay_count = len([b for b in BUSINESSES.values() if b.get('payment_status') == 'paid'])
+    pending_pay_count = len([b for b in BUSINESSES.values() if b.get('payment_status') == 'pending'])
+
     biz_rows = ""
     for b in BUSINESSES.values():
         status = b.get('status', 'pending')
-        status_badge = '<span class="px-2.5 py-1 rounded-md text-[10px] font-extrabold uppercase bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">Approved</span>' if status == 'approved' else '<span class="px-2.5 py-1 rounded-md text-[10px] font-extrabold uppercase bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400">Pending</span>'
+        if filter_status == 'pending_biz' and status != 'pending':
+            continue
+        if filter_status == 'approved_biz' and status != 'approved':
+            continue
+
+        status_color = 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' if status == 'approved' else 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+        expiry_str = b.get('expiry_date').strftime('%d %b %Y') if b.get('expiry_date') else 'N/A'
         
         biz_rows += f'''
         <tr class="border-b border-gray-100 dark:border-gray-800 text-xs text-gray-800 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800/50">
@@ -1720,95 +1561,333 @@ def admin_dashboard():
                 <p class="font-bold text-sm text-gray-900 dark:text-white">{b['name']}</p>
                 <p class="text-[11px] text-gray-500">📧 {b.get('client_email', 'N/A')}</p>
             </td>
-            <td class="p-4 uppercase font-semibold">{b['category']}</td>
-            <td class="p-4">{status_badge}</td>
+            <td class="p-4 uppercase font-semibold text-[11px]">{b['category']}</td>
+            <td class="p-4">
+                <span class="px-2.5 py-1 rounded-md text-[10px] font-extrabold uppercase {status_color}">{status}</span>
+            </td>
+            <td class="p-4">{expiry_str}</td>
             <td class="p-4 space-x-2 flex items-center">
-                <a href="/admin/preview/{b['id']}" class="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1 rounded-lg font-bold btn-hover-effect">Preview 👁️</a>
-                <a href="/admin/status/{b['id']}/approved" class="bg-green-600 hover:bg-green-500 text-white px-3 py-1 rounded-lg font-bold btn-hover-effect">Approve</a>
-                <a href="/admin/status/{b['id']}/pending" class="bg-yellow-600 hover:bg-yellow-500 text-white px-3 py-1 rounded-lg font-bold btn-hover-effect">Pending</a>
-                <a href="/admin/delete/{b['id']}" class="bg-red-600 hover:bg-red-500 text-white px-3 py-1 rounded-lg font-bold btn-hover-effect">Delete</a>
+                <a href="/admin/status/{b['id']}/approved" class="bg-green-600 hover:bg-green-500 text-white px-2.5 py-1 rounded-lg text-[11px] font-bold btn-hover-effect">Approve</a>
+                <a href="/admin/status/{b['id']}/pending" class="bg-yellow-600 hover:bg-yellow-500 text-white px-2.5 py-1 rounded-lg text-[11px] font-bold btn-hover-effect">Pending</a>
+                <a href="/admin/extend/{b['id']}" class="bg-blue-600 hover:bg-blue-500 text-white px-2.5 py-1 rounded-lg text-[11px] font-bold btn-hover-effect">+30 Days</a>
+                <a href="/admin/delete/{b['id']}" onclick="return confirm('Delete listing?');" class="bg-red-600 hover:bg-red-500 text-white px-2.5 py-1 rounded-lg text-[11px] font-bold btn-hover-effect">Delete</a>
             </td>
         </tr>
         '''
 
-    notice_banner = f'''
-    <div class="bg-blue-600 text-white px-6 py-3 rounded-2xl font-bold text-xs text-center shadow-lg animate-fade-in">
-        🔔 Notice: {notice}
-    </div>
-    ''' if notice else ''
+    pay_rows = ""
+    for b in BUSINESSES.values():
+        pay_status = b.get('payment_status', 'pending')
+        if filter_status == 'pending_pay' and pay_status != 'pending':
+            continue
+        if filter_status == 'paid_pay' and pay_status != 'paid':
+            continue
 
-    return get_base_head(back_url="/", back_text="Back to Home") + f'''
-    <main class="max-w-7xl mx-auto px-4 py-12 space-y-6 animate-fade-in">
-        <div class="bg-white dark:bg-gray-900 p-6 rounded-3xl border border-gray-200 dark:border-gray-800 shadow-xl flex justify-between items-center animate-modal">
-            <h1 class="text-3xl font-black text-gray-900 dark:text-white">🛡️ Admin Dashboard</h1>
-            <a href="/admin/logout" class="bg-red-600 text-white px-5 py-2.5 rounded-xl text-xs font-bold btn-hover-effect">Logout</a>
-        </div>
-        {notice_banner}
+        pay_color = 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' if pay_status == 'paid' else 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+        
+        pay_rows += f'''
+        <tr class="border-b border-gray-100 dark:border-gray-800 text-xs text-gray-800 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800/50">
+            <td class="p-4 font-bold">{b['id']}</td>
+            <td class="p-4 font-bold text-sm text-gray-900 dark:text-white">{b['name']}</td>
+            <td class="p-4 font-semibold text-blue-600 dark:text-blue-400">{b.get('payment_method', 'N/A')}</td>
+            <td class="p-4 text-gray-500">{b.get('payment_ref', 'N/A')}</td>
+            <td class="p-4">
+                <span class="px-2.5 py-1 rounded-md text-[10px] font-extrabold uppercase {pay_color}">{pay_status}</span>
+            </td>
+            <td class="p-4 space-x-2 flex items-center">
+                <a href="/admin/payment/{b['id']}/paid" class="bg-green-600 hover:bg-green-500 text-white px-3 py-1 rounded-lg text-[11px] font-bold btn-hover-effect">Mark Paid</a>
+                <a href="/admin/payment/{b['id']}/pending" class="bg-yellow-600 hover:bg-yellow-500 text-white px-3 py-1 rounded-lg text-[11px] font-bold btn-hover-effect">Mark Pending</a>
+            </td>
+        </tr>
+        '''
+
+    biz_tab_active = 'bg-blue-600 text-white shadow-md' if active_tab == 'businesses' else 'bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-700'
+    pay_tab_active = 'bg-blue-600 text-white shadow-md' if active_tab == 'payments' else 'bg-gray-200 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-700'
+
+    active_table_html = ""
+    if active_tab == 'payments':
+        active_table_html = f'''
         <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl overflow-hidden shadow-xl animate-modal">
-            <table class="w-full text-left border-collapse">
-                <thead>
-                    <tr class="bg-gray-50 dark:bg-gray-800 text-[11px] font-extrabold uppercase text-gray-500 border-b border-gray-200 dark:border-gray-800">
-                        <th class="p-4">ID</th><th class="p-4">Business Name & Owner</th><th class="p-4">Category</th><th class="p-4">Status</th><th class="p-4">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>{biz_rows}</tbody>
-            </table>
-        </div>
-    </main>
-    ''' + FOOTER
-
-@app.route('/admin/preview/<b_id>')
-def admin_preview_business(b_id):
-    if not session.get('admin_logged_in'): return redirect(url_for('admin_login'))
-    if b_id not in BUSINESSES: abort(404)
-    b = BUSINESSES[b_id]
-    
-    docs_html = ""
-    for d in b.get('doctors', []):
-        d_name = d.get('name', 'N/A')
-        d_spec = d.get('specialty', 'N/A')
-        d_timing = d.get('appt_timing', 'N/A')
-        docs_html += f'<li class="text-xs"><strong>{d_name}</strong> ({d_spec}) - Timing: {d_timing}</li>'
-    if not docs_html: docs_html = '<p class="text-xs text-gray-500">No staff/doctors added.</p>'
-
-    return get_base_head(back_url="/admin/dashboard", back_text="Back to Admin Panel") + f'''
-    <main class="max-w-4xl mx-auto px-4 py-12 animate-fade-in">
-        <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-8 shadow-2xl space-y-6 animate-modal">
-            <span class="bg-blue-100 text-blue-700 text-xs px-3 py-1 rounded-md font-bold uppercase">{b['category']}</span>
-            <h1 class="text-3xl font-black text-gray-900 dark:text-white">{b['name']}</h1>
-            <p class="text-xs text-gray-500">📍 {b['address']} | 📞 {", ".join(b.get('phones', []))}</p>
-            <div class="pt-4 border-t border-gray-100 dark:border-gray-800 space-y-2">
-                <h3 class="font-bold text-sm">Staff / Doctors:</h3>
-                <ul class="list-disc pl-5 space-y-1">{docs_html}</ul>
+            <div class="p-6 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center">
+                <h3 class="text-lg font-bold text-gray-900 dark:text-white">💳 Payment Requests & Verification</h3>
             </div>
-            <div class="pt-4 border-t border-gray-100 dark:border-gray-800 space-y-2">
-                <h3 class="font-bold text-sm">Services / Tests / Menu:</h3>
-                <p class="text-xs text-gray-600 dark:text-gray-300 whitespace-pre-line">{b.get('tests_dishes', 'N/A')}</p>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-gray-50 dark:bg-gray-800/80 text-[11px] font-extrabold uppercase text-gray-500 border-b border-gray-200 dark:border-gray-800">
+                            <th class="p-4">ID</th>
+                            <th class="p-4">Business Name</th>
+                            <th class="p-4">Payment Method</th>
+                            <th class="p-4">Reference / Receipt</th>
+                            <th class="p-4">Payment Status</th>
+                            <th class="p-4">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {pay_rows}
+                    </tbody>
+                </table>
             </div>
         </div>
+        '''
+    else:
+        active_table_html = f'''
+        <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl overflow-hidden shadow-xl animate-modal">
+            <div class="p-6 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center">
+                <h3 class="text-lg font-bold text-gray-900 dark:text-white">🏢 Business Registrations & Approvals</h3>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-gray-50 dark:bg-gray-800/80 text-[11px] font-extrabold uppercase text-gray-500 border-b border-gray-200 dark:border-gray-800">
+                            <th class="p-4">ID</th>
+                            <th class="p-4">Business Name & Owner</th>
+                            <th class="p-4">Category</th>
+                            <th class="p-4">Status</th>
+                            <th class="p-4">Expiry Date</th>
+                            <th class="p-4">Admin Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {biz_rows}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        '''
+
+    html = get_base_head(back_url="/", back_text="Back to Home") + '''
+    <main class="max-w-7xl mx-auto px-4 py-12 animate-fade-in space-y-8">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white dark:bg-gray-900 p-6 rounded-3xl border border-gray-200 dark:border-gray-800 shadow-xl">
+            <div>
+                <h1 class="text-3xl font-black text-gray-900 dark:text-white">🛡️ Master Admin Control Panel</h1>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Manage business approvals and payment verifications.</p>
+            </div>
+            <a href="/admin/logout" class="bg-red-600 hover:bg-red-500 text-white px-5 py-2.5 rounded-xl text-xs font-bold transition shadow-md">Admin Logout</a>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <a href="/admin/dashboard?tab=businesses&filter=all" class="bg-white dark:bg-gray-900 p-5 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm text-center card-hover-effect block">
+                <p class="text-xs text-gray-500 font-bold uppercase">Total Listings</p>
+                <p class="text-2xl font-black text-blue-600 dark:text-blue-400 mt-1">''' + str(total_listings) + '''</p>
+            </a>
+            <a href="/admin/dashboard?tab=businesses&filter=pending_biz" class="bg-white dark:bg-gray-900 p-5 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm text-center card-hover-effect block">
+                <p class="text-xs text-gray-500 font-bold uppercase">Pending Business Approvals</p>
+                <p class="text-2xl font-black text-yellow-500 mt-1">''' + str(pending_biz_count) + '''</p>
+            </a>
+            <a href="/admin/dashboard?tab=payments&filter=paid_pay" class="bg-white dark:bg-gray-900 p-5 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm text-center card-hover-effect block">
+                <p class="text-xs text-gray-500 font-bold uppercase">Paid Payments</p>
+                <p class="text-2xl font-black text-green-500 mt-1">''' + str(paid_pay_count) + '''</p>
+            </a>
+            <a href="/admin/dashboard?tab=payments&filter=pending_pay" class="bg-white dark:bg-gray-900 p-5 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm text-center card-hover-effect block">
+                <p class="text-xs text-gray-500 font-bold uppercase">Pending Payments</p>
+                <p class="text-2xl font-black text-yellow-500 mt-1">''' + str(pending_pay_count) + '''</p>
+            </a>
+        </div>
+
+        <div class="flex gap-3">
+            <a href="/admin/dashboard?tab=businesses" class="px-6 py-3 rounded-2xl font-bold text-xs transition btn-hover-effect ''' + biz_tab_active + '''">🏢 Business Registrations</a>
+            <a href="/admin/dashboard?tab=payments" class="px-6 py-3 rounded-2xl font-bold text-xs transition btn-hover-effect ''' + pay_tab_active + '''">💳 Payment Requests</a>
+        </div>
+
+        ''' + active_table_html + '''
     </main>
     ''' + FOOTER
+    return render_template_string(html)
 
 @app.route('/admin/status/<b_id>/<new_status>')
 def admin_change_status(b_id, new_status):
-    if not session.get('admin_logged_in'): return redirect(url_for('admin_login'))
+    if not session.get('admin_logged_in'):
+        return redirect(url_for('admin_login'))
     if b_id in BUSINESSES:
         BUSINESSES[b_id]['status'] = new_status
-    return redirect(url_for('admin_dashboard', notice=f"Business ID {b_id} status updated to {new_status}!"))
+    return redirect(url_for('admin_dashboard', tab='businesses'))
+
+@app.route('/admin/payment/<b_id>/<new_pay_status>')
+def admin_change_payment(b_id, new_pay_status):
+    if not session.get('admin_logged_in'):
+        return redirect(url_for('admin_login'))
+    if b_id in BUSINESSES:
+        BUSINESSES[b_id]['payment_status'] = new_pay_status
+    return redirect(url_for('admin_dashboard', tab='payments'))
+
+@app.route('/admin/extend/<b_id>')
+def admin_extend_expiry(b_id):
+    if not session.get('admin_logged_in'):
+        return redirect(url_for('admin_login'))
+    if b_id in BUSINESSES:
+        curr_exp = BUSINESSES[b_id].get('expiry_date', datetime.now())
+        BUSINESSES[b_id]['expiry_date'] = curr_exp + timedelta(days=30)
+    return redirect(url_for('admin_dashboard', tab='businesses'))
 
 @app.route('/admin/delete/<b_id>')
 def admin_delete_business(b_id):
-    if not session.get('admin_logged_in'): return redirect(url_for('admin_login'))
+    if not session.get('admin_logged_in'):
+        return redirect(url_for('admin_login'))
     if b_id in BUSINESSES:
-        name = BUSINESSES[b_id]['name']
         del BUSINESSES[b_id]
-        return redirect(url_for('admin_dashboard', notice=f"Business '{name}' deleted successfully!"))
     return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin/logout')
 def admin_logout():
     session.pop('admin_logged_in', None)
     return redirect(url_for('home'))
+
+@app.route('/client/login', methods=['GET', 'POST'])
+def client_login():
+    error_msg = ""
+    if request.method == 'POST':
+        email = request.form.get('email', '').strip().lower()
+        password = request.form.get('password', '')
+        
+        matched_biz = None
+        for b in BUSINESSES.values():
+            if b.get('client_email', '').lower() == email and b.get('client_password') == password:
+                matched_biz = b
+                break
+                
+        if matched_biz:
+            session['client_logged_email'] = email
+            return redirect(url_for('client_dashboard'))
+        else:
+            error_msg = "Invalid Email or Password!"
+
+    html = get_base_head(back_url="/", back_text="Back to Home") + '''
+    <main class="max-w-md mx-auto px-4 py-20 animate-fade-in">
+        <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-8 shadow-2xl space-y-6 animate-modal">
+            <div class="text-center space-y-2">
+                <span class="text-5xl inline-block">🔑</span>
+                <h1 class="text-2xl font-black text-gray-900 dark:text-white">Owner Login</h1>
+                <p class="text-xs text-gray-500 dark:text-gray-400">Access your business dashboard.</p>
+            </div>
+
+            <form method="POST" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Email Address</label>
+                    <input type="email" name="email" required placeholder="owner@gmail.com" class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white input-hover-effect outline-none text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Password</label>
+                    <input type="password" name="password" required placeholder="••••••••" class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white input-hover-effect outline-none text-sm">
+                </div>
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-3.5 rounded-xl font-bold btn-hover-effect text-sm shadow-lg">Login to Dashboard</button>
+            </form>
+            ''' + (f'<p class="text-red-500 text-xs text-center font-semibold">{error_msg}</p>' if error_msg else '') + '''
+        </div>
+    </main>
+    ''' + FOOTER
+    return render_template_string(html)
+
+@app.route('/client/dashboard')
+def client_dashboard():
+    client_email = session.get('client_logged_email')
+    if not client_email:
+        return redirect(url_for('client_login'))
+        
+    owner_businesses = [b for b in BUSINESSES.values() if b.get('client_email', '').lower() == client_email.lower()]
+    
+    cards_html = ""
+    for b in owner_businesses:
+        cards_html += f'''
+        <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6 shadow-md flex flex-col justify-between space-y-4 card-hover-effect animate-modal">
+            <div class="flex items-start gap-4">
+                <img src="{b.get('image', '')}" class="w-20 h-20 object-cover rounded-xl border border-gray-200 dark:border-gray-800">
+                <div class="space-y-1">
+                    <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-md bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">{b.get('status', 'pending')}</span>
+                    <h3 class="text-lg font-bold text-gray-900 dark:text-white">{b['name']}</h3>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">📍 {b['address']}</p>
+                </div>
+            </div>
+            <div class="flex items-center justify-between pt-3 border-t border-gray-100 dark:border-gray-800">
+                <a href="/business/{b['id']}" class="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline">View Listing →</a>
+                <div class="flex items-center gap-2">
+                    <a href="/client/edit/{b['id']}" class="bg-blue-50 dark:bg-blue-600/20 text-blue-600 dark:text-blue-400 px-3 py-1.5 rounded-xl text-xs font-bold transition hover:bg-blue-600 hover:text-white btn-hover-effect">Edit ✏️</a>
+                    <a href="/client/delete/{b['id']}" onclick="return confirm('Delete this business?');" class="bg-red-50 dark:bg-red-600/20 text-red-600 dark:text-red-400 px-3 py-1.5 rounded-xl text-xs font-bold transition hover:bg-red-600 hover:text-white btn-hover-effect">Delete 🗑️</a>
+                </div>
+            </div>
+        </div>
+        '''
+
+    if not cards_html:
+        cards_html = '<div class="col-span-2 text-center py-12 text-gray-500"><p>No businesses found under this email.</p></div>'
+
+    html = get_base_head(back_url="/", back_text="Back to Home") + '''
+    <main class="max-w-5xl mx-auto px-4 py-12 animate-fade-in space-y-8">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white dark:bg-gray-900 p-6 rounded-3xl border border-gray-200 dark:border-gray-800 shadow-xl animate-modal">
+            <div>
+                <h1 class="text-2xl font-black text-gray-900 dark:text-white">Client Dashboard</h1>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Logged in as: <strong class="text-blue-600 dark:text-blue-400">''' + client_email + '''</strong></p>
+            </div>
+            <div class="flex items-center gap-3">
+                <a href="/register" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow-md btn-hover-effect">＋ Register Business</a>
+                <a href="/client/logout" class="bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-600 hover:text-white px-4 py-2.5 rounded-xl text-xs font-bold transition btn-hover-effect">Logout</a>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            ''' + cards_html + '''
+        </div>
+    </main>
+    ''' + FOOTER
+    return render_template_string(html)
+
+@app.route('/client/logout')
+def client_logout():
+    session.pop('client_logged_email', None)
+    return redirect(url_for('home'))
+
+@app.route('/client/edit/<b_id>', methods=['GET', 'POST'])
+def client_edit_business(b_id):
+    client_email = session.get('client_logged_email')
+    if not client_email or b_id not in BUSINESSES:
+        return redirect(url_for('client_login'))
+        
+    b = BUSINESSES[b_id]
+    if b.get('client_email', '').lower() != client_email.lower():
+        abort(403)
+
+    if request.method == 'POST':
+        b['name'] = request.form.get('name', b['name'])
+        b['address'] = request.form.get('address', b['address'])
+        b['phones'] = [p.strip() for p in request.form.get('phones', '').split(',') if p.strip()]
+        return redirect(url_for('client_dashboard'))
+
+    html = get_base_head(back_url="/client/dashboard", back_text="Back to Dashboard") + '''
+    <main class="max-w-xl mx-auto px-4 py-12 animate-fade-in">
+        <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-8 shadow-2xl space-y-6 animate-modal">
+            <h1 class="text-2xl font-black text-gray-900 dark:text-white">Edit Business: ''' + b['name'] + '''</h1>
+
+            <form method="POST" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Business Name</label>
+                    <input type="text" name="name" value="''' + b['name'] + '''" required class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white input-hover-effect outline-none text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Address / Location</label>
+                    <input type="text" name="address" value="''' + b['address'] + '''" required class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white input-hover-effect outline-none text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Phone Numbers (separated with commas)</label>
+                    <input type="text" name="phones" value="''' + ", ".join(b.get('phones', [])) + '''" required class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white input-hover-effect outline-none text-sm">
+                </div>
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-3.5 rounded-xl font-bold btn-hover-effect text-sm shadow-lg">Save Changes</button>
+            </form>
+        </div>
+    </main>
+    ''' + FOOTER
+    return render_template_string(html)
+
+@app.route('/client/delete/<b_id>')
+def client_delete_business(b_id):
+    client_email = session.get('client_logged_email')
+    if not client_email or b_id not in BUSINESSES:
+        return redirect(url_for('client_login'))
+        
+    b = BUSINESSES[b_id]
+    if b.get('client_email', '').lower() == client_email.lower():
+        del BUSINESSES[b_id]
+        
+    return redirect(url_for('client_dashboard'))
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
