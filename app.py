@@ -1,4 +1,4 @@
-"""SwatBiz Hub - Clickable Admin Stats Cards & Category Specific Labels."""
+"""SwatBiz Hub - Complete Code with Staff/Doctor Image Upload (Gallery & URL)."""
 from datetime import datetime, timedelta
 import os
 import json
@@ -34,7 +34,8 @@ BUSINESSES = {
                 'appt_timing': '9:00 AM - 2:00 PM',
                 'clinic_timing': 'Mon - Sat (9 AM - 5 PM)',
                 'room': 'OPD Block - Room 12',
-                'appt_numbers': '+92 300 9240001, +92 946 9240123'
+                'appt_numbers': '+92 300 9240001, +92 946 9240123',
+                'doc_image': 'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&w=400&q=80'
             },
             {
                 'name': 'Dr. Ayesha Khan',
@@ -43,7 +44,8 @@ BUSINESSES = {
                 'appt_timing': '10:00 AM - 4:00 PM',
                 'clinic_timing': 'Mon - Fri (10 AM - 4 PM)',
                 'room': 'Children Ward - Room 04',
-                'appt_numbers': '+92 301 8881122'
+                'appt_numbers': '+92 301 8881122',
+                'doc_image': 'https://images.unsplash.com/photo-1594824813566-78a9c240902c?auto=format&fit=crop&w=400&q=80'
             }
         ],
         'special_info': 'Dr. Muhammad Ali (Cardiologist), Dr. Ayesha Khan (Pediatrician)',
@@ -75,7 +77,8 @@ BUSINESSES = {
                 'appt_timing': '12:00 PM - 11:00 PM',
                 'clinic_timing': 'Daily Open',
                 'room': 'Main Grill Section / Family Cabin',
-                'appt_numbers': '+92 946 881122'
+                'appt_numbers': '+92 946 881122',
+                'doc_image': ''
             }
         ],
         'special_info': 'Special Family Cabin Available | Chef Rashid',
@@ -107,7 +110,8 @@ BUSINESSES = {
                 'appt_timing': '8:00 AM - 2:00 PM',
                 'clinic_timing': 'Mon - Sat',
                 'room': 'Main Administration Block',
-                'appt_numbers': '+92 946 720111'
+                'appt_numbers': '+92 946 720111',
+                'doc_image': ''
             }
         ],
         'special_info': 'Prof. Shah Zarin (Principal), Admissions open for Metric & FSc',
@@ -608,6 +612,7 @@ def business_detail(b_id):
         for idx, doc in enumerate(doctors_data):
             appt_nums = doc.get('appt_numbers', ", ".join(b.get('phones', [])))
             quals = doc.get('qualifications', '')
+            doc_img = doc.get('doc_image', '')
             
             doc_json = json.dumps({
                 'name': doc.get('name', ''),
@@ -617,6 +622,7 @@ def business_detail(b_id):
                 'clinic_timing': doc.get('clinic_timing', ''),
                 'room': doc.get('room', ''),
                 'appt_numbers': appt_nums,
+                'doc_image': doc_img,
                 'hospital_name': b['name'],
                 'hospital_address': b['address'],
                 'hospital_phones': ", ".join(b.get('phones', []))
@@ -624,13 +630,18 @@ def business_detail(b_id):
             
             quals_badge = f'<p class="text-[11px] text-gray-500 dark:text-gray-400 italic">🎓 {quals}</p>' if quals else ''
             
+            doc_avatar = f'<img src="{doc_img}" class="w-12 h-12 rounded-full object-cover border-2 border-blue-500 shadow-sm">' if doc_img else '<span class="text-2xl p-2 bg-blue-50 dark:bg-blue-600/20 rounded-full">👤</span>'
+
             doctors_cards_html += f'''
             <div onclick='openDoctorModal({doc_json})' class="doc-card-item bg-gray-50 dark:bg-gray-950 p-5 rounded-2xl border border-gray-200 dark:border-gray-800 card-hover-effect space-y-2 cursor-pointer group animate-modal">
                 <div class="flex justify-between items-start">
-                    <div>
-                        <h4 class="text-base font-extrabold text-blue-600 dark:text-blue-400 group-hover:underline">{doc.get('name', 'N/A')}</h4>
-                        <p class="text-xs font-semibold text-indigo-600 dark:text-indigo-400">{doc.get('specialty', 'Specialist')}</p>
-                        {quals_badge}
+                    <div class="flex items-center gap-3">
+                        {doc_avatar}
+                        <div>
+                            <h4 class="text-base font-extrabold text-blue-600 dark:text-blue-400 group-hover:underline">{doc.get('name', 'N/A')}</h4>
+                            <p class="text-xs font-semibold text-indigo-600 dark:text-indigo-400">{doc.get('specialty', 'Specialist')}</p>
+                            {quals_badge}
+                        </div>
                     </div>
                     <span class="bg-blue-100 dark:bg-blue-600/20 text-blue-700 dark:text-blue-400 text-[10px] px-2.5 py-1 rounded-full font-bold">View Info →</span>
                 </div>
@@ -664,7 +675,9 @@ def business_detail(b_id):
         <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-6 md:p-8 max-w-md w-full shadow-2xl animate-modal space-y-4">
             <div class="flex justify-between items-start">
                 <div class="flex items-center gap-3">
-                    <span class="text-4xl p-2 bg-blue-50 dark:bg-blue-600/20 rounded-2xl">👤</span>
+                    <div id="mDocAvatarContainer">
+                        <span class="text-4xl p-2 bg-blue-50 dark:bg-blue-600/20 rounded-2xl">👤</span>
+                    </div>
                     <div>
                         <h3 id="mDocName" class="text-xl font-black text-gray-900 dark:text-white">Name</h3>
                         <p id="mDocSpec" class="text-xs font-bold text-blue-600 dark:text-blue-400">Specialty</p>
@@ -731,6 +744,13 @@ def business_detail(b_id):
             document.getElementById('mClinicTiming').innerText = doc.clinic_timing;
             document.getElementById('mRoom').innerText = doc.room;
             
+            var avatarContainer = document.getElementById('mDocAvatarContainer');
+            if (doc.doc_image) {
+                avatarContainer.innerHTML = '<img src="' + doc.doc_image + '" class="w-16 h-16 rounded-full object-cover border-2 border-blue-500 shadow-md">';
+            } else {
+                avatarContainer.innerHTML = '<span class="text-4xl p-2 bg-blue-50 dark:bg-blue-600/20 rounded-2xl">👤</span>';
+            }
+
             var phoneLink = document.getElementById('mApptPhoneLink');
             phoneLink.innerText = doc.appt_numbers;
             phoneLink.href = 'tel:' + doc.appt_numbers.split(',')[0].trim();
@@ -770,6 +790,7 @@ def register():
         doc_clinics = request.form.getlist('doc_clinic')
         doc_rooms = request.form.getlist('doc_room')
         doc_phones = request.form.getlist('doc_phone')
+        doc_images = request.form.getlist('doc_image')
         
         doctors_list = []
         for i in range(len(doc_names)):
@@ -781,7 +802,8 @@ def register():
                     'appt_timing': doc_appts[i].strip() if i < len(doc_appts) else '',
                     'clinic_timing': doc_clinics[i].strip() if i < len(doc_clinics) else '',
                     'room': doc_rooms[i].strip() if i < len(doc_rooms) else '',
-                    'appt_numbers': doc_phones[i].strip() if i < len(doc_phones) and doc_phones[i].strip() else raw_phones
+                    'appt_numbers': doc_phones[i].strip() if i < len(doc_phones) and doc_phones[i].strip() else raw_phones,
+                    'doc_image': doc_images[i].strip() if i < len(doc_images) else ''
                 })
         
         if name and category and client_email and client_password:
@@ -878,6 +900,7 @@ def register():
                     <div id="doctorsContainer" class="space-y-4">
                         <div class="doc-entry animate-modal bg-gray-50 dark:bg-gray-950 p-4 rounded-2xl border border-gray-200 dark:border-gray-800 space-y-3 relative">
                             <button type="button" onclick="requestDeleteDoctor(this)" title="Delete Entry" class="absolute top-3 right-3 bg-red-600 hover:bg-red-700 text-white w-8 h-8 rounded-full flex items-center justify-center font-black text-sm shadow-md transition transform hover:scale-110 z-10 border border-red-400">✕</button>
+                            
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                                 <input type="text" name="doc_name" placeholder="Name (e.g. Dr. Ahmad)" class="doc-input-name p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
                                 <input type="text" name="doc_spec" placeholder="Specialty (e.g. Cardiologist)" class="doc-input-spec p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
@@ -892,6 +915,23 @@ def register():
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                                 <input type="text" name="doc_room" placeholder="Location / Room (e.g. Room 12)" class="doc-input-room p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
                                 <input type="text" name="doc_phone" placeholder="Direct Phone (comma separated)" class="doc-input-phone p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
+                            </div>
+
+                            <!-- Doctor/Staff Photo Upload Section (Gallery or URL) -->
+                            <div class="pt-2 border-t border-gray-200 dark:border-gray-800/60 space-y-2">
+                                <label class="block text-[11px] font-bold text-gray-500 dark:text-gray-400">🖼️ Photo / Picture (Optional - Gallery or URL)</label>
+                                <div class="flex flex-col sm:flex-row gap-2 items-center">
+                                    <label class="w-full sm:w-auto bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 px-3 py-2 rounded-xl text-xs font-bold cursor-pointer transition flex items-center justify-center gap-1 border border-gray-300 dark:border-gray-700">
+                                        📁 Gallery
+                                        <input type="file" accept="image/*" onchange="handleDocFileUpload(event, this)" class="hidden">
+                                    </label>
+                                    <span class="text-[10px] text-gray-400">OR</span>
+                                    <input type="text" name="doc_image" placeholder="Paste Image URL link..." class="doc-img-input w-full p-2 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
+                                </div>
+                                <div class="doc-preview-box hidden flex items-center gap-2 pt-1">
+                                    <img class="doc-preview-img w-8 h-8 rounded-full object-cover border border-blue-500">
+                                    <span class="text-[10px] text-green-500 font-bold">✓ Photo Selected</span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -966,6 +1006,25 @@ def register():
             }
         }
 
+        function handleDocFileUpload(event, fileInput) {
+            var file = event.target.files[0];
+            if (file) {
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    var base64Img = e.target.result;
+                    var docEntry = fileInput.closest('.doc-entry');
+                    var imgInput = docEntry.querySelector('.doc-img-input');
+                    var previewBox = docEntry.querySelector('.doc-preview-box');
+                    var previewImg = docEntry.querySelector('.doc-preview-img');
+
+                    imgInput.value = base64Img;
+                    previewImg.src = base64Img;
+                    previewBox.classList.remove('hidden');
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
         function updateCategoryFields() {
             var catSelect = document.getElementById('categorySelect');
             var subcatSelect = document.getElementById('subcategorySelect');
@@ -1024,6 +1083,7 @@ def register():
             div.className = 'doc-entry animate-modal bg-gray-50 dark:bg-gray-950 p-4 rounded-2xl border border-gray-200 dark:border-gray-800 space-y-3 relative mt-3';
             div.innerHTML = `
                 <button type="button" onclick="requestDeleteDoctor(this)" title="Delete Entry" class="absolute top-3 right-3 bg-red-600 hover:bg-red-700 text-white w-8 h-8 rounded-full flex items-center justify-center font-black text-sm shadow-md transition transform hover:scale-110 z-10 border border-red-400">✕</button>
+                
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <input type="text" name="doc_name" placeholder="" class="doc-input-name p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
                     <input type="text" name="doc_spec" placeholder="" class="doc-input-spec p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
@@ -1038,6 +1098,22 @@ def register():
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <input type="text" name="doc_room" placeholder="" class="doc-input-room p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
                     <input type="text" name="doc_phone" placeholder="" class="doc-input-phone p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
+                </div>
+
+                <div class="pt-2 border-t border-gray-200 dark:border-gray-800/60 space-y-2">
+                    <label class="block text-[11px] font-bold text-gray-500 dark:text-gray-400">🖼️ Photo / Picture (Optional - Gallery or URL)</label>
+                    <div class="flex flex-col sm:flex-row gap-2 items-center">
+                        <label class="w-full sm:w-auto bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 px-3 py-2 rounded-xl text-xs font-bold cursor-pointer transition flex items-center justify-center gap-1 border border-gray-300 dark:border-gray-700">
+                            📁 Gallery
+                            <input type="file" accept="image/*" onchange="handleDocFileUpload(event, this)" class="hidden">
+                        </label>
+                        <span class="text-[10px] text-gray-400">OR</span>
+                        <input type="text" name="doc_image" placeholder="Paste Image URL link..." class="doc-img-input w-full p-2 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
+                    </div>
+                    <div class="doc-preview-box hidden flex items-center gap-2 pt-1">
+                        <img class="doc-preview-img w-8 h-8 rounded-full object-cover border border-blue-500">
+                        <span class="text-[10px] text-green-500 font-bold">✓ Photo Selected</span>
+                    </div>
                 </div>
             `;
             container.appendChild(div);
