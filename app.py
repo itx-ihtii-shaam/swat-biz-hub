@@ -630,7 +630,6 @@ def business_detail(b_id):
             
             quals_badge = f'<p class="text-[11px] text-gray-500 dark:text-gray-400 italic">🎓 {quals}</p>' if quals else ''
             
-            # Clicking directly on doctor card image opens zoom lightbox without opening modal
             doc_avatar = f'<img src="{doc_img}" class="w-16 h-16 rounded-2xl object-cover border-2 border-blue-500 shadow-md transition transform hover:scale-105 cursor-pointer" onclick="event.stopPropagation(); openLightbox(\'{doc_img}\');" title="Click to view full picture">' if doc_img else '<span class="text-3xl p-3 bg-blue-50 dark:bg-blue-600/20 rounded-2xl">👤</span>'
 
             doctors_cards_html += f'''
@@ -940,7 +939,6 @@ def register():
                                 <input type="text" name="doc_phone" placeholder="Direct Phone (comma separated)" class="doc-input-phone p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
                             </div>
 
-                            <!-- Doctor/Staff Photo Upload Section (Gallery or URL) -->
                             <div class="pt-2 border-t border-gray-200 dark:border-gray-800/60 space-y-2">
                                 <label class="block text-[11px] font-bold text-gray-500 dark:text-gray-400">🖼️ Photo / Picture (Optional - Gallery or URL)</label>
                                 <div class="flex flex-col sm:flex-row gap-2 items-center">
@@ -1178,10 +1176,6 @@ def register():
     ''' + FOOTER
     return render_template_string(html)
 
-# ==========================================
-# ADMIN SYSTEM ROUTES (CLICKABLE STATS CARDS)
-# ==========================================
-
 @app.route('/admin', methods=['GET', 'POST'])
 @app.route('/admin/login', methods=['GET', 'POST'])
 def admin_login():
@@ -1233,7 +1227,6 @@ def admin_dashboard():
     paid_pay_count = len([b for b in BUSINESSES.values() if b.get('payment_status') == 'paid'])
     pending_pay_count = len([b for b in BUSINESSES.values() if b.get('payment_status') == 'pending'])
 
-    # 1. Business Table Rows (with filter support)
     biz_rows = ""
     for b in BUSINESSES.values():
         status = b.get('status', 'pending')
@@ -1266,7 +1259,6 @@ def admin_dashboard():
         </tr>
         '''
 
-    # 2. Payment Table Rows (with filter support)
     pay_rows = ""
     for b in BUSINESSES.values():
         pay_status = b.get('payment_status', 'pending')
@@ -1367,7 +1359,6 @@ def admin_dashboard():
             <a href="/admin/logout" class="bg-red-600 hover:bg-red-500 text-white px-5 py-2.5 rounded-xl text-xs font-bold transition shadow-md">Admin Logout</a>
         </div>
 
-        <!-- Clickable Stats Cards -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <a href="/admin/dashboard?tab=businesses&filter=all" class="bg-white dark:bg-gray-900 p-5 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm text-center card-hover-effect block">
                 <p class="text-xs text-gray-500 font-bold uppercase">Total Listings</p>
@@ -1435,10 +1426,6 @@ def admin_logout():
     session.pop('admin_logged_in', None)
     return redirect(url_for('home'))
 
-# ==========================================
-# CLIENT LOGIN & DASHBOARD ROUTES
-# ==========================================
-
 @app.route('/client/login', methods=['GET', 'POST'])
 def client_login():
     error_msg = ""
@@ -1461,139 +1448,4 @@ def client_login():
     html = get_base_head(back_url="/", back_text="Back to Home") + '''
     <main class="max-w-md mx-auto px-4 py-20 animate-fade-in">
         <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-8 shadow-2xl space-y-6 animate-modal">
-            <div class="text-center space-y-2">
-                <span class="text-5xl inline-block">🔑</span>
-                <h1 class="text-2xl font-black text-gray-900 dark:text-white">Owner Login</h1>
-                <p class="text-xs text-gray-500 dark:text-gray-400">Access your business dashboard.</p>
-            </div>
-
-            <form method="POST" class="space-y-4">
-                <div>
-                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Email Address</label>
-                    <input type="email" name="email" required placeholder="owner@gmail.com" class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white input-hover-effect outline-none text-sm">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Password</label>
-                    <input type="password" name="password" required placeholder="••••••••" class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white input-hover-effect outline-none text-sm">
-                </div>
-                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-3.5 rounded-xl font-bold btn-hover-effect text-sm shadow-lg">Login to Dashboard</button>
-            </form>
-            ''' + (f'<p class="text-red-500 text-xs text-center font-semibold">{error_msg}</p>' if error_msg else '') + '''
-        </div>
-    </main>
-    ''' + FOOTER
-    return render_template_string(html)
-
-@app.route('/client/dashboard')
-def client_dashboard():
-    client_email = session.get('client_logged_email')
-    if not client_email:
-        return redirect(url_for('client_login'))
-        
-    owner_businesses = [b for b in BUSINESSES.values() if b.get('client_email', '').lower() == client_email.lower()]
-    
-    cards_html = ""
-    for b in owner_businesses:
-        cards_html += f'''
-        <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl p-6 shadow-md flex flex-col justify-between space-y-4 card-hover-effect animate-modal">
-            <div class="flex items-start gap-4">
-                <img src="{b.get('image', '')}" class="w-20 h-20 object-cover rounded-xl border border-gray-200 dark:border-gray-800">
-                <div class="space-y-1">
-                    <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded-md bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">{b.get('status', 'pending')}</span>
-                    <h3 class="text-lg font-bold text-gray-900 dark:text-white">{b['name']}</h3>
-                    <p class="text-xs text-gray-500 dark:text-gray-400">📍 {b['address']}</p>
-                </div>
-            </div>
-            <div class="flex items-center justify-between pt-3 border-t border-gray-100 dark:border-gray-800">
-                <a href="/business/{b['id']}" class="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline">View Listing →</a>
-                <div class="flex items-center gap-2">
-                    <a href="/client/edit/{b['id']}" class="bg-blue-50 dark:bg-blue-600/20 text-blue-600 dark:text-blue-400 px-3 py-1.5 rounded-xl text-xs font-bold transition hover:bg-blue-600 hover:text-white btn-hover-effect">Edit ✏️</a>
-                    <a href="/client/delete/{b['id']}" onclick="return confirm('Delete this business?');" class="bg-red-50 dark:bg-red-600/20 text-red-600 dark:text-red-400 px-3 py-1.5 rounded-xl text-xs font-bold transition hover:bg-red-600 hover:text-white btn-hover-effect">Delete 🗑️</a>
-                </div>
-            </div>
-        </div>
-        '''
-
-    if not cards_html:
-        cards_html = '<div class="col-span-2 text-center py-12 text-gray-500"><p>No businesses found under this email.</p></div>'
-
-    html = get_base_head(back_url="/", back_text="Back to Home") + '''
-    <main class="max-w-5xl mx-auto px-4 py-12 animate-fade-in space-y-8">
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white dark:bg-gray-900 p-6 rounded-3xl border border-gray-200 dark:border-gray-800 shadow-xl animate-modal">
-            <div>
-                <h1 class="text-2xl font-black text-gray-900 dark:text-white">Client Dashboard</h1>
-                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Logged in as: <strong class="text-blue-600 dark:text-blue-400">''' + client_email + '''</strong></p>
-            </div>
-            <div class="flex items-center gap-3">
-                <a href="/register" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow-md btn-hover-effect">＋ Register Business</a>
-                <a href="/client/logout" class="bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-600 hover:text-white px-4 py-2.5 rounded-xl text-xs font-bold transition btn-hover-effect">Logout</a>
-            </div>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            ''' + cards_html + '''
-        </div>
-    </main>
-    ''' + FOOTER
-    return render_template_string(html)
-
-@app.route('/client/logout')
-def client_logout():
-    session.pop('client_logged_email', None)
-    return redirect(url_for('home'))
-
-@app.route('/client/edit/<b_id>', methods=['GET', 'POST'])
-def client_edit_business(b_id):
-    client_email = session.get('client_logged_email')
-    if not client_email or b_id not in BUSINESSES:
-        return redirect(url_for('client_login'))
-        
-    b = BUSINESSES[b_id]
-    if b.get('client_email', '').lower() != client_email.lower():
-        abort(403)
-
-    if request.method == 'POST':
-        b['name'] = request.form.get('name', b['name'])
-        b['address'] = request.form.get('address', b['address'])
-        b['phones'] = [p.strip() for p in request.form.get('phones', '').split(',') if p.strip()]
-        return redirect(url_for('client_dashboard'))
-
-    html = get_base_head(back_url="/client/dashboard", back_text="Back to Dashboard") + '''
-    <main class="max-w-xl mx-auto px-4 py-12 animate-fade-in">
-        <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-8 shadow-2xl space-y-6 animate-modal">
-            <h1 class="text-2xl font-black text-gray-900 dark:text-white">Edit Business: ''' + b['name'] + '''</h1>
-
-            <form method="POST" class="space-y-4">
-                <div>
-                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Business Name</label>
-                    <input type="text" name="name" value="''' + b['name'] + '''" required class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white input-hover-effect outline-none text-sm">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Address / Location</label>
-                    <input type="text" name="address" value="''' + b['address'] + '''" required class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white input-hover-effect outline-none text-sm">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Phone Numbers (separated with commas)</label>
-                    <input type="text" name="phones" value="''' + ", ".join(b.get('phones', [])) + '''" required class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white input-hover-effect outline-none text-sm">
-                </div>
-                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-3.5 rounded-xl font-bold btn-hover-effect text-sm shadow-lg">Save Changes</button>
-            </form>
-        </div>
-    </main>
-    ''' + FOOTER
-    return render_template_string(html)
-
-@app.route('/client/delete/<b_id>')
-def client_delete_business(b_id):
-    client_email = session.get('client_logged_email')
-    if not client_email or b_id notin BUSINESSES:
-        return redirect(url_for('client_login'))
-        
-    _b = BUSINESSES[b_id]
-    if _b.get('client_email', '').lower() == client_email.lower():
-        del BUSINESSES[b_id]
-        
-    return redirect(url_for('client_dashboard'))
-
-if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+            <div class="text
