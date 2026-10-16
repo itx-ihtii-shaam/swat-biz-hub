@@ -5,6 +5,7 @@ import json
 import urllib.parse
 import re
 import random
+import requests
 from flask import Flask, abort, redirect, render_template_string, request, url_for, session
 
 SITE_NAME = 'SwatBiz Hub'
@@ -16,6 +17,61 @@ app.secret_key = 'swat_biz_hub_secret_key'
 # Temporary storage for email verification codes & password reset tokens
 EMAIL_VERIFICATION_CODES = {}
 PASSWORD_RESET_CODES = {}
+
+# ============================================================
+# REAL EMAIL SENDING (Brevo / Sendinblue transactional email API)
+# ------------------------------------------------------------
+# PythonAnywhere's FREE tier blocks normal SMTP connections
+# (smtp.gmail.com etc are NOT on its outbound whitelist), but it
+# DOES allow plain HTTPS requests to api.brevo.com, so this uses
+# Brevo's HTTP API instead of smtplib to actually deliver email.
+#
+# Setup (one-time, takes ~3 minutes):
+#   1) Create a free account at https://www.brevo.com (300 emails/day free)
+#   2) Go to: SMTP & API -> API Keys -> "Generate a new API key"
+#      Paste that key into BREVO_API_KEY below.
+#   3) Go to: Senders, Domains & Dedicated IPs -> Senders -> Add a Sender
+#      Verify an email address you own (e.g. your Gmail) and put it in
+#      MAIL_FROM_EMAIL below. Every email this site sends will be sent
+#      "from" that verified address.
+# ============================================================
+BREVO_API_KEY = 'PASTE-YOUR-BREVO-API-KEY-HERE'
+MAIL_FROM_EMAIL = 'youremail@gmail.com'   # must be verified as a Sender in Brevo
+MAIL_FROM_NAME = SITE_NAME
+
+
+def send_email(to_email, subject, html_body):
+    """Sends a real email via Brevo's HTTPS API.
+    Returns True if the email was actually sent, False otherwise.
+    Never raises - so registration/login never crashes even if email fails."""
+    if not BREVO_API_KEY or BREVO_API_KEY.startswith('PASTE-'):
+        # Not configured yet - fall back to printing in the server log so
+        # you can still test locally. Visible in PythonAnywhere's error log.
+        print(f"[EMAIL NOT SENT - set BREVO_API_KEY first] To: {to_email} | Subject: {subject}\n{html_body}")
+        return False
+    try:
+        resp = requests.post(
+            'https://api.brevo.com/v3/smtp/email',
+            headers={
+                'accept': 'application/json',
+                'api-key': BREVO_API_KEY,
+                'content-type': 'application/json',
+            },
+            json={
+                'sender': {'name': MAIL_FROM_NAME, 'email': MAIL_FROM_EMAIL},
+                'to': [{'email': to_email}],
+                'subject': subject,
+                'htmlContent': html_body,
+            },
+            timeout=15,
+        )
+        if resp.status_code not in (200, 201):
+            print(f"[EMAIL SEND FAILED] {resp.status_code}: {resp.text}")
+            return False
+        return True
+    except Exception as e:
+        print(f"[EMAIL SEND ERROR] {e}")
+        return False
 
 def get_google_maps_url(name, address):
     """Smart Google Maps URL builder: extracts GPS coords if available, else builds name+address query."""
@@ -1105,8 +1161,19 @@ def register():
                 })
         
         if name and category and client_email and client_password:
-            # Generate 4-digit verification code
+            # Generate 4-digit verification code and actually email it
             v_code = str(random.randint(1000, 9999))
+            send_email(
+                client_email,
+                f"Your {SITE_NAME} verification code",
+                f'''<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;padding:24px;">
+                    <h2 style="color:#2563eb;margin-bottom:4px;">{SITE_NAME}</h2>
+                    <p>Assalam o Alaikum,</p>
+                    <p>Use the code below to verify your email and finish registering <strong>{name}</strong>:</p>
+                    <p style="font-size:32px;font-weight:800;letter-spacing:6px;background:#f1f5f9;padding:14px 20px;border-radius:12px;text-align:center;">{v_code}</p>
+                    <p style="color:#64748b;font-size:12px;">This code expires once used. If you didn't request this, you can ignore this email.</p>
+                </div>'''
+            )
             EMAIL_VERIFICATION_CODES[client_email] = {
                 'code': v_code,
                 'temp_data': {
@@ -1563,11 +1630,7 @@ def verify_email_page():
         <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-8 shadow-2xl space-y-6 animate-modal text-center">
             <span class="text-5xl inline-block">✉️</span>
             <h1 class="text-2xl font-black text-gray-900 dark:text-white">Email Verification</h1>
-            <p class="text-xs text-gray-500 dark:text-gray-400">We have sent a 4-digit verification code to <strong class="text-blue-600 dark:text-blue-400">''' + email + '''</strong>.</p>
-            
-            <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 p-3 rounded-2xl text-xs text-blue-700 dark:text-blue-300 font-bold">
-                💡 Demo Notice: Your 4-digit code is: <span class="text-lg underline font-black">''' + actual_code + '''</span>
-            </div>
+            <p class="text-xs text-gray-500 dark:text-gray-400">We have sent a 4-digit verification code to <strong class="text-blue-600 dark:text-blue-400">''' + email + '''</strong>. Please check your inbox (and spam folder).</p>
 
             <form method="POST" class="space-y-4 text-left">
                 <div>
@@ -1598,7 +1661,17 @@ def client_forgot_password():
         if matched:
             reset_code = str(random.randint(1000, 9999))
             PASSWORD_RESET_CODES[email] = reset_code
-            success_msg = f"Password reset instructions sent! Your 4-digit reset code is: {reset_code}"
+            send_email(
+                email,
+                f"Your {SITE_NAME} password reset code",
+                f'''<div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;padding:24px;">
+                    <h2 style="color:#2563eb;margin-bottom:4px;">{SITE_NAME}</h2>
+                    <p>We received a request to reset your password. Use the code below:</p>
+                    <p style="font-size:32px;font-weight:800;letter-spacing:6px;background:#f1f5f9;padding:14px 20px;border-radius:12px;text-align:center;">{reset_code}</p>
+                    <p style="color:#64748b;font-size:12px;">If you didn't request this, you can safely ignore this email.</p>
+                </div>'''
+            )
+            success_msg = "Password reset instructions sent! Please check your email for the 4-digit reset code."
             session['reset_email'] = email
         else:
             error_msg = "No business account found with this email address."
@@ -1746,10 +1819,12 @@ def admin_dashboard():
                 <span class="px-2.5 py-1 rounded-md text-[10px] font-extrabold uppercase {status_color}">{status}</span>
             </td>
             <td class="p-4">{expiry_str}</td>
-            <td class="p-4 space-x-2 flex items-center">
+            <td class="p-4 space-x-2 flex items-center flex-wrap gap-y-1">
+                <a href="/admin/preview/{b['id']}" class="bg-indigo-600 hover:bg-indigo-500 text-white px-2.5 py-1 rounded-lg text-[11px] font-bold btn-hover-effect">👁️ Preview</a>
                 <a href="/admin/status/{b['id']}/approved" class="bg-green-600 hover:bg-green-500 text-white px-2.5 py-1 rounded-lg text-[11px] font-bold btn-hover-effect">Approve</a>
                 <a href="/admin/status/{b['id']}/pending" class="bg-yellow-600 hover:bg-yellow-500 text-white px-2.5 py-1 rounded-lg text-[11px] font-bold btn-hover-effect">Pending</a>
                 <a href="/admin/extend/{b['id']}" class="bg-blue-600 hover:bg-blue-500 text-white px-2.5 py-1 rounded-lg text-[11px] font-bold btn-hover-effect">+30 Days</a>
+                <a href="/admin/edit/{b['id']}" class="bg-gray-700 hover:bg-gray-600 text-white px-2.5 py-1 rounded-lg text-[11px] font-bold btn-hover-effect">✏️ Edit</a>
                 <a href="/admin/delete/{b['id']}" onclick="return confirm('Delete listing?');" class="bg-red-600 hover:bg-red-500 text-white px-2.5 py-1 rounded-lg text-[11px] font-bold btn-hover-effect">Delete</a>
             </td>
         </tr>
@@ -1890,6 +1965,509 @@ def admin_change_payment(b_id, new_pay_status):
     if b_id in BUSINESSES:
         BUSINESSES[b_id]['payment_status'] = new_pay_status
     return redirect(url_for('admin_dashboard', tab='payments'))
+
+@app.route('/admin/preview/<b_id>')
+def admin_preview_business(b_id):
+    """Lets admin see EXACTLY what the owner submitted (full details, images,
+    doctors/staff, etc.) before approving - plus quick Approve/Edit/Delete actions."""
+    if not session.get('admin_logged_in'):
+        return redirect(url_for('admin_login'))
+    if b_id not in BUSINESSES:
+        abort(404)
+
+    b = BUSINESSES[b_id]
+    cat_meta = CATEGORIES.get(b.get('category'), {})
+    status = b.get('status', 'pending')
+    status_color = 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' if status == 'approved' else 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+    pay_status = b.get('payment_status', 'pending')
+    pay_color = 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' if pay_status == 'paid' else 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+    joining_str = b.get('joining_date').strftime('%d %b %Y') if b.get('joining_date') else 'N/A'
+    expiry_str = b.get('expiry_date').strftime('%d %b %Y') if b.get('expiry_date') else 'N/A'
+
+    images_html = ""
+    for img in b.get('images', []) or ([b['image']] if b.get('image') else []):
+        images_html += f'<img src="{img}" class="w-full h-40 object-cover rounded-xl border border-gray-200 dark:border-gray-800">'
+    if not images_html:
+        images_html = '<p class="text-xs text-gray-400">No pictures uploaded.</p>'
+
+    staff_label = cat_meta.get('staff_label', 'Staff')
+    staff_html = ""
+    doctors = b.get('doctors', [])
+    if doctors:
+        for d in doctors:
+            d_img = f'<img src="{d.get("doc_image")}" class="w-14 h-14 rounded-full object-cover border-2 border-blue-500">' if d.get('doc_image') else '<span class="text-3xl">👤</span>'
+            staff_html += f'''
+            <div class="bg-gray-50 dark:bg-gray-950 p-4 rounded-2xl border border-gray-200 dark:border-gray-800 flex gap-4 items-start">
+                {d_img}
+                <div class="text-xs space-y-1">
+                    <p class="text-sm font-extrabold text-blue-600 dark:text-blue-400">{d.get('name', 'N/A')}</p>
+                    <p class="font-semibold text-indigo-600 dark:text-indigo-400">{d.get('specialty', '')}</p>
+                    <p class="text-gray-500 dark:text-gray-400">🎓 {d.get('qualifications', '')}</p>
+                    <p>🕒 {d.get('appt_timing', '')} &middot; 📅 {d.get('clinic_timing', '')}</p>
+                    <p>🚪 {d.get('room', '')}</p>
+                    <p class="font-bold text-blue-600 dark:text-blue-400">📞 {d.get('appt_numbers', '')}</p>
+                </div>
+            </div>
+            '''
+    else:
+        staff_html = f'<p class="text-xs text-gray-400">No {staff_label.lower()} added.</p>'
+
+    html = get_base_head(back_url="/admin/dashboard", back_text="Back to Admin Dashboard") + '''
+    <main class="max-w-4xl mx-auto px-4 py-10 animate-fade-in space-y-6">
+        <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-6 shadow-xl space-y-4">
+            <div class="flex flex-wrap justify-between items-start gap-3">
+                <div>
+                    <h1 class="text-2xl font-black text-gray-900 dark:text-white">👁️ Preview: ''' + b['name'] + '''</h1>
+                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">This is exactly what will go live once approved. Review everything before approving.</p>
+                </div>
+                <div class="flex gap-2">
+                    <span class="px-3 py-1.5 rounded-lg text-[11px] font-extrabold uppercase ''' + status_color + '''">''' + status + '''</span>
+                    <span class="px-3 py-1.5 rounded-lg text-[11px] font-extrabold uppercase ''' + pay_color + '''">Payment: ''' + pay_status + '''</span>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-gray-700 dark:text-gray-300 pt-2 border-t border-gray-100 dark:border-gray-800">
+                <p><strong>Category:</strong> ''' + cat_meta.get('title', b.get('category', 'N/A')) + ''' ''' + (('&middot; ' + b.get('subcategory')) if b.get('subcategory') else '') + '''</p>
+                <p><strong>Address:</strong> ''' + b.get('address', 'N/A') + '''</p>
+                <p><strong>Phone(s):</strong> ''' + ", ".join(b.get('phones', [])) + '''</p>
+                <p><strong>Owner email:</strong> ''' + b.get('client_email', 'N/A') + '''</p>
+                <p><strong>Joined:</strong> ''' + joining_str + '''</p>
+                <p><strong>Expiry:</strong> ''' + expiry_str + '''</p>
+                <p><strong>Payment method:</strong> ''' + b.get('payment_method', 'N/A') + '''</p>
+                <p><strong>Payment reference:</strong> ''' + b.get('payment_ref', 'N/A') + '''</p>
+            </div>
+
+            <div class="pt-3 border-t border-gray-100 dark:border-gray-800">
+                <h3 class="text-sm font-extrabold text-gray-800 dark:text-gray-200 mb-2">🖼️ Pictures</h3>
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-3">''' + images_html + '''</div>
+            </div>
+
+            <div class="pt-3 border-t border-gray-100 dark:border-gray-800">
+                <h3 class="text-sm font-extrabold text-gray-800 dark:text-gray-200 mb-2">''' + cat_meta.get('info_title', staff_label) + '''</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">''' + staff_html + '''</div>
+            </div>
+
+            <div class="pt-3 border-t border-gray-100 dark:border-gray-800">
+                <h3 class="text-sm font-extrabold text-gray-800 dark:text-gray-200 mb-2">''' + cat_meta.get('extra_title', 'Details') + '''</h3>
+                <p class="text-xs text-gray-600 dark:text-gray-400 whitespace-pre-line">''' + (b.get('tests_dishes') or 'Not specified') + '''</p>
+                ''' + (f'<img src="{b.get("extra_img")}" class="w-full max-w-sm mt-3 rounded-xl border border-gray-200 dark:border-gray-800">' if b.get('extra_img') else '') + '''
+            </div>
+
+            <div class="pt-4 border-t border-gray-100 dark:border-gray-800 flex flex-wrap gap-2">
+                <a href="/admin/status/''' + b['id'] + '''/approved" class="bg-green-600 hover:bg-green-500 text-white px-4 py-2.5 rounded-xl text-xs font-bold btn-hover-effect">✓ Approve Listing</a>
+                <a href="/admin/status/''' + b['id'] + '''/pending" class="bg-yellow-600 hover:bg-yellow-500 text-white px-4 py-2.5 rounded-xl text-xs font-bold btn-hover-effect">Mark Pending</a>
+                <a href="/admin/edit/''' + b['id'] + '''" class="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2.5 rounded-xl text-xs font-bold btn-hover-effect">✏️ Edit Details</a>
+                <a href="/admin/delete/''' + b['id'] + '''" onclick="return confirm('Delete this listing permanently?');" class="bg-red-600 hover:bg-red-500 text-white px-4 py-2.5 rounded-xl text-xs font-bold btn-hover-effect">🗑️ Delete</a>
+            </div>
+        </div>
+    </main>
+    ''' + FOOTER
+    return render_template_string(html)
+
+@app.route('/admin/edit/<b_id>', methods=['GET', 'POST'])
+def admin_edit_business(b_id):
+    """Lets admin fix/update any field of a submitted business (same fields the
+    owner filled in at registration) without touching status/payment history."""
+    if not session.get('admin_logged_in'):
+        return redirect(url_for('admin_login'))
+    if b_id not in BUSINESSES:
+        abort(404)
+
+    b = BUSINESSES[b_id]
+    error_msg = ""
+
+    if request.method == 'POST':
+        name = request.form.get('name', '').strip()
+        category = request.form.get('category', '').strip()
+        subcategory = request.form.get('subcategory', '').strip()
+        address = request.form.get('address', '').strip()
+        raw_phones = request.form.get('phone', '').strip()
+        phones_list = [p.strip() for p in raw_phones.split(',') if p.strip()]
+        tests_dishes = request.form.get('tests_dishes', '').strip()
+        extra_img = request.form.get('extra_img', '').strip()
+
+        main_images = [img.strip() for img in request.form.getlist('main_images') if img.strip()]
+
+        doc_names = request.form.getlist('doc_name')
+        doc_specs = request.form.getlist('doc_spec')
+        doc_quals = request.form.getlist('doc_qual')
+        doc_appts = request.form.getlist('doc_appt')
+        doc_clinics = request.form.getlist('doc_clinic')
+        doc_rooms = request.form.getlist('doc_room')
+        doc_phones = request.form.getlist('doc_phone')
+        doc_images = request.form.getlist('doc_image')
+
+        doctors_list = []
+        for i in range(len(doc_names)):
+            if doc_names[i].strip():
+                doctors_list.append({
+                    'name': doc_names[i].strip(),
+                    'specialty': doc_specs[i].strip() if i < len(doc_specs) else '',
+                    'qualifications': doc_quals[i].strip() if i < len(doc_quals) else '',
+                    'appt_timing': doc_appts[i].strip() if i < len(doc_appts) else '',
+                    'clinic_timing': doc_clinics[i].strip() if i < len(doc_clinics) else '',
+                    'room': doc_rooms[i].strip() if i < len(doc_rooms) else '',
+                    'appt_numbers': doc_phones[i].strip() if i < len(doc_phones) and doc_phones[i].strip() else raw_phones,
+                    'doc_image': doc_images[i].strip() if i < len(doc_images) else ''
+                })
+
+        if name and category and address:
+            b['name'] = name
+            b['category'] = category
+            b['subcategory'] = subcategory if subcategory else 'General'
+            b['address'] = address
+            b['phones'] = phones_list if phones_list else b.get('phones', [])
+            if main_images:
+                b['images'] = main_images
+                b['image'] = main_images[0]
+            b['doctors'] = doctors_list
+            b['tests_dishes'] = tests_dishes if tests_dishes else b.get('tests_dishes', '')
+            b['extra_img'] = extra_img
+            return redirect(url_for('admin_preview_business', b_id=b_id))
+        else:
+            error_msg = "Please fill in all required fields."
+
+    cats_options = "".join([
+        f'<option value="{k}" {"selected" if k == b.get("category") else ""}>{v["title"]}</option>'
+        for k, v in CATEGORIES.items()
+    ])
+    categories_json = json.dumps(CATEGORIES)
+
+    doctor_rows_html = ""
+    doctors = b.get('doctors', []) or [{}]
+    for d in doctors:
+        img_val = d.get('doc_image', '')
+        preview_html = f'''
+            <div class="doc-preview-box flex items-center gap-2 pt-1">
+                <img class="doc-preview-img w-8 h-8 rounded-full object-cover border border-blue-500" src="{img_val}">
+                <span class="text-[10px] text-green-500 font-bold">✓ Photo Selected</span>
+            </div>''' if img_val else '<div class="doc-preview-box hidden flex items-center gap-2 pt-1"><img class="doc-preview-img w-8 h-8 rounded-full object-cover border border-blue-500"><span class="text-[10px] text-green-500 font-bold">✓ Photo Selected</span></div>'
+        doctor_rows_html += f'''
+        <div class="doc-entry animate-modal bg-gray-50 dark:bg-gray-950 p-4 rounded-2xl border border-gray-200 dark:border-gray-800 space-y-3 relative">
+            <button type="button" onclick="requestDeleteDoctor(this)" title="Delete Entry" class="absolute top-3 right-3 bg-red-600 hover:bg-red-700 text-white w-8 h-8 rounded-full flex items-center justify-center font-black text-sm shadow-md transition transform hover:scale-110 z-10 border border-red-400">✕</button>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <input type="text" name="doc_name" value="{d.get('name', '')}" placeholder="Name" class="doc-input-name p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
+                <input type="text" name="doc_spec" value="{d.get('specialty', '')}" placeholder="Specialty" class="doc-input-spec p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
+            </div>
+            <div>
+                <input type="text" name="doc_qual" value="{d.get('qualifications', '')}" placeholder="Qualifications" class="doc-input-qual w-full p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <input type="text" name="doc_appt" value="{d.get('appt_timing', '')}" placeholder="Timing" class="doc-input-appt p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
+                <input type="text" name="doc_clinic" value="{d.get('clinic_timing', '')}" placeholder="Days" class="doc-input-clinic p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <input type="text" name="doc_room" value="{d.get('room', '')}" placeholder="Room" class="doc-input-room p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
+                <input type="text" name="doc_phone" value="{d.get('appt_numbers', '')}" placeholder="Phone(s)" class="doc-input-phone p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
+            </div>
+            <div class="pt-2 border-t border-gray-200 dark:border-gray-800/60 space-y-2">
+                <label class="block text-[11px] font-bold text-gray-500 dark:text-gray-400">🖼️ Photo (Gallery or URL)</label>
+                <div class="flex flex-col sm:flex-row gap-2 items-center">
+                    <label class="w-full sm:w-auto bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 px-3 py-2 rounded-xl text-xs font-bold cursor-pointer transition flex items-center justify-center gap-1 border border-gray-300 dark:border-gray-700">
+                        📁 Gallery
+                        <input type="file" accept="image/*" onchange="handleDocFileUpload(event, this)" class="hidden">
+                    </label>
+                    <span class="text-[10px] text-gray-400">OR</span>
+                    <input type="text" name="doc_image" value="{img_val}" placeholder="Paste Image URL link..." class="doc-img-input w-full p-2 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
+                </div>
+                {preview_html}
+            </div>
+        </div>
+        '''
+
+    main_images_rows_html = ""
+    existing_images = b.get('images', []) or ([b['image']] if b.get('image') else [])
+    if not existing_images:
+        existing_images = ['']
+    for img in existing_images:
+        main_images_rows_html += f'''
+        <div class="main-img-row flex flex-col sm:flex-row gap-2 items-center">
+            <label class="w-full sm:w-auto bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 px-3 py-2 rounded-xl text-xs font-bold cursor-pointer transition flex items-center justify-center gap-1 border border-gray-300 dark:border-gray-700">
+                📁 Gallery
+                <input type="file" accept="image/*" onchange="handleMainFileUpload(event, this)" class="hidden">
+            </label>
+            <span class="text-[10px] text-gray-400">OR</span>
+            <input type="text" name="main_images" value="{img}" placeholder="Paste Image URL link..." class="w-full p-2.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
+        </div>
+        '''
+
+    html = get_base_head(back_url="/admin/preview/" + b_id, back_text="Back to Preview") + '''
+    <div id="deleteConfirmModal" class="fixed inset-0 bg-black/60 dark:bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center hidden p-4">
+        <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-6 max-w-sm w-full shadow-2xl animate-modal text-center space-y-4">
+            <span class="text-4xl inline-block">🗑️</span>
+            <h3 class="text-lg font-extrabold text-gray-900 dark:text-white">Delete Entry?</h3>
+            <p class="text-xs text-gray-500 dark:text-gray-400">Are you sure you want to remove this entry from your form?</p>
+            <div class="flex items-center justify-center gap-3 pt-2">
+                <button type="button" onclick="cancelDeleteDoctor()" class="w-1/2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 py-2.5 rounded-xl font-bold text-xs transition">Cancel</button>
+                <button type="button" onclick="confirmDeleteDoctor()" class="w-1/2 bg-red-600 hover:bg-red-500 text-white py-2.5 rounded-xl font-bold text-xs shadow-md transition">Yes, Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <main class="max-w-2xl mx-auto px-4 py-12 animate-fade-in">
+        <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-8 shadow-2xl space-y-6 animate-modal">
+            <div class="text-center space-y-2">
+                <span class="text-5xl inline-block">✏️</span>
+                <h1 class="text-2xl font-black text-gray-900 dark:text-white">Edit: ''' + b['name'] + '''</h1>
+                <p class="text-xs text-gray-500 dark:text-gray-400">Admin edit - status, payment history and login are not affected.</p>
+            </div>
+
+            <form method="POST" class="space-y-6">
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Business Name *</label>
+                    <input type="text" id="bizNameInput" name="name" required value="''' + b.get('name', '') + '''" class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white input-hover-effect outline-none text-sm">
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Category *</label>
+                        <select id="categorySelect" name="category" required onchange="updateCategoryFields()" class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white outline-none text-sm">
+                            ''' + cats_options + '''
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Subcategory / Type</label>
+                        <select id="subcategorySelect" name="subcategory" class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white outline-none text-sm">
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Address / Location *</label>
+                    <input type="text" id="addressInput" name="address" required value="''' + b.get('address', '') + '''" class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white input-hover-effect outline-none text-sm">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Phone Number(s) *</label>
+                    <input type="text" name="phone" required value="''' + ", ".join(b.get('phones', [])) + '''" class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white input-hover-effect outline-none text-sm">
+                </div>
+
+                <div class="pt-2 border-t border-gray-100 dark:border-gray-800 space-y-3">
+                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300">🖼️ Main / Gallery Pictures</label>
+                    <div id="mainImagesContainer" class="space-y-3">
+                        ''' + main_images_rows_html + '''
+                    </div>
+                    <button type="button" onclick="addMainImageRow()" class="text-xs bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 px-3 py-2 rounded-xl font-bold transition flex items-center gap-1">
+                        + Add Another Main Picture
+                    </button>
+                </div>
+
+                <div class="pt-4 border-t border-gray-100 dark:border-gray-800 space-y-4">
+                    <div class="flex justify-between items-center">
+                        <label id="staffSectionHeading" class="block text-sm font-extrabold text-blue-600 dark:text-blue-400">Staff / Doctors</label>
+                    </div>
+                    <div id="doctorsContainer" class="space-y-4">
+                        ''' + doctor_rows_html + '''
+                    </div>
+                    <button id="addStaffBtn" type="button" onclick="addDoctorRow()" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2.5 rounded-xl text-xs font-bold btn-hover-effect flex items-center gap-2 shadow-md">
+                        + Add New Entry
+                    </button>
+                </div>
+
+                <div class="pt-4 border-t border-gray-100 dark:border-gray-800 space-y-3">
+                    <label id="extraSectionLabel" class="block text-xs font-bold text-gray-700 dark:text-gray-300">Tests / Services / Menu</label>
+                    <textarea id="extraSectionTextarea" name="tests_dishes" rows="3" class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white input-hover-effect outline-none text-sm">''' + (b.get('tests_dishes') or '') + '''</textarea>
+
+                    <div class="space-y-2">
+                        <label id="extraImgLabel" class="block text-[11px] font-bold text-gray-500 dark:text-gray-400">Banner Image (Optional)</label>
+                        <div class="flex flex-col sm:flex-row gap-3 items-center">
+                            <label class="w-full sm:w-auto bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 px-4 py-2.5 rounded-xl text-xs font-bold cursor-pointer transition flex items-center justify-center gap-2 border border-gray-300 dark:border-gray-700">
+                                📁 Select from Gallery
+                                <input type="file" accept="image/*" onchange="handleFileUpload(event)" class="hidden">
+                            </label>
+                            <span class="text-xs text-gray-400">OR</span>
+                            <input type="text" id="extraImgInput" name="extra_img" value="''' + (b.get('extra_img') or '') + '''" class="w-full p-2.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white input-hover-effect outline-none">
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-3.5 rounded-xl font-bold btn-hover-effect text-sm shadow-lg">Save Changes</button>
+            </form>
+
+            ''' + (f'<div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-3 rounded-xl text-red-600 dark:text-red-400 text-xs text-center font-semibold">{error_msg}</div>' if error_msg else '') + '''
+        </div>
+    </main>
+
+    <script>
+        var categoriesMeta = ''' + categories_json + ''';
+        var pendingDeleteTarget = null;
+        var initialSubcategory = "''' + b.get('subcategory', '') + '''";
+
+        function handleMainFileUpload(event, fileInput) {
+            var file = event.target.files[0];
+            if (file) {
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    var row = fileInput.closest('.main-img-row');
+                    row.querySelector('input[name="main_images"]').value = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function addMainImageRow() {
+            var container = document.getElementById('mainImagesContainer');
+            var div = document.createElement('div');
+            div.className = 'main-img-row flex flex-col sm:flex-row gap-2 items-center animate-modal';
+            div.innerHTML = `
+                <label class="w-full sm:w-auto bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 px-3 py-2 rounded-xl text-xs font-bold cursor-pointer transition flex items-center justify-center gap-1 border border-gray-300 dark:border-gray-700">
+                    📁 Gallery
+                    <input type="file" accept="image/*" onchange="handleMainFileUpload(event, this)" class="hidden">
+                </label>
+                <span class="text-[10px] text-gray-400">OR</span>
+                <input type="text" name="main_images" placeholder="Paste Image URL link..." class="w-full p-2.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
+            `;
+            container.appendChild(div);
+        }
+
+        function handleFileUpload(event) {
+            var file = event.target.files[0];
+            if (file) {
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('extraImgInput').value = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function handleDocFileUpload(event, fileInput) {
+            var file = event.target.files[0];
+            if (file) {
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    var docEntry = fileInput.closest('.doc-entry');
+                    var imgInput = docEntry.querySelector('.doc-img-input');
+                    var previewBox = docEntry.querySelector('.doc-preview-box');
+                    var previewImg = docEntry.querySelector('.doc-preview-img');
+                    imgInput.value = e.target.result;
+                    previewImg.src = e.target.result;
+                    previewBox.classList.remove('hidden');
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function updateCategoryFields() {
+            var catSelect = document.getElementById('categorySelect');
+            var subcatSelect = document.getElementById('subcategorySelect');
+            var selectedCatKey = catSelect.value;
+            var catObj = categoriesMeta[selectedCatKey];
+            if (!catObj) return;
+
+            subcatSelect.innerHTML = '';
+            var optNone = document.createElement('option');
+            optNone.value = '';
+            optNone.text = 'Select Subcategory (Optional)';
+            subcatSelect.appendChild(optNone);
+
+            if (catObj.subcategories) {
+                catObj.subcategories.forEach(function(sub) {
+                    var option = document.createElement('option');
+                    option.value = sub;
+                    option.text = sub;
+                    if (sub === initialSubcategory) option.selected = true;
+                    subcatSelect.appendChild(option);
+                });
+            }
+
+            document.getElementById('staffSectionHeading').innerText = catObj.staff_heading || 'Staff';
+            document.getElementById('addStaffBtn').innerText = catObj.btn_text || '+ Add New Entry';
+            document.getElementById('extraSectionLabel').innerText = catObj.extra_label || 'Details';
+            document.getElementById('extraImgLabel').innerText = catObj.img_label || 'Banner Image';
+
+            document.querySelectorAll('.doc-entry').forEach(function(row) {
+                applyPlaceholdersToRow(row, catObj);
+            });
+        }
+
+        function applyPlaceholdersToRow(row, catObj) {
+            row.querySelector('.doc-input-name').placeholder = catObj.ph_name;
+            row.querySelector('.doc-input-spec').placeholder = catObj.ph_spec;
+            row.querySelector('.doc-input-qual').placeholder = catObj.ph_qual;
+            row.querySelector('.doc-input-appt').placeholder = catObj.ph_appt;
+            row.querySelector('.doc-input-clinic').placeholder = catObj.ph_clinic;
+            row.querySelector('.doc-input-room').placeholder = catObj.ph_room;
+            row.querySelector('.doc-input-phone').placeholder = catObj.ph_phone;
+        }
+
+        function addDoctorRow() {
+            var catSelect = document.getElementById('categorySelect');
+            var catObj = categoriesMeta[catSelect.value];
+            var container = document.getElementById('doctorsContainer');
+            var div = document.createElement('div');
+            div.className = 'doc-entry animate-modal bg-gray-50 dark:bg-gray-950 p-4 rounded-2xl border border-gray-200 dark:border-gray-800 space-y-3 relative mt-3';
+            div.innerHTML = `
+                <button type="button" onclick="requestDeleteDoctor(this)" title="Delete Entry" class="absolute top-3 right-3 bg-red-600 hover:bg-red-700 text-white w-8 h-8 rounded-full flex items-center justify-center font-black text-sm shadow-md transition transform hover:scale-110 z-10 border border-red-400">✕</button>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <input type="text" name="doc_name" placeholder="" class="doc-input-name p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
+                    <input type="text" name="doc_spec" placeholder="" class="doc-input-spec p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
+                </div>
+                <div>
+                    <input type="text" name="doc_qual" placeholder="" class="doc-input-qual w-full p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <input type="text" name="doc_appt" placeholder="" class="doc-input-appt p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
+                    <input type="text" name="doc_clinic" placeholder="" class="doc-input-clinic p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <input type="text" name="doc_room" placeholder="" class="doc-input-room p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
+                    <input type="text" name="doc_phone" placeholder="" class="doc-input-phone p-3 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
+                </div>
+                <div class="pt-2 border-t border-gray-200 dark:border-gray-800/60 space-y-2">
+                    <label class="block text-[11px] font-bold text-gray-500 dark:text-gray-400">🖼️ Photo (Optional - Gallery or URL)</label>
+                    <div class="flex flex-col sm:flex-row gap-2 items-center">
+                        <label class="w-full sm:w-auto bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 px-3 py-2 rounded-xl text-xs font-bold cursor-pointer transition flex items-center justify-center gap-1 border border-gray-300 dark:border-gray-700">
+                            📁 Gallery
+                            <input type="file" accept="image/*" onchange="handleDocFileUpload(event, this)" class="hidden">
+                        </label>
+                        <span class="text-[10px] text-gray-400">OR</span>
+                        <input type="text" name="doc_image" placeholder="Paste Image URL link..." class="doc-img-input w-full p-2 rounded-xl bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-xs text-gray-900 dark:text-white outline-none input-hover-effect">
+                    </div>
+                    <div class="doc-preview-box hidden flex items-center gap-2 pt-1">
+                        <img class="doc-preview-img w-8 h-8 rounded-full object-cover border border-blue-500">
+                        <span class="text-[10px] text-green-500 font-bold">✓ Photo Selected</span>
+                    </div>
+                </div>
+            `;
+            container.appendChild(div);
+            applyPlaceholdersToRow(div, catObj);
+        }
+
+        function requestDeleteDoctor(btn) {
+            pendingDeleteTarget = btn.closest('.doc-entry');
+            document.getElementById('deleteConfirmModal').classList.remove('hidden');
+        }
+
+        function cancelDeleteDoctor() {
+            pendingDeleteTarget = null;
+            document.getElementById('deleteConfirmModal').classList.add('hidden');
+        }
+
+        function confirmDeleteDoctor() {
+            if (pendingDeleteTarget) {
+                var entries = document.querySelectorAll('.doc-entry');
+                if (entries.length > 1) {
+                    pendingDeleteTarget.classList.remove('animate-modal');
+                    pendingDeleteTarget.classList.add('animate-fade-out');
+                    setTimeout(function() {
+                        pendingDeleteTarget.remove();
+                        pendingDeleteTarget = null;
+                    }, 200);
+                } else {
+                    pendingDeleteTarget.querySelectorAll('input').forEach(input => input.value = '');
+                    pendingDeleteTarget = null;
+                }
+            }
+            document.getElementById('deleteConfirmModal').classList.add('hidden');
+        }
+
+        window.addEventListener('DOMContentLoaded', function() {
+            updateCategoryFields();
+        });
+    </script>
+    ''' + FOOTER
+    return render_template_string(html)
 
 @app.route('/admin/extend/<b_id>')
 def admin_extend_expiry(b_id):
