@@ -35,8 +35,8 @@ PASSWORD_RESET_CODES = {}
 #      MAIL_FROM_EMAIL below. Every email this site sends will be sent
 #      "from" that verified address.
 # ============================================================
-BREVO_API_KEY = 'PASTE-YOUR-BREVO-API-KEY-HERE'
-MAIL_FROM_EMAIL = 'youremail@gmail.com'   # must be verified as a Sender in Brevo
+BREVO_API_KEY = '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'
+MAIL_FROM_EMAIL = 'im.drnaeemuddin@gmail.com'   # must be verified as a Sender in Brevo
 MAIL_FROM_NAME = SITE_NAME
 
 
