@@ -4,6 +4,7 @@ import os
 import json
 import urllib.parse
 import re
+import random
 from flask import Flask, abort, redirect, render_template_string, request, url_for, session
 
 SITE_NAME = 'SwatBiz Hub'
@@ -11,6 +12,10 @@ ADMIN_PASSWORD = 'admin123'
 
 app = Flask(__name__)
 app.secret_key = 'swat_biz_hub_secret_key'
+
+# Temporary storage for email verification codes & password reset tokens
+EMAIL_VERIFICATION_CODES = {}
+PASSWORD_RESET_CODES = {}
 
 def get_google_maps_url(name, address):
     """Smart Google Maps URL builder: extracts GPS coords if available, else builds name+address query."""
@@ -1100,31 +1105,28 @@ def register():
                 })
         
         if name and category and client_email and client_password:
-            new_id = str(len(BUSINESSES) + 1)
-            BUSINESSES[new_id] = {
-                'id': new_id,
-                'category': category,
-                'subcategory': subcategory if subcategory else 'General',
-                'name': name,
-                'address': address,
-                'phones': phones_list if phones_list else ['+92 300 0000000'],
-                'image': main_images[0],
-                'images': main_images,
-                'status': 'pending',
-                'payment_method': 'Bank Transfer / JazzCash',
-                'payment_ref': 'PENDING-VERIFY',
-                'payment_status': 'pending',
-                'joining_date': datetime.now(),
-                'expiry_date': datetime.now() + timedelta(days=30),
-                'doctors': doctors_list,
-                'special_info': f"{len(doctors_list)} Staff / Specialist(s) Registered",
-                'tests_dishes': tests_dishes if tests_dishes else 'Services available.',
-                'extra_img': extra_img,
-                'client_email': client_email,
-                'client_password': client_password
+            # Generate 4-digit verification code
+            v_code = str(random.randint(1000, 9999))
+            EMAIL_VERIFICATION_CODES[client_email] = {
+                'code': v_code,
+                'temp_data': {
+                    'category': category,
+                    'subcategory': subcategory if subcategory else 'General',
+                    'name': name,
+                    'address': address,
+                    'phones': phones_list if phones_list else ['+92 300 0000000'],
+                    'image': main_images[0],
+                    'images': main_images,
+                    'doctors': doctors_list,
+                    'special_info': f"{len(doctors_list)} Staff / Specialist(s) Registered",
+                    'tests_dishes': tests_dishes if tests_dishes else 'Services available.',
+                    'extra_img': extra_img,
+                    'client_email': client_email,
+                    'client_password': client_password
+                }
             }
-            session['client_logged_email'] = client_email
-            return redirect(url_for('client_dashboard'))
+            session['verify_email'] = client_email
+            return redirect(url_for('verify_email_page'))
         else:
             error_msg = "Please fill in all required fields."
 
@@ -1297,7 +1299,7 @@ def register():
                     </div>
                 </div>
 
-                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-3.5 rounded-xl font-bold btn-hover-effect text-sm shadow-lg">Register & Open Dashboard</button>
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-3.5 rounded-xl font-bold btn-hover-effect text-sm shadow-lg">Register & Verify Email</button>
             </form>
 
             ''' + (f'<div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 p-3 rounded-xl text-red-600 dark:text-red-400 text-xs text-center font-semibold">{error_msg}</div>' if error_msg else '') + '''
@@ -1520,6 +1522,154 @@ def register():
             updateCategoryFields();
         });
     </script>
+    ''' + FOOTER
+    return render_template_string(html)
+
+@app.route('/verify-email', methods=['GET', 'POST'])
+def verify_email_page():
+    email = session.get('verify_email')
+    if not email or email not in EMAIL_VERIFICATION_CODES:
+        return redirect(url_for('register'))
+
+    actual_code = EMAIL_VERIFICATION_CODES[email]['code']
+    error_msg = ""
+
+    if request.method == 'POST':
+        entered_code = request.form.get('verification_code', '').strip()
+        if entered_code == actual_code:
+            # Save business permanently
+            temp_data = EMAIL_VERIFICATION_CODES[email]['temp_data']
+            new_id = str(len(BUSINESSES) + 1)
+            temp_data['id'] = new_id
+            temp_data['status'] = 'pending'
+            temp_data['payment_method'] = 'Bank Transfer / JazzCash'
+            temp_data['payment_ref'] = 'PENDING-VERIFY'
+            temp_data['payment_status'] = 'pending'
+            temp_data['joining_date'] = datetime.now()
+            temp_data['expiry_date'] = datetime.now() + timedelta(days=30)
+            
+            BUSINESSES[new_id] = temp_data
+            
+            # Clear verification session and log in client
+            session.pop('verify_email', None)
+            del EMAIL_VERIFICATION_CODES[email]
+            session['client_logged_email'] = email
+            return redirect(url_for('client_dashboard'))
+        else:
+            error_msg = "Invalid 4-digit code! Please check and try again."
+
+    html = get_base_head(back_url="/register", back_text="Back to Register") + '''
+    <main class="max-w-md mx-auto px-4 py-20 animate-fade-in">
+        <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-8 shadow-2xl space-y-6 animate-modal text-center">
+            <span class="text-5xl inline-block">✉️</span>
+            <h1 class="text-2xl font-black text-gray-900 dark:text-white">Email Verification</h1>
+            <p class="text-xs text-gray-500 dark:text-gray-400">We have sent a 4-digit verification code to <strong class="text-blue-600 dark:text-blue-400">''' + email + '''</strong>.</p>
+            
+            <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 p-3 rounded-2xl text-xs text-blue-700 dark:text-blue-300 font-bold">
+                💡 Demo Notice: Your 4-digit code is: <span class="text-lg underline font-black">''' + actual_code + '''</span>
+            </div>
+
+            <form method="POST" class="space-y-4 text-left">
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Enter 4-Digit Code</label>
+                    <input type="text" name="verification_code" required maxlength="4" placeholder="1234" class="w-full p-3.5 text-center tracking-widest text-xl font-bold rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white input-hover-effect outline-none">
+                </div>
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-3.5 rounded-xl font-bold btn-hover-effect text-sm shadow-lg">Verify & Complete Registration</button>
+            </form>
+            ''' + (f'<p class="text-red-500 text-xs font-semibold">{error_msg}</p>' if error_msg else '') + '''
+        </div>
+    </main>
+    ''' + FOOTER
+    return render_template_string(html)
+
+@app.route('/client/forgot-password', methods=['GET', 'POST'])
+def client_forgot_password():
+    error_msg = ""
+    success_msg = ""
+    
+    if request.method == 'POST':
+        email = request.form.get('email', '').strip().lower()
+        matched = False
+        for b in BUSINESSES.values():
+            if b.get('client_email', '').lower() == email:
+                matched = True
+                break
+        
+        if matched:
+            reset_code = str(random.randint(1000, 9999))
+            PASSWORD_RESET_CODES[email] = reset_code
+            success_msg = f"Password reset instructions sent! Your 4-digit reset code is: {reset_code}"
+            session['reset_email'] = email
+        else:
+            error_msg = "No business account found with this email address."
+
+    html = get_base_head(back_url="/client/login", back_text="Back to Login") + '''
+    <main class="max-w-md mx-auto px-4 py-20 animate-fade-in">
+        <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-8 shadow-2xl space-y-6 animate-modal">
+            <div class="text-center space-y-2">
+                <span class="text-5xl inline-block">🔑</span>
+                <h1 class="text-2xl font-black text-gray-900 dark:text-white">Forgot Password</h1>
+                <p class="text-xs text-gray-500 dark:text-gray-400">Enter your registered email to reset password.</p>
+            </div>
+
+            <form method="POST" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Email Address</label>
+                    <input type="email" name="email" required placeholder="owner@gmail.com" class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white input-hover-effect outline-none text-sm">
+                </div>
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-3.5 rounded-xl font-bold btn-hover-effect text-sm shadow-lg">Send Reset Code</button>
+            </form>
+
+            ''' + (f'<div class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 p-3 rounded-xl text-green-600 dark:text-green-400 text-xs text-center font-semibold space-y-2"><p>{success_msg}</p><a href="/client/reset-password" class="inline-block bg-green-600 text-white px-4 py-2 rounded-lg font-bold">Proceed to Reset Password →</a></div>' if success_msg else '') + '''
+            ''' + (f'<p class="text-red-500 text-xs text-center font-semibold">{error_msg}</p>' if error_msg else '') + '''
+        </div>
+    </main>
+    ''' + FOOTER
+    return render_template_string(html)
+
+@app.route('/client/reset-password', methods=['GET', 'POST'])
+def client_reset_password():
+    email = session.get('reset_email', '')
+    error_msg = ""
+    
+    if request.method == 'POST':
+        entered_code = request.form.get('code', '').strip()
+        new_password = request.form.get('new_password', '').strip()
+        
+        if email in PASSWORD_RESET_CODES and PASSWORD_RESET_CODES[email] == entered_code:
+            for b in BUSINESSES.values():
+                if b.get('client_email', '').lower() == email.lower():
+                    b['client_password'] = new_password
+            
+            PASSWORD_RESET_CODES.pop(email, None)
+            session.pop('reset_email', None)
+            return redirect(url_for('client_login'))
+        else:
+            error_msg = "Invalid verification code!"
+
+    html = get_base_head(back_url="/client/login", back_text="Back to Login") + '''
+    <main class="max-w-md mx-auto px-4 py-20 animate-fade-in">
+        <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-8 shadow-2xl space-y-6 animate-modal">
+            <div class="text-center space-y-2">
+                <span class="text-5xl inline-block">🔒</span>
+                <h1 class="text-2xl font-black text-gray-900 dark:text-white">Reset Password</h1>
+                <p class="text-xs text-gray-500 dark:text-gray-400">Enter code and set your new password.</p>
+            </div>
+
+            <form method="POST" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">4-Digit Code</label>
+                    <input type="text" name="code" required maxlength="4" placeholder="1234" class="w-full p-3.5 tracking-widest text-center text-lg font-bold rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white input-hover-effect outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">New Password</label>
+                    <input type="password" name="new_password" required placeholder="Enter new secure password" class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white input-hover-effect outline-none text-sm">
+                </div>
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-3.5 rounded-xl font-bold btn-hover-effect text-sm shadow-lg">Update Password</button>
+            </form>
+            ''' + (f'<p class="text-red-500 text-xs text-center font-semibold">{error_msg}</p>' if error_msg else '') + '''
+        </div>
+    </main>
     ''' + FOOTER
     return render_template_string(html)
 
@@ -1797,7 +1947,10 @@ def client_login():
                     <input type="email" name="email" required placeholder="owner@gmail.com" class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white input-hover-effect outline-none text-sm">
                 </div>
                 <div>
-                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Password</label>
+                    <div class="flex justify-between items-center mb-1">
+                        <label class="block text-xs font-bold text-gray-700 dark:text-gray-300">Password</label>
+                        <a href="/client/forgot-password" class="text-[11px] text-blue-600 dark:text-blue-400 font-bold hover:underline">Forgot Password?</a>
+                    </div>
                     <input type="password" name="password" required placeholder="••••••••" class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white input-hover-effect outline-none text-sm">
                 </div>
                 <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-3.5 rounded-xl font-bold btn-hover-effect text-sm shadow-lg">Login to Dashboard</button>
@@ -1849,6 +2002,7 @@ def client_dashboard():
                 <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Logged in as: <strong class="text-blue-600 dark:text-blue-400">''' + client_email + '''</strong></p>
             </div>
             <div class="flex items-center gap-3">
+                <a href="/client/change-password" class="bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-200 px-4 py-2.5 rounded-xl text-xs font-bold transition">Change Password 🔒</a>
                 <a href="/register" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow-md btn-hover-effect">＋ Register Business</a>
                 <a href="/client/logout" class="bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400 hover:bg-red-600 hover:text-white px-4 py-2.5 rounded-xl text-xs font-bold transition btn-hover-effect">Logout</a>
             </div>
@@ -1856,6 +2010,60 @@ def client_dashboard():
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             ''' + cards_html + '''
+        </div>
+    </main>
+    ''' + FOOTER
+    return render_template_string(html)
+
+@app.route('/client/change-password', methods=['GET', 'POST'])
+def client_change_password():
+    client_email = session.get('client_logged_email')
+    if not client_email:
+        return redirect(url_for('client_login'))
+
+    error_msg = ""
+    success_msg = ""
+
+    if request.method == 'POST':
+        old_pass = request.form.get('old_password', '')
+        new_pass = request.form.get('new_password', '')
+        
+        matched_biz = None
+        for b in BUSINESSES.values():
+            if b.get('client_email', '').lower() == client_email.lower():
+                matched_biz = b
+                break
+
+        if matched_biz and matched_biz.get('client_password') == old_pass:
+            for b in BUSINESSES.values():
+                if b.get('client_email', '').lower() == client_email.lower():
+                    b['client_password'] = new_pass
+            success_msg = "Password updated successfully!"
+        else:
+            error_msg = "Incorrect old password!"
+
+    html = get_base_head(back_url="/client/dashboard", back_text="Back to Dashboard") + '''
+    <main class="max-w-md mx-auto px-4 py-20 animate-fade-in">
+        <div class="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-8 shadow-2xl space-y-6 animate-modal">
+            <div class="text-center space-y-2">
+                <span class="text-5xl inline-block">🔒</span>
+                <h1 class="text-2xl font-black text-gray-900 dark:text-white">Change Password</h1>
+                <p class="text-xs text-gray-500 dark:text-gray-400">Update your account password securely.</p>
+            </div>
+
+            <form method="POST" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">Old Password</label>
+                    <input type="password" name="old_password" required placeholder="••••••••" class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white input-hover-effect outline-none text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-700 dark:text-gray-300 mb-1">New Password</label>
+                    <input type="password" name="new_password" required placeholder="••••••••" class="w-full p-3.5 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white input-hover-effect outline-none text-sm">
+                </div>
+                <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-3.5 rounded-xl font-bold btn-hover-effect text-sm shadow-lg">Update Password</button>
+            </form>
+            ''' + (f'<p class="text-green-500 text-xs text-center font-semibold">{success_msg}</p>' if success_msg else '') + '''
+            ''' + (f'<p class="text-red-500 text-xs text-center font-semibold">{error_msg}</p>' if error_msg else '') + '''
         </div>
     </main>
     ''' + FOOTER
